@@ -86,26 +86,115 @@ void Grammar::readRules() {
     }
 
     ComplexGrammarRule rule;
+    std::map<UnicodeString, std::vector<WordInfo>> tempSet;
     while(parser->getNextRule(rule)) {
 //        rules.insert(std::make_pair(std::move(rule.leftPart), std::move(rule.rightHandles)));
-        std::cout << "get next rule: current rule is " << rule << std::endl;
+//        std::cout << "get next rule: current rule is " << rule << std::endl;
+
+        auto found = tempSet.find(rule.leftPart);
+        if (found != tempSet.end()) {
+            nonTerminals[rule.leftPart] = found->second;
+            tempSet.erase(rule.leftPart);
+        } else {
+            nonTerminals[rule.leftPart] = {};
+        }
+
+        for (int i = 0; i < rule.rightHandles.size(); ++i) {
+            auto simpleRule = rule.rightHandles[i];
+            for (int j = 0; j < simpleRule.rightHandle.size(); ++j) {
+                auto word = simpleRule.rightHandle[j];
+                if (nonTerminals.find(word) == nonTerminals.end()) {
+                    WordInfo wordInfo {{word, i}, j};
+                    auto wordFound = tempSet.find(word);
+                    if (wordFound != tempSet.end()) {
+                        wordFound->second.push_back(std::move(wordInfo));
+                    } else {
+                        tempSet[word] = {std::move(wordInfo)};
+                    }
+                }
+            }
+        }
+
         auto it = rules.find(rule.leftPart);
         if (it == rules.end()) {
             rules[rule.leftPart] = rule.rightHandles;
         } else {
-            auto &rightHandles = rules[rule.leftPart];
+            auto &rightHandles = it->second;
             rightHandles.insert(rightHandles.end(), rule.rightHandles.begin(), rule.rightHandles.end());
         }
     }
+
+    for (auto &terminal : tempSet) {
+        terminals.insert(std::move(terminal.first));
+    }
+
+    buildFirstSet();
+    buildFollowSet();
 }
 
-//std::vector<UnicodeString> Grammar::getRightHandlesForLeftHandle(const UnicodeString &leftHandle) {
-//    auto iter = rules.find(leftHandle);
-//    if (iter != rules.end()) {
-//        return iter->second;
-//    }
-//    return std::vector<UnicodeString>{};
-//}
+void Grammar::buildFirstSet() {
+    for (auto &terminal : terminals) {
+        firstSet[terminal] = {terminal};
+    }
+
+    for (auto &nterminal : nonTerminals) {
+        auto nterm_word = nterminal.first;
+        firstSet[nterm_word] = firstSetForNonTerminal(nterm_word);
+    }
+}
+
+void Grammar::buildFollowSet() {
+    for (auto &nterm : nonTerminals) {
+        auto nterm_word = nterm.first;
+        followSet[nterm_word] = followSetForNonTerminal(nterm_word);
+    }
+}
+
+std::set<UnicodeString> Grammar::firstSetForNonTerminal(const UnicodeString &word) {
+    std::set<UnicodeString> firstSet;
+    auto rulesForWord = getRulesForLeftHandle(word);
+    for (auto &rule : rulesForWord) {
+        auto firstWord = rule.rightHandle[0];
+        if (firstWord == word) {
+            continue;
+        }
+        auto result = firstSetForNonTerminal(firstWord);
+        if (result.size() > 0) {
+            firstSet.insert(result.begin(), result.end());
+        }
+    }
+
+    return firstSet;
+}
+
+std::set<UnicodeString> Grammar::followSetForNonTerminal(const UnicodeString &word) {
+    if (word == EXPLICIT_START_SYMBOL) {
+        return {END_OF_INPUT};
+    }
+
+    auto followForWord = followSet.find(word);
+    if (followForWord != followSet.end()) {
+        return  followForWord->second;
+    }
+
+    std::set<UnicodeString> follow;
+    auto info = nonTerminals[word];
+    for (auto infoRecord : info) {
+        RuleIndex ruleIndex = infoRecord.ruleIndex;
+        auto simpleRules = rules[ruleIndex.leftHandle];
+        SimpleGrammarRule simpleRule = simpleRules[ruleIndex.simpleRuleNumber];
+        if (infoRecord.position < simpleRule.rightHandle.size() - 1) {
+            auto nextWord = simpleRule.rightHandle[infoRecord.position + 1];
+            auto firstSetForNextWord = firstSet[nextWord];
+            follow.insert(firstSetForNextWord.begin(), firstSetForNextWord.end());
+        } else {
+            auto followSetForLeftHandle = followSetForNonTerminal(simpleRule.leftPart);
+            follow.insert(followSetForLeftHandle.begin(), followSetForLeftHandle.end());
+        }
+    }
+
+    return follow;
+}
 
 std::vector<SimpleGrammarRule> Grammar::getRulesForLeftHandle(const UnicodeString &leftHandle) const {
     auto it = rules.find(leftHandle);
@@ -144,6 +233,30 @@ SimpleGrammarRule &Grammar::getStartRule() const {
     } else {
         return emptyRule;
     }
+}
+
+RuleIndex Grammar::getRuleIndex(const SimpleGrammarRule &rule) const {
+    auto it = rules.find(rule.leftPart);
+    if (it != rules.end()) {
+        auto &rulesForLeftPart = it->second;
+        for (int i = 0; i < rulesForLeftPart.size(); ++i) {
+            if (rulesForLeftPart[i] == rule) {
+                return {it->first, i};
+            }
+        }
+    }
+
+    return {"", -1};
+}
+
+bool Grammar::followWordsForNterminal(const UnicodeString &nterm, std::set<UnicodeString> &followWords) const {
+    auto followItem = followSet.find(nterm);
+    if (followItem != followSet.end()) {
+        followWords = followItem->second;
+        return true;
+    }
+
+    return false;
 }
 
 } /* namespace tproc */

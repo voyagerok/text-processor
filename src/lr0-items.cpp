@@ -17,6 +17,10 @@ bool LR0Item::operator!=(const LR0Item &other) {
     return !(*this == other);
 }
 
+UnicodeString LR0Item::getWordAtCurrentPosition() {
+    return this->rule.rightHandle.at(this->position);
+}
+
 bool LR0ItemSet::operator==(const LR0ItemSet &other) {
     if (items.size() != other.items.size()) {
         return false;
@@ -34,6 +38,15 @@ std::ostream &operator<<(std::ostream &os, const LR0ItemSet &itemSet) {
         os << item << std::endl;
     }
     return os;
+}
+
+int LR0ItemSet::getNextStateForWord(const UnicodeString &word) {
+    auto it = transitions.find(word);
+    if (it != transitions.end()) {
+        return it->second;
+    } else {
+        return -1;
+    }
 }
 
 LR0ItemSetCollection::LR0ItemSetCollection() {
@@ -82,13 +95,13 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
             UnicodeString wordToRead = rule.rightHandle[position];
             std::cout << "Word to read: " << wordToRead << std::endl;
 //            std::cout << "Rule: " << rule << ", position: " << position << std::endl;
-            auto it = itemSet.relations.find(wordToRead);
-            if (it == itemSet.relations.end()) {
+            auto it = itemSet.transitions.find(wordToRead);
+            if (it == itemSet.transitions.end()) {
                 LR0ItemSet nextItemSet;
                 nextItemSet.addItem({rule, position + 1});
                 nextItemSet.incomingWord = wordToRead;
                 nextItemSets[++itemSetIndex] = std::move(nextItemSet);
-                itemSet.relations[wordToRead] = itemSetIndex;
+                itemSet.transitions[wordToRead] = itemSetIndex;
             } else {
                 auto &nextItemSet = nextItemSets[it->second];
                 nextItemSet.addItem({rule, position + 1});
