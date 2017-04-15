@@ -29,10 +29,10 @@
 int main(void) {
     icu::UnicodeString ustring = "S = \"Вася\" S \"Петя\" S\nS = a\n";
     tproc::Grammar grammar;
-    tproc::LR0ItemSet itemSet;
+    tproc::LR0ItemSetCollection itemSet;
     if (grammar.initFromPlainText(ustring)) {
         itemSet.build(grammar);
-        auto items = itemSet.getItems();
+        auto items = itemSet.getItemSetCollection();
         std::cout << "Final itemset is:" << std::endl;
         for (auto &item : items) {
             std::cout << "Incoming word is " << item.incomingWord << std::endl;

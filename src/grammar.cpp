@@ -45,8 +45,8 @@ bool Grammar::initFromFile(const char *filename) {
         if (!validateRules()) {
             return false;
         }
-        startRule = new SimpleGrammarRule {MARKED_START_SYMBOL, {START_SYMBOL}, true};
-        rules[MARKED_START_SYMBOL] = {*startRule};
+        startRule = new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true};
+        rules[EXPLICIT_START_SYMBOL] = {*startRule};
     } catch (GrammarParserException &err) {
         std::cerr << err.what() << std::endl;
         return false;
@@ -63,8 +63,8 @@ bool Grammar::initFromPlainText(const UnicodeString &plainText) {
         if (!validateRules()) {
             return false;
         }
-        startRule = new SimpleGrammarRule {MARKED_START_SYMBOL, {START_SYMBOL}, true};
-        rules[MARKED_START_SYMBOL] = {*startRule};
+        startRule = new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true};
+        rules[EXPLICIT_START_SYMBOL] = {*startRule};
     } catch (GrammarParserException &err) {
         std::cerr << err.what() << std::endl;
         return false;

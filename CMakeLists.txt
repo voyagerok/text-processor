@@ -20,7 +20,9 @@ set(SRC "src/main.cpp"
     "src/lr0-items.h"
     "src/global-defs.h"
     "src/utils/string-helper.h"
-    "src/utils/string-helper.cpp")
+    "src/utils/string-helper.cpp"
+    "src/parser-table.cpp"
+    "src/parser-table.h")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEPS REQUIRED icu-uc icu-io)

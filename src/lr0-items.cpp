@@ -4,43 +4,43 @@
 
 namespace tproc {
 
-std::ostream &operator<<(std::ostream &os, const LR0ItemRule &itemRule) {
-    os << itemRule.rule << ", " << itemRule.position;
+std::ostream &operator<<(std::ostream &os, const LR0Item &item) {
+    os << item.rule << ", " << item.position;
     return os;
 }
 
-bool LR0ItemRule::operator==(const LR0ItemRule &other) {
+bool LR0Item::operator==(const LR0Item &other) {
     return position == other.position && rule == other.rule;
 }
 
-bool LR0ItemRule::operator!=(const LR0ItemRule &other) {
+bool LR0Item::operator!=(const LR0Item &other) {
     return !(*this == other);
 }
 
-bool LR0Item::operator==(const LR0Item &other) {
-    if (rules.size() != other.rules.size()) {
+bool LR0ItemSet::operator==(const LR0ItemSet &other) {
+    if (items.size() != other.items.size()) {
         return false;
     }
-    for (auto i = 0; i < rules.size(); ++i) {
-        if (rules[i] != other.rules[i])
+    for (auto i = 0; i < items.size(); ++i) {
+        if (items[i] != other.items[i])
             return false;
     }
 
     return true;
 }
 
-std::ostream &operator<<(std::ostream &os, const LR0Item &item) {
-    for (auto &itemRule : item.rules) {
-        os << itemRule << std::endl;
+std::ostream &operator<<(std::ostream &os, const LR0ItemSet &itemSet) {
+    for (auto &item : itemSet.items) {
+        os << item << std::endl;
     }
     return os;
 }
 
-LR0ItemSet::LR0ItemSet() {
+LR0ItemSetCollection::LR0ItemSetCollection() {
 
 }
 
-bool LR0ItemSet::build(const Grammar &grammar) {
+bool LR0ItemSetCollection::build(const Grammar &grammar) {
     history.clear();
 //    std::cout << "get start rule" << std::endl;
     SimpleGrammarRule startRule = grammar.getStartRule();
@@ -49,10 +49,10 @@ bool LR0ItemSet::build(const Grammar &grammar) {
         return false;
     }
 //    std::cout << "Building start item" << std::endl;
-    LR0Item startItem;
-    startItem.addItemRule({startRule, 0});
+    LR0ItemSet startItemSet;
+    startItemSet.addItem({startRule, 0});
 //    std::cout << "start item is " << startItem << std::endl;
-    build(grammar, startItem, 0);
+    build(grammar, startItemSet, 0);
 
     return true;
 }
@@ -62,62 +62,62 @@ bool LR0ItemSet::build(const Grammar &grammar) {
 
 //};
 
-void LR0ItemSet::build(const Grammar &grammar, LR0Item &item, int itemIndex) {
+void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, int itemSetIndex) {
 //    std::cout << "Starting iteration for item with index: " << itemIndex << std::endl;
-    for (auto i = 0; i < item.rules.size(); ++i) {
+    for (auto i = 0; i < itemSet.items.size(); ++i) {
 //        std::cout << "closure for item " << item << "and rule " << item.rules[i] << std::endl;
-        closure(grammar, item, item.rules[i]);
+        closure(grammar, itemSet, itemSet.items[i]);
     }
-    items.push_back(item);
+    itemSetCollection.push_back(itemSet);
 
-    std::cout << "Item after clousre, index:" << itemIndex << std::endl;
-    std::cout << item << std::endl;
+    std::cout << "Item after clousre, index:" << itemSetIndex << std::endl;
+    std::cout << itemSet << std::endl;
 
 //    std::map<int, std::shared_ptr<LR0Item>> nextItems;
-    std::map<int, LR0Item> nextItems;
-    for (auto i = 0; i < item.rules.size(); ++i) {
-        auto position = item.rules[i].position;
-        auto rule = item.rules[i].rule;
+    std::map<int, LR0ItemSet> nextItemSets;
+    for (auto i = 0; i < itemSet.items.size(); ++i) {
+        auto position = itemSet.items[i].position;
+        auto rule = itemSet.items[i].rule;
         if (position < rule.rightHandle.size()) {
             UnicodeString wordToRead = rule.rightHandle[position];
             std::cout << "Word to read: " << wordToRead << std::endl;
 //            std::cout << "Rule: " << rule << ", position: " << position << std::endl;
-            auto it = item.relations.find(wordToRead);
-            if (it == item.relations.end()) {
-                LR0Item nextItem;
-                nextItem.addItemRule({rule, position + 1});
-                nextItem.incomingWord = wordToRead;
-                nextItems[++itemIndex] = std::move(nextItem);
-                item.relations[wordToRead] = itemIndex;
+            auto it = itemSet.relations.find(wordToRead);
+            if (it == itemSet.relations.end()) {
+                LR0ItemSet nextItemSet;
+                nextItemSet.addItem({rule, position + 1});
+                nextItemSet.incomingWord = wordToRead;
+                nextItemSets[++itemSetIndex] = std::move(nextItemSet);
+                itemSet.relations[wordToRead] = itemSetIndex;
             } else {
-                auto &nextItem = nextItems[it->second];
-                nextItem.addItemRule({rule, position + 1});
+                auto &nextItemSet = nextItemSets[it->second];
+                nextItemSet.addItem({rule, position + 1});
             }
         }
     }
 
 //    std::cout << "Next items are:" << std::endl;
-    for (auto &itemIndexPair : nextItems) {
+    for (auto &itemIndexPair : nextItemSets) {
 //        std::cout << itemIndexPair.second << std::endl;
-        auto currentItem = itemIndexPair.second;
-        auto currentItemIndex = itemIndexPair.first;
-        bool currentItemFound = false;
-        if (!currentItem.incomingWord.isEmpty()) {
-            auto wordItemsPair = history.find(currentItem.incomingWord);
+        auto currentItemSet = itemIndexPair.second;
+        auto currentItemSetIndex = itemIndexPair.first;
+        bool currentItemSetFound = false;
+        if (!currentItemSet.incomingWord.isEmpty()) {
+            auto wordItemsPair = history.find(currentItemSet.incomingWord);
             if (wordItemsPair != history.end()) {
                 auto items = wordItemsPair->second;
                 for (auto &historyItem : items) {
-                    if (historyItem == currentItem) {
-                        currentItemFound = true;
+                    if (historyItem == currentItemSet) {
+                        currentItemSetFound = true;
                         break;
                     }
                 }
             }
         }
 //        std::cout << "Current item found: " << currentItemFound << std::endl;
-        if (!currentItemFound) {
-            addItemToHistory(currentItem);
-            build(grammar, currentItem, currentItemIndex);
+        if (!currentItemSetFound) {
+            addItemSetToHistory(currentItemSet);
+            build(grammar, currentItemSet, currentItemSetIndex);
         }
     }
 }
@@ -129,19 +129,19 @@ void LR0ItemSet::build(const Grammar &grammar, LR0Item &item, int itemIndex) {
 //    LR0Item currentItem;
 //}
 
-void LR0ItemSet::addItemToHistory(const LR0Item &item) {
-    auto incomingWord = item.incomingWord;
+void LR0ItemSetCollection::addItemSetToHistory(const LR0ItemSet &itemSet) {
+    auto incomingWord = itemSet.incomingWord;
     auto it = history.find(incomingWord);
     if (it == history.end()) {
-        history[incomingWord] = {item};
+        history[incomingWord] = {itemSet};
     } else {
         auto &itemsForWord = history[incomingWord];
-        itemsForWord.push_back(item);
+        itemsForWord.push_back(itemSet);
     }
 }
 
-void LR0ItemSet::closure(const Grammar &grammar, LR0Item &item, const LR0ItemRule &currentRule) {
-    UnicodeString currentWord = currentRule.rule.rightHandle[currentRule.position];
+void LR0ItemSetCollection::closure(const Grammar &grammar, LR0ItemSet &itemSet, const LR0Item &currentItem) {
+    UnicodeString currentWord = currentItem.rule.rightHandle[currentItem.position];
 //    std::cout << "Closure: currentWord is " << currentWord << std::endl;
     auto rulesForWord = grammar.getRulesForLeftHandle(currentWord);
 //    std::cout << "Rules for current word:" << std::endl;
@@ -149,13 +149,13 @@ void LR0ItemSet::closure(const Grammar &grammar, LR0Item &item, const LR0ItemRul
 //        std::cout << rule << std::endl;
 //    }
     for (int i = 0; i < rulesForWord.size(); ++i) {
-        LR0ItemRule itemRule {rulesForWord[i], 0};
+        LR0Item itemRule {rulesForWord[i], 0};
 //        std::cout << "got item for rule: " << itemRule << std::endl;
-        if (itemRule != currentRule) {
+        if (itemRule != currentItem) {
 //            std::cout << "recurs closure call for rule " << itemRule << std::endl;
-            closure(grammar, item, itemRule);
+            closure(grammar, itemSet, itemRule);
 //            std::cout << "adding rule " << itemRule << " in item " << item << std::endl;
-            item.addItemRule(itemRule);
+            itemSet.addItem(itemRule);
         }
     }
 }

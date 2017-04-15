@@ -11,7 +11,7 @@
 #include <memory>
 #include <vector>
 
-#include "grammar-rule.h"
+//#include "grammar-rule.h"
 #include <unicode/unistr.h>
 #include <unicode/regex.h>
 
@@ -20,6 +20,8 @@
 //using icu::RegexMatcher;
 
 namespace tproc {
+
+struct ComplexGrammarRule;
 
 class GrammarParser {
 public:

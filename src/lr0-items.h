@@ -10,37 +10,37 @@
 
 namespace tproc {
 
-struct LR0ItemRule {
+struct LR0Item {
     SimpleGrammarRule rule;
     int position;
 
-    bool operator==(const LR0ItemRule &other);
-    bool operator!=(const LR0ItemRule &other);
-    friend std::ostream &operator<<(std::ostream &os, const LR0ItemRule &itemRule);
-};
-
-struct LR0Item {
-    UnicodeString incomingWord;
-    std::vector<LR0ItemRule> rules;
-    std::map<UnicodeString, int> relations;
-    void addItemRule(const LR0ItemRule &rule) { rules.push_back(rule); }
-
     bool operator==(const LR0Item &other);
+    bool operator!=(const LR0Item &other);
     friend std::ostream &operator<<(std::ostream &os, const LR0Item &item);
 };
 
-class LR0ItemSet {
-public:
-    LR0ItemSet();
-    bool build(const Grammar &grammar);
-    std::vector<LR0Item> getItems() const { return items; }
-private:
-    void build(const Grammar &grammar, LR0Item &item, int itemIndex);
-    void closure(const Grammar &grammar, LR0Item &item, const LR0ItemRule &currentRule);
-    void addItemToHistory(const LR0Item &item);
-
+struct LR0ItemSet {
+    UnicodeString incomingWord;
     std::vector<LR0Item> items;
-    std::map<UnicodeString, std::vector<LR0Item>> history;
+    std::map<UnicodeString, int> relations;
+    void addItem(const LR0Item &item) { items.push_back(item); }
+
+    bool operator==(const LR0ItemSet &other);
+    friend std::ostream &operator<<(std::ostream &os, const LR0ItemSet &itemSet);
+};
+
+class LR0ItemSetCollection {
+public:
+    LR0ItemSetCollection();
+    bool build(const Grammar &grammar);
+    std::vector<LR0ItemSet> getItemSetCollection() const { return itemSetCollection; }
+private:
+    void build(const Grammar &grammar, LR0ItemSet &itemSet, int itemSetIndex);
+    void closure(const Grammar &grammar, LR0ItemSet &itemSet, const LR0Item &currentItem);
+    void addItemSetToHistory(const LR0ItemSet &itemSet);
+
+    std::vector<LR0ItemSet> itemSetCollection;
+    std::map<UnicodeString, std::vector<LR0ItemSet>> history;
 };
 
 }

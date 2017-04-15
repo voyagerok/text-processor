@@ -35,7 +35,8 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
     for (int i = 0; i < n_of_lines; ++i) {
 //        std::cout << "line is: " << lines[i] << std::endl;
         if (!lines[i].isEmpty())
-            result.push_back(lines[i]);
+            if (!lines[i].isEmpty())
+                result.push_back(lines[i]);
     }
 
     return true;
