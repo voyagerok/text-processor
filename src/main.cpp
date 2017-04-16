@@ -17,6 +17,7 @@
  */
 
 //#include <iostream>
+#include <Python.h>
 #include <unicode/unistr.h>
 #include <unicode/ustream.h>
 #include <unicode/schriter.h>
@@ -26,29 +27,45 @@
 #include "grammar.h"
 #include "lr0-items.h"
 #include "parser-table.h"
+#include "morph-analyzer.h"
 
 int main(void) {
-    icu::UnicodeString ustring = "S = a S b S\nS = a\n";
-    tproc::Grammar grammar;
-    tproc::LR0ItemSetCollection itemSet;
-    if (grammar.initFromPlainText(ustring)) {
-        itemSet.build(grammar);
-        auto items = itemSet.getItemSetCollection();
-        std::cout << "Final itemset is:" << std::endl;
-        for (auto &item : items) {
-            std::cout << "Incoming word is " << item.incomingWord << std::endl;
-//            std::cout
-            std::cout << item << "\n\n";
-        }
+    Py_Initialize();
+    initmorph();
 
-//        grammar.printFirstSet();
-//        grammar.printFollowSet();
+//    icu::UnicodeString ustring = "S = a S b S\nS = a\n";
+//    tproc::Grammar grammar;
+//    tproc::LR0ItemSetCollection itemSet;
+//    if (grammar.initFromPlainText(ustring)) {
+//        itemSet.build(grammar);
+//        auto items = itemSet.getItemSetCollection();
+//        std::cout << "Final itemset is:" << std::endl;
+//        for (auto &item : items) {
+//            std::cout << "Incoming word is " << item.incomingWord << std::endl;
+////            std::cout
+//            std::cout << item << "\n\n";
+//        }
 
-        tproc::ParserTable table;
-        table.buildTableFromGrammar(grammar);
-        table.printActionTable();
-        table.printGotoTable();
+////        grammar.printFirstSet();
+////        grammar.printFollowSet();
+
+//        tproc::ParserTable table;
+//        table.buildTableFromGrammar(grammar);
+//        table.printActionTable();
+//        table.printGotoTable();
+//    }
+
+//    tproc::analyzeTokens({""});
+//    std::vector<std::map<std::string, std::string>> result;
+    std::vector<AnalysisResult> results;
+    analyzeTokens({"Николай", "медведь"}, results);
+    for (auto &result : results) {
+        std::cout << result.normalForm << std::endl;
+        std::cout << result.tag.partOfSpeech << std::endl;
+        std::cout << result.tag.number << std::endl;
     }
+
+    Py_Finalize();
 
     return 0;
 }

@@ -172,16 +172,6 @@ void ParserTable::addNewAction(int currentState, const UnicodeString &currentWor
     auto &actionForState = actionTable->at(currentState);
     auto it = actionForState.find(currentWord);
     if (it != actionForState.end()) {
-//        bool found = false;
-//        for (auto &currentAction : it->second) {
-//            if (currentAction->equals(*action)) {
-//                found = true;
-//                break;
-//            }
-//        }
-//        if (!found) {
-//            it->second.push_back(action);
-//        }
         it->second.insert(action);
     } else {
         actionForState[currentWord] = {action};
