@@ -81,11 +81,11 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 //        std::cout << "closure for item " << item << "and rule " << item.rules[i] << std::endl;
         closure(grammar, itemSet, itemSet.items[i]);
     }
-    itemSetCollection.push_back(itemSet);
 
     std::cout << "Item after clousre, index:" << itemSetIndex << std::endl;
     std::cout << itemSet << std::endl;
 
+    auto nextItemSetIndex = itemSetIndex;
 //    std::map<int, std::shared_ptr<LR0Item>> nextItems;
     std::map<int, LR0ItemSet> nextItemSets;
     for (auto i = 0; i < itemSet.items.size(); ++i) {
@@ -100,14 +100,17 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
                 LR0ItemSet nextItemSet;
                 nextItemSet.addItem({rule, position + 1});
                 nextItemSet.incomingWord = wordToRead;
-                nextItemSets[++itemSetIndex] = std::move(nextItemSet);
-                itemSet.transitions[wordToRead] = itemSetIndex;
+                nextItemSet.itemsetIndex = ++nextItemSetIndex;
+                nextItemSets[nextItemSetIndex] = nextItemSet;
+                itemSet.transitions[wordToRead] = nextItemSetIndex;
             } else {
                 auto &nextItemSet = nextItemSets[it->second];
                 nextItemSet.addItem({rule, position + 1});
             }
         }
     }
+
+    itemSetCollection.push_back(itemSet);
 
 //    std::cout << "Next items are:" << std::endl;
     for (auto &itemIndexPair : nextItemSets) {
@@ -121,6 +124,8 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
                 auto items = wordItemsPair->second;
                 for (auto &historyItem : items) {
                     if (historyItem == currentItemSet) {
+                        auto &itemSet = itemSetCollection.at(itemSetIndex);
+                        itemSet.transitions[currentItemSet.incomingWord] = historyItem.itemsetIndex;
                         currentItemSetFound = true;
                         break;
                     }

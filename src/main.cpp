@@ -25,9 +25,10 @@
 #include "grammar-parser.h"
 #include "grammar.h"
 #include "lr0-items.h"
+#include "parser-table.h"
 
 int main(void) {
-    icu::UnicodeString ustring = "S = \"Вася\" S \"Петя\" S\nS = a\n";
+    icu::UnicodeString ustring = "S = a S b S\nS = a\n";
     tproc::Grammar grammar;
     tproc::LR0ItemSetCollection itemSet;
     if (grammar.initFromPlainText(ustring)) {
@@ -36,16 +37,18 @@ int main(void) {
         std::cout << "Final itemset is:" << std::endl;
         for (auto &item : items) {
             std::cout << "Incoming word is " << item.incomingWord << std::endl;
+//            std::cout
             std::cout << item << "\n\n";
         }
+
+//        grammar.printFirstSet();
+//        grammar.printFollowSet();
+
+        tproc::ParserTable table;
+        table.buildTableFromGrammar(grammar);
+        table.printActionTable();
+        table.printGotoTable();
     }
-//    if (grammar.initFromPlainText(ustring)) {
-//        for (auto &rule : grammar) {
-//            for (auto &rule_right_handle : rule.second) {
-//                std::cout << rule.first << " = " << rule_right_handle << std::endl;
-//            }
-//        }
-//    }
 
     return 0;
 }
