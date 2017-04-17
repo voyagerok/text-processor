@@ -30,10 +30,13 @@ cdef public analyzeTokens(const vector[string] &tokens, vector[AnalysisResult] &
             #print(res.tag.number)
             result.normalForm = res.normal_form.encode('UTF-8')
             result.tags.clear()
+            '''
             if res.tag.number is not None:
                 result.tags.push_back(res.tag.number)
+            '''
             if res.tag.POS is not None:
                 result.tags.push_back(res.tag.POS)
+            '''
             if res.tag.animacy is not None:
                 result.tags.push_back(res.tag.animacy)
             if res.tag.case is not None:
@@ -42,4 +45,5 @@ cdef public analyzeTokens(const vector[string] &tokens, vector[AnalysisResult] &
                 result.tags.push_back(res.tag.gender)
             if res.tag.number is not None:
                 result.tags.push_back(res.tag.number)
+            '''
             analysis_results.push_back(result)

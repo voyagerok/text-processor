@@ -343,4 +343,16 @@ bool Grammar::isStartRule(const SimpleGrammarRule &rule) const {
     return rule.leftPart == EXPLICIT_START_SYMBOL;
 }
 
+bool Grammar::getRuleForRuleIndex(const RuleIndex &ruleIndex, SimpleGrammarRule &rule) const {
+    auto rulesForNterm = rules.find(ruleIndex.leftHandle);
+    if (rulesForNterm == rules.end()) {
+        return false;
+    }
+    if (ruleIndex.simpleRuleNumber < 0 || ruleIndex.simpleRuleNumber >= rulesForNterm->second.size()) {
+        return false;
+    }
+    rule = rulesForNterm->second.at(ruleIndex.simpleRuleNumber);
+    return true;
+}
+
 } /* namespace tproc */

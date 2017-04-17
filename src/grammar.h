@@ -43,6 +43,7 @@ public:
     ~Grammar();
     bool initFromFile(const char *filename);
     bool initFromPlainText(const UnicodeString &plainText);
+
     std::vector<SimpleGrammarRule> getRulesForLeftHandle(const UnicodeString &leftHandle) const;
     SimpleGrammarRule &getStartRule() const;
     bool isNonTerminal(const UnicodeString &word) const { return rules.find(word) != rules.end(); }
@@ -52,6 +53,7 @@ public:
     bool isStartRule(const SimpleGrammarRule &rule) const;
     void printFirstSet();
     void printFollowSet();
+    bool getRuleForRuleIndex(const RuleIndex &index, SimpleGrammarRule &rule) const;
 
     iter begin();
     iter end();

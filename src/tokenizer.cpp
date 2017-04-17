@@ -9,7 +9,7 @@
 
 namespace tproc {
 
-static const UnicodeString sentenceDelims = "[\\?+,\\.+,\\!+]";
+//static const UnicodeString sentenceDelims = "[\\?+,\\.+,\\!+]";
 
 //static Token buildTokenFromAnalysisResult(const AnalysisResult &result) {
 //    Token token;
@@ -20,6 +20,30 @@ static const UnicodeString sentenceDelims = "[\\?+,\\.+,\\!+]";
 
 //    return token;
 //}
+
+bool Token::operator==(const Token &other) {
+    if (this->word != other.word) {
+        return false;
+    }
+    if (this->normalForm != other.normalForm) {
+        return false;
+    }
+    if (this->tags.size() != other.tags.size()) {
+        return false;
+    }
+    for (int i = 0; i < this->tags.size(); ++i) {
+        if (this->tags[i] != other.tags[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Token::operator!=(const Token &other) {
+    return !(*this == other);
+}
+
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
     os << "Original word: " << token.word << ", normal form: " << token.normalForm << ", tags: ";

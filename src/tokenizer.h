@@ -12,6 +12,10 @@ struct Token {
     UnicodeString normalForm;
     std::vector<UnicodeString> tags;
 
+    unsigned long hash() const;
+
+    bool operator==(const Token &other);
+    bool operator!=(const Token &other);
     friend std::ostream &operator<<(std::ostream &os, const Token &token);
 };
 

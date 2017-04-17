@@ -40,6 +40,8 @@ set(SRC "src/main.cpp"
     "src/parser.h"
     "src/tokenizer.cpp"
     "src/tokenizer.h"
+    "src/stack.cpp"
+    "src/stack.h"
     "${GENERATED_SOURCE_DIR}/morph-analyzer.cpp"
     "${GENERATED_SOURCE_DIR}/morph-analyzer.h")
 

@@ -30,8 +30,8 @@ std::ostream &ParserAction::print(std::ostream &os) const {
     return os;
 }
 
-bool ParserAction::equals(const ParserAction &other) const {
-    if (this->actionName != other.actionName) {
+bool ParserAction::equals(const ParserActionPtr &other) const {
+    if (this->actionName != other->actionName) {
         return false;
     }
 
@@ -48,16 +48,26 @@ std::ostream &ShiftAction::print(std::ostream &os) const {
     return os;
 }
 
-bool ShiftAction::equals(const ParserAction &other) const {
-    try {
-        const ShiftAction &otherShiftAction = dynamic_cast<const ShiftAction&>(other);
-        if (this->actionName != otherShiftAction.actionName) {
-            return  false;
-        }
-        if (this->nextState != otherShiftAction.nextState) {
-            return false;
-        }
-    } catch (std::bad_cast &err) {
+bool ShiftAction::equals(const ParserActionPtr &other) const {
+//    try {
+//        const ShiftAction &otherShiftAction = dynamic_cast<const ShiftAction&>(other);
+//        if (this->actionName != otherShiftAction.actionName) {
+//            return  false;
+//        }
+//        if (this->nextState != otherShiftAction.nextState) {
+//            return false;
+//        }
+//    } catch (std::bad_cast &err) {
+//        return false;
+//    }
+    auto shiftActionPtr = std::dynamic_pointer_cast<ShiftAction>(other);
+    if (shiftActionPtr == nullptr) {
+        return false;
+    }
+    if (this->actionName != shiftActionPtr->actionName) {
+        return false;
+    }
+    if (this->nextState != shiftActionPtr->nextState) {
         return false;
     }
 
@@ -74,16 +84,27 @@ std::ostream &ReduceAction::print(std::ostream &os) const {
     return os;
 }
 
-bool ReduceAction::equals(const ParserAction &other) const {
-    try {
-        const ReduceAction &otherReduceAction = dynamic_cast<const ReduceAction&>(other);
-        if (this->actionName != otherReduceAction.actionName) {
-            return false;
-        }
-        if (this->ruleIndex != otherReduceAction.ruleIndex) {
-            return false;
-        }
-    } catch (std::bad_cast &err) {
+bool ReduceAction::equals(const ParserActionPtr &other) const {
+//    try {
+//        const ReduceAction &otherReduceAction = dynamic_cast<const ReduceAction&>(other);
+//        if (this->actionName != otherReduceAction.actionName) {
+//            return false;
+//        }
+//        if (this->ruleIndex != otherReduceAction.ruleIndex) {
+//            return false;
+//        }
+//    } catch (std::bad_cast &err) {
+//        return false;
+//    }
+
+    auto reduceActionPtr = std::dynamic_pointer_cast<ReduceAction>(other);
+    if (reduceActionPtr == nullptr) {
+        return false;
+    }
+    if (this->actionName != reduceActionPtr->actionName) {
+        return false;
+    }
+    if (this->ruleIndex != reduceActionPtr->ruleIndex) {
         return false;
     }
 
@@ -208,6 +229,32 @@ void ParserTable::printGotoTable() {
             std::cout << "State: " << gotoJump.second << std::endl;
         }
     }
+}
+
+bool ParserTable::getActionsForStateAndWord(int state, const UnicodeString &word, ParserActionSet &actionSet) const {
+    if (state < 0 || state >= actionTable->size()) {
+        return false;
+    }
+    auto &actionsForState = actionTable->at(state);
+    auto actionsForWord = actionsForState.find(word);
+    if (actionsForWord == actionsForState.end()) {
+        return false;
+    }
+    actionSet = actionsForWord->second;
+    return true;
+}
+
+bool ParserTable::getGotoStateForStateAndNterm(int state, const UnicodeString &nterm, int &targetState) const {
+    if (state < 0 || state >= gotoTable->size()) {
+        return false;
+    }
+    auto &jumpsForState = gotoTable->at(state);
+    auto jumpForNterm = jumpsForState.find(nterm);
+    if (jumpForNterm == jumpsForState.end()) {
+        return false;
+    }
+    targetState = jumpForNterm->second;
+    return true;
 }
 
 }

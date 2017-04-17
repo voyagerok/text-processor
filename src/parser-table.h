@@ -18,6 +18,10 @@ namespace tproc {
 
 enum class ActionName {SHIFT, REDUCE, ACCEPT, ERROR};
 
+class ParserAction;
+
+using ParserActionPtr = std::shared_ptr<ParserAction>;
+
 std::ostream &operator<<(std::ostream &os, ActionName actionName);
 
 class ParserAction {
@@ -25,7 +29,7 @@ public:
     ParserAction (ActionName actionName) : actionName {actionName} {}
     ActionName actionName;
 
-    virtual bool equals(const ParserAction &other) const;
+    virtual bool equals(const ParserActionPtr &other) const;
     virtual unsigned long hash() const;
 
     friend std::ostream &operator<<(std::ostream &os, const ParserAction &parserAction) { return parserAction.print(os); }
@@ -38,7 +42,7 @@ public:
     ShiftAction(int nextState) : ParserAction {ActionName::SHIFT}, nextState {nextState} {}
     int nextState;
 
-    bool equals(const ParserAction &other) const override;
+    bool equals(const ParserActionPtr &other) const override;
     unsigned long hash() const override;
 
     friend std::ostream &operator<<(std::ostream &os, const ShiftAction &parserAction) { return parserAction.print(os); }
@@ -51,7 +55,7 @@ public:
     ReduceAction(RuleIndex ruleIndex) : ParserAction {ActionName::REDUCE}, ruleIndex {ruleIndex} {}
     RuleIndex ruleIndex;
 
-    bool equals(const ParserAction &other) const override;
+    bool equals(const ParserActionPtr &other) const override;
     unsigned long hash() const override;
 
     friend std::ostream &operator<<(std::ostream &os, const ReduceAction &parserAction) { return parserAction.print(os); }
@@ -61,14 +65,14 @@ protected:
 
 class ParserActionEquality {
 public:
-    bool operator()(const std::shared_ptr<ParserAction> &act1, const std::shared_ptr<ParserAction> &act2) const {
-        return act1->equals(*act2);
+    bool operator()(const ParserActionPtr &act1, const ParserActionPtr &act2) const {
+        return act1->equals(act2);
     }
 };
 
 class ParserActionHash {
 public:
-    unsigned long operator()(const std::shared_ptr<ParserAction> &act) const {
+    unsigned long operator()(const ParserActionPtr &act) const {
         return act->hash();
     }
 };
@@ -81,11 +85,15 @@ public:
 
     ~ParserTable();
 
+    bool getActionsForStateAndWord(int state, const UnicodeString &word, ParserActionSet &actionSet) const;
+    bool getGotoStateForStateAndNterm(int state, const UnicodeString &nterm, int &targetState) const;
+
     bool buildTableFromGrammar(const Grammar &grammar);
+
     void printActionTable();
     void printGotoTable();
 private:
-    void addNewAction(int currentState, const UnicodeString &currentWord, std::shared_ptr<ParserAction> action);
+    void addNewAction(int currentState, const UnicodeString &currentWord, ParserActionPtr action);
 //    std::set<UnicodeString> followSetForWord(const Grammar &grammar, const UnicodeString &word);
 //    std::set<UnicodeString> firstSetForWord(const Grammar &grammar, const UnicodeString &word);
 
