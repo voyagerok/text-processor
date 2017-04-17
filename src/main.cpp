@@ -28,42 +28,56 @@
 #include "lr0-items.h"
 #include "parser-table.h"
 #include "morph-analyzer.h"
+#include "tokenizer.h"
 
 int main(void) {
     Py_Initialize();
     initmorph();
 
-//    icu::UnicodeString ustring = "S = a S b S\nS = a\n";
-//    tproc::Grammar grammar;
-//    tproc::LR0ItemSetCollection itemSet;
-//    if (grammar.initFromPlainText(ustring)) {
-//        itemSet.build(grammar);
-//        auto items = itemSet.getItemSetCollection();
-//        std::cout << "Final itemset is:" << std::endl;
-//        for (auto &item : items) {
-//            std::cout << "Incoming word is " << item.incomingWord << std::endl;
-////            std::cout
-//            std::cout << item << "\n\n";
+    icu::UnicodeString ustring = "S = a b C\nS = a B C\nB = b\nC = d";
+    tproc::Grammar grammar;
+    tproc::LR0ItemSetCollection itemSet;
+    if (grammar.initFromPlainText(ustring)) {
+        itemSet.build(grammar);
+        auto items = itemSet.getItemSetCollection();
+        std::cout << "Final itemset is:" << std::endl;
+        for (auto &item : items) {
+            std::cout << "Incoming word is " << item.incomingWord << std::endl;
+            std::cout << "State number is:" << item.itemsetIndex << std::endl;
+            std::cout << item << "\n\n";
+        }
+
+//        grammar.printFirstSet();
+//        grammar.printFollowSet();
+
+        tproc::ParserTable table;
+        table.buildTableFromGrammar(grammar);
+        table.printActionTable();
+        table.printGotoTable();
+    }
+
+////    tproc::analyzeTokens({""});
+////    std::vector<std::map<std::string, std::string>> result;
+//    std::vector<AnalysisResult> results;
+//    analyzeTokens({"Николай", "медведь", "Камни", "Река"}, results);
+//    for (auto &result : results) {
+//        std::cout << "Tags for " << result.normalForm << std::endl;
+//        for (auto &tag : result.tags) {
+//            std::cout << tag << std::endl;
 //        }
-
-////        grammar.printFirstSet();
-////        grammar.printFollowSet();
-
-//        tproc::ParserTable table;
-//        table.buildTableFromGrammar(grammar);
-//        table.printActionTable();
-//        table.printGotoTable();
+////        std::cout << result.tag.partOfSpeech << std::endl;
+////        std::cout << result.tag.number << std::endl;
+////        std::cout << result.tag.animacy << std::endl;
 //    }
 
-//    tproc::analyzeTokens({""});
-//    std::vector<std::map<std::string, std::string>> result;
-    std::vector<AnalysisResult> results;
-    analyzeTokens({"Николай", "медведь"}, results);
-    for (auto &result : results) {
-        std::cout << result.normalForm << std::endl;
-        std::cout << result.tag.partOfSpeech << std::endl;
-        std::cout << result.tag.number << std::endl;
-    }
+//    const UnicodeString inputText = "Сбрось оковы угнатателей! Присоединяйся к революции пролетариата! А ты еще не вступил в добровольцы??? Ну так вступай.";
+//    tproc::Tokenizer tokenizer(inputText);
+//    auto sentences = tokenizer.getSentences();
+//    for (auto &sentence : sentences) {
+//        for (auto &token : sentence) {
+//            std::cout << token << std::endl;
+//        }
+//    }
 
     Py_Finalize();
 

@@ -6,15 +6,17 @@ from libcpp.map cimport map
 
 import pymorphy2
 
+'''
 cdef public cppclass Tag:
     string partOfSpeech
     string animacy
     string morphCase
     string gender
     string number
+'''
 
 cdef public cppclass AnalysisResult:
-    Tag tag
+    vector[string] tags
     string normalForm
 
 cdef public analyzeTokens(const vector[string] &tokens, vector[AnalysisResult] &analysis_results):
@@ -27,28 +29,17 @@ cdef public analyzeTokens(const vector[string] &tokens, vector[AnalysisResult] &
         for res in morph_result:
             #print(res.tag.number)
             result.normalForm = res.normal_form.encode('UTF-8')
-            if res.tag.number is None:
-                result.tag.number = ""
-            else:
-                result.tag.number = res.tag.number
-            if res.tag.POS is None:
-                result.tag.partOfSpeech = ""
-            else:
-                result.tag.partOfSpeech = res.tag.POS
-            if res.tag.animacy is None:
-                result.tag.animacy = ""
-            else:
-                result.tag.animacy = res.tag.animacy
-            if res.tag.case is None:
-                result.tag.morphCase = ""
-            else:
-                result.tag.morphCase = res.tag.case
-            if res.tag.gender is None:
-                result.tag.gender = ""
-            else:
-                result.tag.gender = res.tag.gender
-            if res.tag.number is None:
-                result.tag.number
-            else:
-                result.tag.number = res.tag.number
+            result.tags.clear()
+            if res.tag.number is not None:
+                result.tags.push_back(res.tag.number)
+            if res.tag.POS is not None:
+                result.tags.push_back(res.tag.POS)
+            if res.tag.animacy is not None:
+                result.tags.push_back(res.tag.animacy)
+            if res.tag.case is not None:
+                result.tags.push_back(res.tag.case)
+            if res.tag.gender is not None:
+                result.tags.push_back(res.tag.gender)
+            if res.tag.number is not None:
+                result.tags.push_back(res.tag.number)
             analysis_results.push_back(result)

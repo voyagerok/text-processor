@@ -26,7 +26,7 @@ struct LR0ItemSet {
     using const_iter = std::vector<LR0Item>::const_iterator;
 
     UnicodeString incomingWord;
-    int itemsetIndex;
+    int itemsetIndex = 0;
     std::vector<LR0Item> items;
     std::map<UnicodeString, int> transitions;
 

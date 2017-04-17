@@ -82,29 +82,33 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
         closure(grammar, itemSet, itemSet.items[i]);
     }
 
-    std::cout << "Item after clousre, index:" << itemSetIndex << std::endl;
-    std::cout << itemSet << std::endl;
+//    std::cout << "Item after clousre, index:" << itemSetIndex << std::endl;
+//    std::cout << itemSet << std::endl;
 
-    auto nextItemSetIndex = itemSetIndex;
+//    auto nextItemSetIndex = itemSetCollection.size();
 //    std::map<int, std::shared_ptr<LR0Item>> nextItems;
-    std::map<int, LR0ItemSet> nextItemSets;
+    std::map<UnicodeString, LR0ItemSet> nextItemSets;
     for (auto i = 0; i < itemSet.items.size(); ++i) {
         auto position = itemSet.items[i].position;
         auto rule = itemSet.items[i].rule;
         if (position < rule.rightHandle.size()) {
             UnicodeString wordToRead = rule.rightHandle[position];
-            std::cout << "Word to read: " << wordToRead << std::endl;
+//            std::cout << "Word to read: " << wordToRead << std::endl;
 //            std::cout << "Rule: " << rule << ", position: " << position << std::endl;
-            auto it = itemSet.transitions.find(wordToRead);
-            if (it == itemSet.transitions.end()) {
+//            auto it = itemSet.transitions.find(wordToRead);
+            auto it = nextItemSets.find(wordToRead);
+            if (it == nextItemSets.end()) {
+//                ++nextItemSetIndex;
                 LR0ItemSet nextItemSet;
                 nextItemSet.addItem({rule, position + 1});
                 nextItemSet.incomingWord = wordToRead;
-                nextItemSet.itemsetIndex = ++nextItemSetIndex;
-                nextItemSets[nextItemSetIndex] = nextItemSet;
-                itemSet.transitions[wordToRead] = nextItemSetIndex;
+                nextItemSets[wordToRead] = nextItemSet;
+//                nextItemSets.push_back(nextItemSet);
+//                nextItemSet.itemsetIndex = nextItemSetIndex;
+//                nextItemSets[nextItemSetIndex] = nextItemSet;
+//                itemSet.transitions[wordToRead] = nextItemSetIndex;
             } else {
-                auto &nextItemSet = nextItemSets[it->second];
+                auto &nextItemSet = it->second;
                 nextItemSet.addItem({rule, position + 1});
             }
         }
@@ -112,32 +116,60 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 
     itemSetCollection.push_back(itemSet);
 
-//    std::cout << "Next items are:" << std::endl;
-    for (auto &itemIndexPair : nextItemSets) {
-//        std::cout << itemIndexPair.second << std::endl;
-        auto currentItemSet = itemIndexPair.second;
-        auto currentItemSetIndex = itemIndexPair.first;
-        bool currentItemSetFound = false;
-        if (!currentItemSet.incomingWord.isEmpty()) {
-            auto wordItemsPair = history.find(currentItemSet.incomingWord);
-            if (wordItemsPair != history.end()) {
-                auto items = wordItemsPair->second;
-                for (auto &historyItem : items) {
-                    if (historyItem == currentItemSet) {
+    for (auto &nextItemSetWordPair : nextItemSets) {
+        auto nextItemSet = nextItemSetWordPair.second;
+        bool itemSetFound = false;
+        if (!nextItemSet.incomingWord.isEmpty()) {
+            auto wordItemPair = history.find(nextItemSet.incomingWord);
+            if (wordItemPair != history.end()) {
+                auto items = wordItemPair->second;
+                for (auto &historyItemSet : items) {
+                    if (historyItemSet == nextItemSet) {
                         auto &itemSet = itemSetCollection.at(itemSetIndex);
-                        itemSet.transitions[currentItemSet.incomingWord] = historyItem.itemsetIndex;
-                        currentItemSetFound = true;
+                        itemSet.transitions[nextItemSet.incomingWord] = historyItemSet.itemsetIndex;
+                        itemSetFound = true;
                         break;
                     }
                 }
             }
         }
-//        std::cout << "Current item found: " << currentItemFound << std::endl;
-        if (!currentItemSetFound) {
-            addItemSetToHistory(currentItemSet);
-            build(grammar, currentItemSet, currentItemSetIndex);
+
+        if (!itemSetFound) {
+            int nextItemSetIndex = itemSetCollection.size();
+            nextItemSet.itemsetIndex = nextItemSetIndex;
+            auto &itemSet = itemSetCollection.at(itemSetIndex);
+            itemSet.transitions[nextItemSet.incomingWord] = nextItemSetIndex;
+            addItemSetToHistory(nextItemSet);
+            build(grammar, nextItemSet, nextItemSetIndex);
         }
     }
+
+////    std::cout << "Next items are:" << std::endl;
+//    for (auto &itemIndexPair : nextItemSets) {
+////        std::cout << itemIndexPair.second << std::endl;
+//        auto currentItemSet = itemIndexPair.second;
+//        auto currentItemSetIndex = itemIndexPair.first;
+//        bool currentItemSetFound = false;
+//        if (!currentItemSet.incomingWord.isEmpty()) {
+//            auto wordItemsPair = history.find(currentItemSet.incomingWord);
+//            if (wordItemsPair != history.end()) {
+//                auto items = wordItemsPair->second;
+//                for (auto &historyItem : items) {
+//                    if (historyItem == currentItemSet) {
+//                        auto &itemSet = itemSetCollection.at(itemSetIndex);
+//                        itemSet.transitions[currentItemSet.incomingWord] = historyItem.itemsetIndex;
+//                        currentItemSetFound = true;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+////        std::cout << "Current item found: " << currentItemFound << std::endl;
+//        if (!currentItemSetFound) {
+//            addItemSetToHistory(currentItemSet);
+//            build(grammar, currentItemSet, currentItemSetIndex);
+//        }
+//    }
 }
 
 //bool LR0ItemSet::build(const Grammar &grammar, const SimpleGrammarRule &currentRule) {

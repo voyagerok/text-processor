@@ -130,11 +130,14 @@ void Grammar::readRules() {
             ntermFound->second.insert(ntermFound->second.end(), nterm_wordinfo.begin(), nterm_wordinfo.end());
         }
 
+        auto ruleInStorage = rules.find(rule.leftPart);
+        int n_of_rules_for_left = ruleInStorage == rules.end() ? 0 : ruleInStorage->second.size();
+
         for (int i = 0; i < rule.rightHandles.size(); ++i) {
             auto simpleRule = rule.rightHandles[i];
             for (int j = 0; j < simpleRule.rightHandle.size(); ++j) {
                 auto word = simpleRule.rightHandle[j];
-                WordInfo wordInfo {{word, i}, j};
+                WordInfo wordInfo {{rule.leftPart, n_of_rules_for_left}, j};
                 auto ntermFound = nonTerminals.find(word);
                 if (ntermFound == nonTerminals.end()) {
                     auto wordFound = tempSet.find(word);
@@ -149,11 +152,11 @@ void Grammar::readRules() {
             }
         }
 
-        auto it = rules.find(rule.leftPart);
-        if (it == rules.end()) {
+//        auto it = rules.find(rule.leftPart);
+        if (ruleInStorage == rules.end()) {
             rules[rule.leftPart] = rule.rightHandles;
         } else {
-            auto &rightHandles = it->second;
+            auto &rightHandles = ruleInStorage->second;
             rightHandles.insert(rightHandles.end(), rule.rightHandles.begin(), rule.rightHandles.end());
         }
     }
@@ -228,6 +231,8 @@ std::set<UnicodeString> Grammar::followSetForNonTerminal(const UnicodeString &wo
         return  followForWord->second;
     }
 
+    std::cout << "word: " << word << std::endl;
+
     std::set<UnicodeString> follow;
     auto info = nonTerminals[word];
     for (auto infoRecord : info) {
@@ -239,6 +244,8 @@ std::set<UnicodeString> Grammar::followSetForNonTerminal(const UnicodeString &wo
             auto firstSetForNextWord = firstSet[nextWord];
             follow.insert(firstSetForNextWord.begin(), firstSetForNextWord.end());
         } else if (simpleRule.rightHandle[infoRecord.position] != simpleRule.leftPart) {
+            std::cout << simpleRule << std::endl;
+            std::cout << "current word: " << simpleRule.rightHandle[infoRecord.position] << std::endl;
             auto followSetForLeftHandle = followSetForNonTerminal(simpleRule.leftPart);
             follow.insert(followSetForLeftHandle.begin(), followSetForLeftHandle.end());
         }

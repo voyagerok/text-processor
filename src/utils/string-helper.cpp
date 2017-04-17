@@ -17,6 +17,8 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
     }
     patternStr.append("]");
 
+//    return split_unistring(unistring, patternStr, result);
+
     UErrorCode status = U_ZERO_ERROR;
     RegexMatcher splitter {patternStr, 0, status};
     if (U_FAILURE(status)) {
@@ -41,6 +43,32 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
 
     return true;
 }
+
+//bool split_unistring(const UnicodeString &unistring, const UnicodeString &splitRegex, std::vector<UnicodeString> &result) {
+//    UErrorCode status = U_ZERO_ERROR;
+//    RegexMatcher splitter {splitRegex, 0, status};
+//    if (U_FAILURE(status)) {
+//        return false;
+//    }
+
+//    auto capacity = unistring.length();
+//    UnicodeString lines[capacity];
+//    auto n_of_lines = splitter.split(unistring, lines, capacity, status);
+//    if (U_FAILURE(status)) {
+//        return false;
+//    }
+
+////    result = std::vector<UnicodeString> {lines, lines + n_of_lines};
+////    result.assign(lines, lines + n_of_lines);
+//    for (int i = 0; i < n_of_lines; ++i) {
+////        std::cout << "line is: " << lines[i] << std::endl;
+//        if (!lines[i].isEmpty())
+//            if (!lines[i].isEmpty())
+//                result.push_back(lines[i]);
+//    }
+
+//    return true;
+//}
 
 }
 
