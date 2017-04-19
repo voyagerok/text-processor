@@ -15,6 +15,7 @@
 #include "grammar-parser.h"
 #include "grammar.h"
 #include "grammar-rule.h"
+#include "utils/logger.h"
 
 namespace tproc {
 
@@ -37,7 +38,7 @@ bool RuleIndex::operator!=(const RuleIndex &other) const {
 //        parser->beginParseFromPlainText(plainText);
 //        readRules();
 //    } catch (GrammarParserException &err) {
-//        std::cerr << err.what() << std::endl;
+//        Logger::getErrLogger() << err.what() << std::endl;
 //    }
 //}
 
@@ -47,7 +48,7 @@ bool RuleIndex::operator!=(const RuleIndex &other) const {
 //        parser->beginParseFromFile(filename);
 //        readRules();
 //    } catch (GrammarParserException &err) {
-//        std::cerr << err.what() << std::endl;
+//        Logger::getErrLogger() << err.what() << std::endl;
 //    }
 //}
 
@@ -65,7 +66,7 @@ bool Grammar::initFromFile(const char *filename) {
         buildFirstSet();
         buildFollowSet();
     } catch (GrammarParserException &err) {
-        std::cerr << err.what() << std::endl;
+        Logger::getErrLogger() << err.what() << std::endl;
         return false;
     }
 
@@ -85,7 +86,7 @@ bool Grammar::initFromPlainText(const UnicodeString &plainText) {
         buildFirstSet();
         buildFollowSet();
     } catch (GrammarParserException &err) {
-        std::cerr << err.what() << std::endl;
+        Logger::getErrLogger() << err.what() << std::endl;
         return false;
     }
 
@@ -120,7 +121,7 @@ void Grammar::readRules() {
     std::map<UnicodeString, std::vector<WordInfo>> tempSet;
     while(parser->getNextRule(rule)) {
 //        rules.insert(std::make_pair(std::move(rule.leftPart), std::move(rule.rightHandles)));
-//        std::cout << "get next rule: current rule is " << rule << std::endl;
+//        Logger::getLogger() << "get next rule: current rule is " << rule << std::endl;
 
         std::vector<WordInfo> nterm_wordinfo;
         auto found = tempSet.find(rule.leftPart);
@@ -172,17 +173,17 @@ void Grammar::readRules() {
         terminals.insert(std::move(terminal.first));
     }
 
-//    std::cout << "Terminals are:" << std::endl;
+//    Logger::getLogger() << "Terminals are:" << std::endl;
 //    for (auto &term : terminals) {
-//        std::cout << term << std::endl;
+//        Logger::getLogger() << term << std::endl;
 //    }
-    std::cout << "Non terminals are:" << std::endl;
+    Logger::getLogger() << "Non terminals are:" << std::endl;
     for (auto &nterm : nonTerminals) {
-        std::cout << nterm.first << std::endl;
+        Logger::getLogger() << nterm.first << std::endl;
         for (auto &wordInfo : nterm.second) {
-            std::cout << wordInfo.position << ", ";
+            Logger::getLogger() << wordInfo.position << ", ";
         }
-        std::cout << std::endl;
+        Logger::getLogger() << std::endl;
     }
 }
 
@@ -209,9 +210,9 @@ std::set<UnicodeString> Grammar::firstSetForNonTerminal(const UnicodeString &wor
     std::set<UnicodeString> firstSet;
     auto rulesForWord = getRulesForLeftHandle(word);
     for (auto &rule : rulesForWord) {
-//        std::cout << "First set: current rule: " << rule << " for nonterminal: " << word << std::endl;
+//        Logger::getLogger() << "First set: current rule: " << rule << " for nonterminal: " << word << std::endl;
         auto firstWord = rule.rightHandle[0];
-//        std::cout << "First word: " << firstWord << " for rule: " << rule << std::endl;
+//        Logger::getLogger() << "First word: " << firstWord << " for rule: " << rule << std::endl;
         if (firstWord == word) {
             continue;
         }
@@ -238,7 +239,7 @@ std::set<UnicodeString> Grammar::followSetForNonTerminal(const UnicodeString &wo
         return  followForWord->second;
     }
 
-    std::cout << "word: " << word << std::endl;
+    Logger::getLogger() << "word: " << word << std::endl;
 
     std::set<UnicodeString> follow;
     auto info = nonTerminals[word];
@@ -251,8 +252,8 @@ std::set<UnicodeString> Grammar::followSetForNonTerminal(const UnicodeString &wo
             auto firstSetForNextWord = firstSet[nextWord];
             follow.insert(firstSetForNextWord.begin(), firstSetForNextWord.end());
         } else if (simpleRule.rightHandle[infoRecord.position] != simpleRule.leftPart) {
-            std::cout << simpleRule << std::endl;
-            std::cout << "current word: " << simpleRule.rightHandle[infoRecord.position] << std::endl;
+            Logger::getLogger() << simpleRule << std::endl;
+            Logger::getLogger() << "current word: " << simpleRule.rightHandle[infoRecord.position] << std::endl;
             auto followSetForLeftHandle = followSetForNonTerminal(simpleRule.leftPart);
             follow.insert(followSetForLeftHandle.begin(), followSetForLeftHandle.end());
         }
@@ -326,18 +327,18 @@ bool Grammar::followWordsForNterminal(const UnicodeString &nterm, std::set<Unico
 
 void Grammar::printFirstSet() {
     for (auto &set : firstSet) {
-        std::cout << "First set for word: " << set.first << std::endl;
+        Logger::getLogger() << "First set for word: " << set.first << std::endl;
         for (auto &word : set.second) {
-            std::cout << "Word in first set: " << word << std::endl;
+            Logger::getLogger() << "Word in first set: " << word << std::endl;
         }
     }
 }
 
 void Grammar::printFollowSet() {
     for (auto &set : followSet) {
-        std::cout << "Follow set for word: " << set.first << std::endl;
+        Logger::getLogger() << "Follow set for word: " << set.first << std::endl;
         for (auto &word : set.second) {
-            std::cout << "Word in follow set: " << word << std::endl;
+            Logger::getLogger() << "Word in follow set: " << word << std::endl;
         }
     }
 }

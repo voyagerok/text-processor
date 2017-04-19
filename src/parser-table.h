@@ -31,6 +31,7 @@ public:
 
     virtual bool equals(const ParserActionPtr &other) const;
     virtual unsigned long hash() const;
+    virtual ~ParserAction() {}
 
     friend std::ostream &operator<<(std::ostream &os, const ParserAction &parserAction) { return parserAction.print(os); }
 protected:

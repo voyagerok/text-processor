@@ -3,8 +3,14 @@
 #include <algorithm>
 
 #include "parser.h"
+#include "utils/logger.h"
 
 namespace tproc {
+
+std::ostream &operator<<(std::ostream &os, const ShiftInfo &shift) {
+    os << "Shift info: target state: " << shift.targetState << ", word: " << shift.word;
+    return os;
+}
 
 bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeString> &result) {
     bool isAccepted = false;
@@ -12,21 +18,43 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeSt
     ActiveSet currentSet;
     currentSet.insert(std::make_shared<GSSStateNode>(0));
 
-    UnicodeString currentChain;
-    for (auto &token : sentence) {
-        std::cout << "checking current token: " << token.word << ", normal form: " << token.normalForm << std::endl;
-        currentSet = parseToken(token, currentSet, isAccepted);
-        if (isAccepted || currentSet.size() == 0) {
-            currentSet = {std::make_shared<GSSStateNode>(0)};
-            if (isAccepted) {
-                result.push_back(currentChain);
-                currentChain = "";
-                isAccepted = false;
+    auto sentenceBegin = sentence.begin();
+
+    while (sentenceBegin != sentence.end()) {
+        UnicodeString currentChain;
+        for (auto it = sentenceBegin; it != sentence.end(); ++it) {
+            currentSet = parseToken(*it, currentSet, isAccepted);
+            if (currentSet.size() > 0) {
+                currentChain.append(it->word + " ");
+                continue;
+            } else if (isAccepted || currentSet.size() == 0) {
+                if (isAccepted) {
+                    result.push_back(currentChain);
+                    isAccepted = false;
+                }
+                currentSet = {std::make_shared<GSSStateNode>(0)};
+                sentenceBegin++;
+                break;
             }
-        } else {
-            currentChain.append(token.word + " ");
         }
     }
+
+//    UnicodeString currentChain;
+//    for (auto &token : sentence) {
+//        Logger::getLogger() << "checking current token: " << token.word << ", normal form: " << token.normalForm << std::endl;
+//        currentSet = parseToken(token, currentSet, isAccepted);
+//        if (isAccepted || currentSet.size() == 0) {
+//            currentSet = {std::make_shared<GSSStateNode>(0)};
+//            if (isAccepted) {
+//                Logger::getLogger() << "Accepted, current chain: " <<  currentChain << std::endl;
+//                result.push_back(currentChain);
+//                currentChain = "";
+//                isAccepted = false;
+//            }
+//        } else {
+//            currentChain.append(token.word + " ");
+//        }
+//    }
 
 //    return  isAccepted;
     return true;
@@ -37,22 +65,22 @@ Parser::ActiveSet Parser::parseToken(const Token &token, ActiveSet &currentLevel
     ActiveSet nextLevelNodes;
     ReduceSet reduceSet;
     ShiftSet shiftSet;
-    std::cout << "parseToken: current active nodes:" << std::endl;
+    Logger::getLogger() << "parseToken: current active nodes:" << std::endl;
     for (auto &activeNode : activeNodes) {
-        std::cout << *activeNode << std::endl;
+        Logger::getLogger() << *activeNode << std::endl;
     }
     while (reduceSet.size() > 0 || activeNodes.size() > 0) {
         if (activeNodes.size() > 0) {
-            std::cout << "parseToken: active nodes not empty - perform actor" << std::endl;
+            Logger::getLogger() << "parseToken: active nodes not empty - perform actor" << std::endl;
             actor(token, activeNodes, reduceSet, shiftSet, accepted);
         }
         if (reduceSet.size() > 0) {
-            std::cout << "parseToken: reduce set not epmpty - perform reducer" << std::endl;
+            Logger::getLogger() << "parseToken: reduce set not epmpty - perform reducer" << std::endl;
             reducer(token, activeNodes, currentLevelSet, reduceSet);
         }
     }
 
-    std::cout << "parseToken: perform shifter" << std::endl;
+    Logger::getLogger() << "parseToken: perform shifter" << std::endl;
 
     shifter(nextLevelNodes, shiftSet);
 
@@ -63,12 +91,12 @@ void Parser::actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduce
     ActiveSet::iterator next_element = std::max_element(activeNodes.begin(), activeNodes.end());
     GSSNodePtr activeNode = *next_element;
     activeNodes.erase(next_element);
-    std::cout << "actor: next element is " << *activeNode << std::endl;
+    Logger::getLogger() << "actor: next element is " << *activeNode << std::endl;
 //    GSSNodePtr activeNode = *activeNodes.rbegin(); //activeNodes.front();
 //    activeNodes.erase(activeNodes.rbegin());
     auto activeStateNode = std::dynamic_pointer_cast<GSSStateNode>(activeNode);
     if (activeStateNode == nullptr) {
-        std::cerr << "Failed to cast ective node to state node" << std::endl;
+        Logger::getErrLogger() << "Failed to cast ective node to state node" << std::endl;
         return;
     }
 
@@ -83,7 +111,7 @@ void Parser::actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduce
 //    if (tags.size() > 0) {
 //        auto partOfSpeechTag = tags[0];
 //        if (parserTable.getActionsForStateAndWord(activeStateNode->state, partOfSpeechTag, tagActionSet)) {
-//            std::cout << "Found action for part of speech" << std::endl;
+//            Logger::getLogger() << "Found action for part of speech" << std::endl;
 //        }
 //    }
 //    actionSet.insert(rawActionSet.begin(), rawActionSet.end());
@@ -91,7 +119,7 @@ void Parser::actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduce
 //    parserTable.getActionsForStateAndWord()
 
 //    if (parserTable.getActionsForStateAndWord(activeStateNode->state, token.normalForm, rawActionSet)) {
-//        std::cout << "Found action for raw word" << std::endl;
+//        Logger::getLogger() << "Found action for raw word" << std::endl;
 ////        for (auto &parserAction : actionSet) {
 
 ////        }
@@ -100,7 +128,7 @@ void Parser::actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduce
 //        if (tags.size() > 0) {
 //            auto partOfSpeechTag = tags[0];
 //            if (parserTable.getActionsForStateAndWord(activeStateNode->state, partOfSpeechTag, actionSet)) {
-//                std::cout << "Found action for part of speech" << std::endl;
+//                Logger::getLogger() << "Found action for part of speech" << std::endl;
 //            }
 //        }
 //    }
@@ -171,30 +199,30 @@ void Parser::reducer(const Token &token, ActiveSet &activeSet, ActiveSet &curren
 //    auto reductionRule = grammar.getRuleForRuleIndex(reduceInfo.ruleIndex)
     SimpleGrammarRule reductionRule;
     if (!grammar.getRuleForRuleIndex(reduceInfo.ruleIndex, reductionRule)) {
-        std::cerr << "Failed to get reduction rule for index" << std::endl;
+        Logger::getErrLogger() << "Failed to get reduction rule for index" << std::endl;
         return;
     }
-    std::cout << "Reducer: found grammar rule: " << reductionRule << std::endl;
+    Logger::getLogger() << "Reducer: found grammar rule: " << reductionRule << std::endl;
 
     auto nterm = reductionRule.leftPart;
     auto startNode = reduceInfo.endNode;
     int reductionPathLength = 2 * reductionRule.rightHandle.size() - 1;
     auto pathEndNodes = findAllDestsForPath(startNode, reductionPathLength);
 
-    std::cout << "Reducer: reduction path end nodes:" << std::endl;
+    Logger::getLogger() << "Reducer: reduction path end nodes:" << std::endl;
     for (auto &endNode : pathEndNodes) {
-        std::cout << *endNode << std::endl;
+        Logger::getLogger() << *endNode << std::endl;
     }
 
     for (auto &destNode : pathEndNodes) {
         auto destStateNode = std::dynamic_pointer_cast<GSSStateNode>(destNode);
         if (destStateNode == nullptr) {
-            std::cerr << "Failed to cast destination node to state node" << std::endl;
+            Logger::getErrLogger() << "Failed to cast destination node to state node" << std::endl;
             return;
         }
         int targetState;
         if (!parserTable.getGotoStateForStateAndNterm(destStateNode->state, nterm, targetState)) {
-            std::cerr << "Failed to get target state for nterm: " << nterm << "and current state: " << destStateNode->state << std::endl;
+            Logger::getErrLogger() << "Failed to get target state for nterm: " << nterm << "and current state: " << destStateNode->state << std::endl;
             return;
         }
 
@@ -250,6 +278,8 @@ void Parser::reducer(const Token &token, ActiveSet &activeSet, ActiveSet &curren
 void Parser::shifter(ActiveSet &nextStateSet, ShiftSet &shiftSet) {
     std::set<std::shared_ptr<GSSStateNode>> stateNodes;
     for (auto &shiftAction : shiftSet) {
+        Logger::getLogger() << "Shifter: current shift:" << std::endl;
+        Logger::getLogger() << shiftAction << std::endl;
         int targetState = shiftAction.targetState;
         auto result = std::find_if(stateNodes.begin(), stateNodes.end(), [targetState](const std::shared_ptr<GSSStateNode> &node){
             return node->state == targetState;
@@ -281,20 +311,24 @@ std::map<UnicodeString, ParserTable::ParserActionSet> Parser::getActionSetForTok
         actionSet[token.normalForm] = rawActionSet;
     }
 
-    ParserTable::ParserActionSet tagActionSet;
-    auto &tags = token.tags;
-    if (tags.size() > 0) {
-        auto partOfSpeechTag = tags[0];
-        if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
-            std::cout << "Found action for part of speech" << std::endl;
-//            actionSet.insert(tagActionSet.begin(), tagActionSet.end());
-            actionSet[partOfSpeechTag] = tagActionSet;
+    if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet tagActionSet;
+        auto &tags = token.tags;
+        if (tags.size() > 0) {
+            auto partOfSpeechTag = tags[0];
+            if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
+                Logger::getLogger() << "Found action for part of speech" << std::endl;
+    //            actionSet.insert(tagActionSet.begin(), tagActionSet.end());
+                actionSet[partOfSpeechTag] = tagActionSet;
+            }
         }
     }
 
-    ParserTable::ParserActionSet endOfInputActions;
-    if (parserTable.getActionsForStateAndWord(state, "$", endOfInputActions)) {
-        actionSet["$"] = endOfInputActions;
+    if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet endOfInputActions;
+        if (parserTable.getActionsForStateAndWord(state, "$", endOfInputActions)) {
+            actionSet["$"] = endOfInputActions;
+        }
     }
 
     return actionSet;
@@ -316,7 +350,7 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
         if (tags.size() > 0) {
             auto partOfSpeechTag = tags[0];
             if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
-                std::cout << "Found action for part of speech" << std::endl;
+                Logger::getLogger() << "Found action for part of speech" << std::endl;
                 actionSet.insert(tagActionSet.begin(), tagActionSet.end());
     //            actionSet[partOfSpeechTag] = tagActionSet;
             }

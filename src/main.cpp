@@ -30,22 +30,44 @@
 #include "morph-analyzer.h"
 #include "tokenizer.h"
 #include "parser.h"
+#include "utils/logger.h"
+
+/*
+ * Грамемы:
+ * NOUN
+ * ADJF - прилагательное полное
+ * ADJS - прилагательное краткое
+ * COMP - сравнительная форма
+ * VERB - глагол (лич форма)
+ * INFN - глагол (инфинитив)
+ * NUMR - числительное
+ * GRND - деепричастие
+ * PRTS - причастие краткое
+ * PRTF - причастие полное
+ * ADVB - наречие
+ * NPRO - местоимение (сущ)
+ * PREP - предлог
+ * CONJ - союз
+ * PRCL - частица
+ * INTJ - междометие
+ * */
+
 
 int main(void) {
     Py_Initialize();
     initmorph();
 
-    icu::UnicodeString ustring = "S = COLOR noun\nS = \"красный\" noun\nCOLOR = \"красный\"\nCOLOR = \"черный\"";
+    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
     tproc::Grammar grammar;
     tproc::LR0ItemSetCollection itemSet;
     if (grammar.initFromPlainText(ustring)) {
         itemSet.build(grammar);
 //        auto items = itemSet.getItemSetCollection();
-//        std::cout << "Final itemset is:" << std::endl;
+//        Logger::getLogger() << "Final itemset is:" << std::endl;
 //        for (auto &item : items) {
-//            std::cout << "Incoming word is " << item.incomingWord << std::endl;
-//            std::cout << "State number is:" << item.itemsetIndex << std::endl;
-//            std::cout << item << "\n\n";
+//            Logger::getLogger() << "Incoming word is " << item.incomingWord << std::endl;
+//            Logger::getLogger() << "State number is:" << item.itemsetIndex << std::endl;
+//            Logger::getLogger() << item << "\n\n";
 //        }
 
 //        grammar.printFirstSet();
@@ -56,7 +78,8 @@ int main(void) {
         table.printActionTable();
         table.printGotoTable();
 
-        const UnicodeString inputText = "Выехал красный внедорожник на трассу, а ему на встречу несется черный седан.";
+        const UnicodeString inputText = "Тридцатого июня был мой первый рабочий день. В тот же день мне исполнлось тридцать лет.";
+//        const UnicodeString inputText = "черный седан.";
         tproc::Parser parser(grammar, table);
         tproc::Tokenizer tokenizer(inputText);
         auto sentences = tokenizer.getSentences();
@@ -76,21 +99,22 @@ int main(void) {
 //    std::vector<AnalysisResult> results;
 //    analyzeTokens({"Николай", "медведь", "Камни", "Река"}, results);
 //    for (auto &result : results) {
-//        std::cout << "Tags for " << result.normalForm << std::endl;
+//        Logger::getLogger() << "Tags for " << result.normalForm << std::endl;
 //        for (auto &tag : result.tags) {
-//            std::cout << tag << std::endl;
+//            Logger::getLogger() << tag << std::endl;
 //        }
-////        std::cout << result.tag.partOfSpeech << std::endl;
-////        std::cout << result.tag.number << std::endl;
-////        std::cout << result.tag.animacy << std::endl;
+////        Logger::getLogger() << result.tag.partOfSpeech << std::endl;
+////        Logger::getLogger() << result.tag.number << std::endl;
+////        Logger::getLogger() << result.tag.animacy << std::endl;
 //    }
+//    const UnicodeString inputText = "Тридцатого июня был мой первый рабочий день.";
 
 //    const UnicodeString inputText = "Красный внедорожник выехал на трассу.";
 //    tproc::Tokenizer tokenizer(inputText);
 //    auto sentences = tokenizer.getSentences();
 //    for (auto &sentence : sentences) {
 //        for (auto &token : sentence) {
-//            std::cout << token << std::endl;
+//            Logger::getLogger() << token << std::endl;
 //        }
 //    }
 

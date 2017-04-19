@@ -6,6 +6,7 @@
 #include "utils/string-helper.h"
 #include "morph-analyzer.h"
 #include "utils/converter.h"
+#include "utils/logger.h"
 
 namespace tproc {
 
@@ -59,20 +60,20 @@ std::ostream &operator<<(std::ostream &os, const Token &token) {
 
 Tokenizer::Tokenizer(const UnicodeString &plainText) {
     std::vector<UnicodeString> plainSentences;
-    split_unistring(plainText, {"\\?+","\\.+","\\!+"}, plainSentences);
+    split_unistring(plainText, {"\\?","\\.","\\!"}, plainSentences);
     for (auto &plainSentence : plainSentences) {
-//        std::cout << plainSentence << std::endl;
+        Logger::getLogger() << plainSentence << std::endl;
         std::vector<UnicodeString> plainTokens;
-        split_unistring(plainSentence, {"\\s+","\\;+","\\:+","\\,+"}, plainTokens);
+        split_unistring(plainSentence, {"\\s","\\;","\\:","\\,"}, plainTokens);
         Sentence currentSentence;
         for (auto &plainToken : plainTokens) {
-//            std::cout << plainToken << std::endl;
+//            Logger::getLogger() << plainToken << std::endl;
             std::vector<AnalysisResult> analysisResults;
             analyzeTokens({stdStringFromUnistr(plainToken)}, analysisResults);
             if (analysisResults.size() > 0) {
                 AnalysisResult &firstResult = analysisResults[0];
                 Token currentToken;
-                currentToken.normalForm = UnicodeString(firstResult.normalForm.c_str());
+                currentToken.normalForm = UnicodeString(firstResult.normalForm.c_str()).findAndReplace("ё","е");
                 for (auto &tag : firstResult.tags) {
                     currentToken.tags.push_back(UnicodeString(tag.c_str()).toLower());
                 }
@@ -80,6 +81,7 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
                 currentSentence.push_back(std::move(currentToken));
             }
         }
+        currentSentence.push_back({"$","$",{"none"}});
 
         this->sentences.push_back(std::move(currentSentence));
     }

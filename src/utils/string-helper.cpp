@@ -4,6 +4,7 @@
 #include <unicode/ustream.h>
 
 #include "string-helper.h"
+#include "utils/logger.h"
 
 namespace tproc {
 
@@ -11,11 +12,12 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
     UnicodeString patternStr = "[";
     for (int i = 0; i < splitSeqs.size(); ++i) {
         patternStr.append(splitSeqs[i]);
-        if (i < splitSeqs.size() - 1) {
-            patternStr.append(",");
-        }
+//        if (i < splitSeqs.size() - 1) {
+//            patternStr.append(",");
+//        }
     }
     patternStr.append("]");
+    Logger::getLogger() << "spiltter: pattern is " << patternStr << std::endl;
 
 //    return split_unistring(unistring, patternStr, result);
 
@@ -35,7 +37,7 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
 //    result = std::vector<UnicodeString> {lines, lines + n_of_lines};
 //    result.assign(lines, lines + n_of_lines);
     for (int i = 0; i < n_of_lines; ++i) {
-//        std::cout << "line is: " << lines[i] << std::endl;
+//        Logger::getLogger() << "line is: " << lines[i] << std::endl;
         if (!lines[i].isEmpty())
             if (!lines[i].isEmpty())
                 result.push_back(lines[i]);
@@ -61,7 +63,7 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
 ////    result = std::vector<UnicodeString> {lines, lines + n_of_lines};
 ////    result.assign(lines, lines + n_of_lines);
 //    for (int i = 0; i < n_of_lines; ++i) {
-////        std::cout << "line is: " << lines[i] << std::endl;
+////        Logger::getLogger() << "line is: " << lines[i] << std::endl;
 //        if (!lines[i].isEmpty())
 //            if (!lines[i].isEmpty())
 //                result.push_back(lines[i]);

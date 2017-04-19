@@ -17,6 +17,7 @@ struct ShiftInfo {
     GSSNodePtr node;
     int targetState;
     UnicodeString word;
+    friend std::ostream &operator<<(std::ostream &os, const ShiftInfo &shift);
 };
 
 struct ReduceInfo {
@@ -25,6 +26,7 @@ struct ReduceInfo {
     GSSNodePtr startNode;
     GSSNodePtr endNode;
     RuleIndex ruleIndex;
+    friend std::ostream &operator<<(std::ostream &os, const ReduceInfo &reduce);
 };
 
 class Parser {

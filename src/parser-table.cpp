@@ -4,6 +4,7 @@
 #include "parser-table.h"
 #include "grammar.h"
 #include "lr0-items.h"
+#include "utils/logger.h"
 
 namespace tproc {
 
@@ -129,7 +130,7 @@ ParserTable::~ParserTable() {
 bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
     LR0ItemSetCollection itemsetCollection;
     if (!itemsetCollection.build(grammar)) {
-        std::cerr << "Failed to build LR0 items" << std::endl;
+        Logger::getErrLogger() << "Failed to build LR0 items" << std::endl;
         return false;
     }
 //    if (actionTable != nullptr) {
@@ -160,7 +161,7 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
                         }
                     }
                 } else {
-                    std::cerr << "Failed to get follow words" << std::endl;
+                    Logger::getErrLogger() << "Failed to get follow words" << std::endl;
                     return false;
                 }
             } else {
@@ -207,12 +208,12 @@ void ParserTable::printActionTable() {
     }
 
     for (int i = 0; i < actionTable->size(); ++i) {
-        std::cout << "Actions for state " << i << std::endl;
+        Logger::getLogger() << "Actions for state " << i << std::endl;
         auto actions = actionTable->at(i);
         for (auto &action : actions) {
-            std::cout << "Word: " << action.first << std::endl;
+            Logger::getLogger() << "Word: " << action.first << std::endl;
             for (auto &parserAction : action.second) {
-                std::cout << "Action: " << *parserAction << std::endl;
+                Logger::getLogger() << "Action: " << *parserAction << std::endl;
             }
         }
     }
@@ -224,11 +225,11 @@ void ParserTable::printGotoTable() {
     }
 
     for (int i = 0; i < gotoTable->size(); ++i) {
-        std::cout << "Goto for state: " << i << std::endl;
+        Logger::getLogger() << "Goto for state: " << i << std::endl;
         auto gotos = gotoTable->at(i);
         for (auto &gotoJump : gotos) {
-            std::cout << "Word: " << gotoJump.first << std::endl;
-            std::cout << "State: " << gotoJump.second << std::endl;
+            Logger::getLogger() << "Word: " << gotoJump.first << std::endl;
+            Logger::getLogger() << "State: " << gotoJump.second << std::endl;
         }
     }
 }

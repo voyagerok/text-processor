@@ -123,14 +123,15 @@ bool GrammarParser::getNextRule(ComplexGrammarRule &rule) {
 
         auto groupsCount = m_RegularRuleMatcher->groupCount();
         if (REGULAR_PAT_LEFT_GROUP_NUM >= groupsCount || REGULAR_PAT_LEFT_GROUP_NUM >= groupsCount) {
-            Logger::printStr("Invalid number of groups");
+            Logger::getErrLogger() << "Invalid number of groups";
             return false;
         }
 
         UErrorCode status = U_ZERO_ERROR;
         UnicodeString leftPart = m_RegularRuleMatcher->group(REGULAR_PAT_LEFT_GROUP_NUM, status);
         if (U_FAILURE(status)) {
-            Logger::printStr("Failed to get left part of rule");
+//            LogStream::printStr("Failed to get left part of rule");
+            Logger::getErrLogger() << "Failed to get left part of rule";
             return false;
         }
 //        simpleRule.leftPart = leftPart;
@@ -138,7 +139,8 @@ bool GrammarParser::getNextRule(ComplexGrammarRule &rule) {
 
         UnicodeString rightPart = m_RegularRuleMatcher->group(REGULAR_PAT_RIGHT_GROUP_NUM, status);
         if (U_FAILURE(status)) {
-            Logger::printStr("Failed to get right part of rule");
+//            Logger::printStr("Failed to get right part of rule");
+            Logger::getErrLogger() << "Failed to get right part of rule";
             return false;
         }
 
@@ -148,15 +150,15 @@ bool GrammarParser::getNextRule(ComplexGrammarRule &rule) {
 //            UnicodeString groupVarRes = m_RightHandleMatcher->group(1, status);
 //            UnicodeString groupLitRes = m_RightHandleMatcher->group(2, status);
 //            if (!groupVarRes.isEmpty()) {
-////                std::cout << "Found variable in grammar: " << groupVarRes << std::endl;
+////                Logger::getLogger() << "Found variable in grammar: " << groupVarRes << std::endl;
 //                std::vector<UnicodeString> words;
 //                split_unistring(groupVarRes, {"\\s"}, words);
 //                SimpleGrammarRule currentRule {leftPart, words, true};
-//                std::cout << "Current parsed simple rule is " << currentRule << std::endl;
+//                Logger::getLogger() << "Current parsed simple rule is " << currentRule << std::endl;
 //                rulesForLeftPart.push_back(SimpleGrammarRule{leftPart, words, true});
 //            }
 //            else if (!groupLitRes.isEmpty()) {
-////                std::cout << "Found literal in grammar: " << groupLitRes << std::endl;
+////                Logger::getLogger() << "Found literal in grammar: " << groupLitRes << std::endl;
 //                std::vector<UnicodeString> words;
 //                split_unistring(groupLitRes, {"\\s"}, words);
 //                rulesForLeftPart.push_back(SimpleGrammarRule {leftPart, words, true});
@@ -167,11 +169,12 @@ bool GrammarParser::getNextRule(ComplexGrammarRule &rule) {
         split_unistring(rightPart, {"\\|"}, rightPartRules);
         for (auto &rawRule : rightPartRules) {
             std::vector<UnicodeString> ruleWords;
-            split_unistring(rawRule, {"\\s+,\\',\\\""}, ruleWords);
+            split_unistring(rawRule, {"\\s","\\'","\\\""}, ruleWords);
 //            rulesForLeftPart.push_back(SimpleGrammarRule {leftPart, })
             if (ruleWords.size() > 0) {
                 SimpleGrammarRule rule {leftPart, ruleWords, true};
-                std::cout << "Current parsed rule is " << rule << std::endl;
+//                Logger::getLogger() << "Current parsed rule is " << rule << std::endl;
+                Logger::getLogger() << "Current parsed rule is " << rule << std::endl;
                 rulesForLeftPart.push_back(std::move(rule));
             }
         }

@@ -18,6 +18,7 @@ struct GSSNode {
 //    virtual std::set<GSSNodePtr> getPred() const = 0;
     virtual void addSucc(const GSSNodePtr &node) = 0;
     virtual std::ostream &print(std::ostream &os) const = 0;
+    virtual ~GSSNode() {}
 //    virtual void addPred(const GSSNodePtr &node) = 0;
 };
 
