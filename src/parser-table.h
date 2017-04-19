@@ -82,8 +82,12 @@ public:
     using ParserActionSet = std::unordered_set<std::shared_ptr<ParserAction>, ParserActionHash, ParserActionEquality>;
     using ActionTable = std::vector<std::map<UnicodeString, ParserActionSet>>;
     using GotoTable = std::vector<std::map<UnicodeString, int>>;
+    using ActionTablePtr = std::shared_ptr<ActionTable>;
+    using GotoTablePtr = std::shared_ptr<GotoTable>;
 
     ~ParserTable();
+//    ParserTable(const ParserTable&) = delete;
+//    ParserTable &operator=(const ParserTable&) = delete;
 
     bool getActionsForStateAndWord(int state, const UnicodeString &word, ParserActionSet &actionSet) const;
     bool getGotoStateForStateAndNterm(int state, const UnicodeString &nterm, int &targetState) const;
@@ -97,8 +101,8 @@ private:
 //    std::set<UnicodeString> followSetForWord(const Grammar &grammar, const UnicodeString &word);
 //    std::set<UnicodeString> firstSetForWord(const Grammar &grammar, const UnicodeString &word);
 
-    ActionTable *actionTable {nullptr};
-    GotoTable *gotoTable {nullptr};
+    ActionTablePtr actionTable {nullptr};
+    GotoTablePtr gotoTable {nullptr};
 };
 
 }

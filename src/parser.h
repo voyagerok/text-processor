@@ -34,7 +34,7 @@ public:
     using ShiftSet = std::vector<ShiftInfo>;
 
     Parser(const Grammar &grammar, const ParserTable &parserTable) : grammar {grammar}, parserTable {parserTable} {}
-    bool tryParse(const Tokenizer::Sentence &sentence, const Tokenizer::Sentence::iterator begin, UnicodeString &result);
+    bool tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeString> &result);
 private:
     ActiveSet parseToken(const Token &token, ActiveSet &currentLevelNodes, bool &accepted);
     void actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduceSet, ShiftSet &shiftSet, bool &isAccepted);

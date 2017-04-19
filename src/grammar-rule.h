@@ -18,6 +18,11 @@
 namespace tproc {
 
 struct SimpleGrammarRule {
+    SimpleGrammarRule() {}
+    SimpleGrammarRule(const UnicodeString &leftPart,
+                      const std::vector<UnicodeString> &rightHandle,
+                      bool isValid = true) : leftPart {leftPart}, rightHandle {rightHandle}, isValid {isValid} {}
+
     UnicodeString leftPart;
     std::vector<UnicodeString> rightHandle;
     bool isValid;

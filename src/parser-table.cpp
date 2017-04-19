@@ -117,13 +117,13 @@ unsigned long ReduceAction::hash() const {
 }
 
 ParserTable::~ParserTable() {
-    if (actionTable != nullptr) {
-        delete actionTable;
-    }
+//    if (actionTable != nullptr) {
+//        delete actionTable;
+//    }
 
-    if (gotoTable != nullptr) {
-        delete  gotoTable;
-    }
+//    if (gotoTable != nullptr) {
+//        delete  gotoTable;
+//    }
 }
 
 bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
@@ -132,15 +132,17 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
         std::cerr << "Failed to build LR0 items" << std::endl;
         return false;
     }
-    if (actionTable != nullptr) {
-        delete actionTable;
-    }
-    actionTable = new ActionTable(itemsetCollection.size());
+//    if (actionTable != nullptr) {
+//        delete actionTable;
+//    }
+//    actionTable = new ActionTable(itemsetCollection.size());
 
-    if (gotoTable != nullptr) {
-        delete gotoTable;
-    }
-    gotoTable = new GotoTable(itemsetCollection.size());
+//    if (gotoTable != nullptr) {
+//        delete gotoTable;
+//    }
+//    gotoTable = new GotoTable(itemsetCollection.size());
+    actionTable = std::make_shared<ActionTable>(itemsetCollection.size());
+    gotoTable = std::make_shared<GotoTable>(itemsetCollection.size());
 
     auto itemSets = itemsetCollection.getItemSetCollection();
     for (int i = 0; i < itemSets.size(); ++i) {

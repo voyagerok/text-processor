@@ -55,5 +55,6 @@ add_definitions(${ICU_CFLAGS_OTHER} ${PYTHON_CFLAGS_OTHER})
 
 add_executable(${PROJECT_NAME} ${SRC})
 add_dependencies(${PROJECT_NAME} RunGenerator)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 
 target_link_libraries(${PROJECT_NAME} ${ICU_LIBRARIES} ${PYTHON_LIBRARIES})

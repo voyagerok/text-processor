@@ -21,7 +21,7 @@
 
 static char const* regular_rule_pattern = "(?<left>[A-Za-z]+|[А-Яа-я]+)\\s=(?<right>(?:\\s*(?:[A-Za-z]+|\\\"*[А-Яа-я]+\\\"*)\\s*\\|*)+)";
 //static char const* start_rule_pattern = "S\\s=(?<right>(?:\\s(?:[A-Za-z]+|[А-Яа-я]+|\\\"[А-Яа-я]+\\\")\\s*\\|*)+)";
-static char const* right_handle_pattern = "(?<var>(?:\\s*\\\"*[A-Za-z]+\\\"*\\s*|\\s*\\\"*[А-Яа-я]+\\\"*\\s*)+)";
+static char const* right_handle_pattern = "(?<var>(?:[A-Za-z]+|[А-Яа-я]+)+)";
 
 #define REGULAR_PAT_LEFT_GROUP_NUM 1
 #define REGULAR_PAT_RIGHT_GROUP_NUM 2
@@ -143,23 +143,36 @@ bool GrammarParser::getNextRule(ComplexGrammarRule &rule) {
         }
 
         // Parsing right part
-        m_RightHandleMatcher->reset(rightPart);
-        while (m_RightHandleMatcher->find()) {
-            UnicodeString groupVarRes = m_RightHandleMatcher->group(1, status);
-            UnicodeString groupLitRes = m_RightHandleMatcher->group(2, status);
-            if (!groupVarRes.isEmpty()) {
-//                std::cout << "Found variable in grammar: " << groupVarRes << std::endl;
-                std::vector<UnicodeString> words;
-                split_unistring(groupVarRes, {"\\s"}, words);
-                SimpleGrammarRule currentRule {leftPart, words, true};
-                std::cout << "Current parsed simple rule is " << currentRule << std::endl;
-                rulesForLeftPart.push_back(SimpleGrammarRule{leftPart, words, true});
-            }
-            else if (!groupLitRes.isEmpty()) {
-//                std::cout << "Found literal in grammar: " << groupLitRes << std::endl;
-                std::vector<UnicodeString> words;
-                split_unistring(groupLitRes, {"\\s"}, words);
-                rulesForLeftPart.push_back(SimpleGrammarRule {leftPart, words, true});
+//        m_RightHandleMatcher->reset(rightPart);
+//        while (m_RightHandleMatcher->find()) {
+//            UnicodeString groupVarRes = m_RightHandleMatcher->group(1, status);
+//            UnicodeString groupLitRes = m_RightHandleMatcher->group(2, status);
+//            if (!groupVarRes.isEmpty()) {
+////                std::cout << "Found variable in grammar: " << groupVarRes << std::endl;
+//                std::vector<UnicodeString> words;
+//                split_unistring(groupVarRes, {"\\s"}, words);
+//                SimpleGrammarRule currentRule {leftPart, words, true};
+//                std::cout << "Current parsed simple rule is " << currentRule << std::endl;
+//                rulesForLeftPart.push_back(SimpleGrammarRule{leftPart, words, true});
+//            }
+//            else if (!groupLitRes.isEmpty()) {
+////                std::cout << "Found literal in grammar: " << groupLitRes << std::endl;
+//                std::vector<UnicodeString> words;
+//                split_unistring(groupLitRes, {"\\s"}, words);
+//                rulesForLeftPart.push_back(SimpleGrammarRule {leftPart, words, true});
+//            }
+//        }
+
+        std::vector<UnicodeString> rightPartRules;
+        split_unistring(rightPart, {"\\|"}, rightPartRules);
+        for (auto &rawRule : rightPartRules) {
+            std::vector<UnicodeString> ruleWords;
+            split_unistring(rawRule, {"\\s+,\\',\\\""}, ruleWords);
+//            rulesForLeftPart.push_back(SimpleGrammarRule {leftPart, })
+            if (ruleWords.size() > 0) {
+                SimpleGrammarRule rule {leftPart, ruleWords, true};
+                std::cout << "Current parsed rule is " << rule << std::endl;
+                rulesForLeftPart.push_back(std::move(rule));
             }
         }
     }

@@ -29,23 +29,24 @@
 #include "parser-table.h"
 #include "morph-analyzer.h"
 #include "tokenizer.h"
+#include "parser.h"
 
 int main(void) {
     Py_Initialize();
     initmorph();
 
-    icu::UnicodeString ustring = "S = a b C\nS = a B C\nB = b\nC = d";
+    icu::UnicodeString ustring = "S = COLOR noun\nS = \"красный\" noun\nCOLOR = \"красный\"\nCOLOR = \"черный\"";
     tproc::Grammar grammar;
     tproc::LR0ItemSetCollection itemSet;
     if (grammar.initFromPlainText(ustring)) {
         itemSet.build(grammar);
-        auto items = itemSet.getItemSetCollection();
-        std::cout << "Final itemset is:" << std::endl;
-        for (auto &item : items) {
-            std::cout << "Incoming word is " << item.incomingWord << std::endl;
-            std::cout << "State number is:" << item.itemsetIndex << std::endl;
-            std::cout << item << "\n\n";
-        }
+//        auto items = itemSet.getItemSetCollection();
+//        std::cout << "Final itemset is:" << std::endl;
+//        for (auto &item : items) {
+//            std::cout << "Incoming word is " << item.incomingWord << std::endl;
+//            std::cout << "State number is:" << item.itemsetIndex << std::endl;
+//            std::cout << item << "\n\n";
+//        }
 
 //        grammar.printFirstSet();
 //        grammar.printFollowSet();
@@ -54,6 +55,20 @@ int main(void) {
         table.buildTableFromGrammar(grammar);
         table.printActionTable();
         table.printGotoTable();
+
+        const UnicodeString inputText = "Выехал красный внедорожник на трассу, а ему на встречу несется черный седан.";
+        tproc::Parser parser(grammar, table);
+        tproc::Tokenizer tokenizer(inputText);
+        auto sentences = tokenizer.getSentences();
+        for (auto &sentence : sentences) {
+            std::vector<UnicodeString> resultChains;
+            parser.tryParse(sentence, resultChains);
+            for (auto &chain : resultChains) {
+                std::cout << "Parser result:" << std::endl;
+                std::cout << chain << std::endl;
+            }
+        }
+//        parser.tryParse()
     }
 
 ////    tproc::analyzeTokens({""});
@@ -70,7 +85,7 @@ int main(void) {
 ////        std::cout << result.tag.animacy << std::endl;
 //    }
 
-//    const UnicodeString inputText = "Сбрось оковы угнатателей! Присоединяйся к революции пролетариата! А ты еще не вступил в добровольцы??? Ну так вступай.";
+//    const UnicodeString inputText = "Красный внедорожник выехал на трассу.";
 //    tproc::Tokenizer tokenizer(inputText);
 //    auto sentences = tokenizer.getSentences();
 //    for (auto &sentence : sentences) {

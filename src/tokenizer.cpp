@@ -74,7 +74,7 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
                 Token currentToken;
                 currentToken.normalForm = UnicodeString(firstResult.normalForm.c_str());
                 for (auto &tag : firstResult.tags) {
-                    currentToken.tags.push_back(UnicodeString(tag.c_str()));
+                    currentToken.tags.push_back(UnicodeString(tag.c_str()).toLower());
                 }
                 currentToken.word = plainToken;
                 currentSentence.push_back(std::move(currentToken));

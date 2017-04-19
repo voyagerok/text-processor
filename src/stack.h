@@ -17,8 +17,11 @@ struct GSSNode {
     virtual std::set<GSSNodePtr> getSucc() const = 0;
 //    virtual std::set<GSSNodePtr> getPred() const = 0;
     virtual void addSucc(const GSSNodePtr &node) = 0;
+    virtual std::ostream &print(std::ostream &os) const = 0;
 //    virtual void addPred(const GSSNodePtr &node) = 0;
 };
+
+std::ostream &operator<<(std::ostream &os, const GSSNode &node);
 
 struct GSSNodePrivate {
     std::set<GSSNodePtr> succ;
@@ -31,6 +34,7 @@ struct GSSSymbolNode : public GSSNode, private GSSNodePrivate {
     std::set<GSSNodePtr> getSucc() const override;
 //    std::set<GSSNodePtr> getPred() const override;
     void addSucc(const GSSNodePtr &node) override { this->succ.insert(node); }
+    std::ostream &print(std::ostream &os) const override;
 //    void addPred(const GSSNodePtr &node) override { this->pred.insert(node); }
 };
 
@@ -40,6 +44,7 @@ struct GSSStateNode : public GSSNode, private GSSNodePrivate {
     std::set<GSSNodePtr> getSucc() const override;
 //    std::set<GSSNodePtr> getPred() const override;
     void addSucc(const GSSNodePtr &node) override { this->succ.insert(node); }
+    std::ostream &print(std::ostream &os) const override;
 //    void addPred(const GSSNodePtr &node) override { this->pred.insert(node); }
 };
 

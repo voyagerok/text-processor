@@ -1,3 +1,5 @@
+#include <unicode/ustream.h>
+
 #include "stack.h"
 
 namespace tproc {
@@ -17,6 +19,20 @@ std::set<GSSNodePtr> GSSSymbolNode::getSucc() const {
 //std::set<GSSNodePtr> GSSSymbolNode::getPred() const {
 //    return this->pred;
 //}
+
+std::ostream &GSSSymbolNode::print(std::ostream &os) const {
+    os << "Symbol node: symbol is " << word;
+    return os;
+}
+
+std::ostream &GSSStateNode::print(std::ostream &os) const {
+    os << "State node: state is " << state;
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const GSSNode &node) {
+    return node.print(os);
+}
 
 std::vector<GSSNodePtr> findAllDestsForPath(const GSSNodePtr &startNode, int pathLength) {
     if (pathLength == 0) {

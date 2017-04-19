@@ -53,7 +53,9 @@ bool RuleIndex::operator!=(const RuleIndex &other) const {
 
 bool Grammar::initFromFile(const char *filename) {
     try {
-        parser = new GrammarParser();
+        parser = std::make_shared<GrammarParser>();
+//        parser = new GrammarParser();
+//        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
         parser->beginParseFromFile(filename);
         readRules();
         if (!validateRules()) {
@@ -72,7 +74,8 @@ bool Grammar::initFromFile(const char *filename) {
 
 bool Grammar::initFromPlainText(const UnicodeString &plainText) {
     try {
-        parser = new GrammarParser();
+        parser = std::make_shared<GrammarParser>();
+//        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
         parser->beginParseFromPlainText(plainText);
         readRules();
         if (!validateRules()) {
@@ -90,7 +93,11 @@ bool Grammar::initFromPlainText(const UnicodeString &plainText) {
 }
 
 void Grammar::addExplicitRule() {
-    startRule = new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true};
+//    startRule = std::unique_ptr<SimpleGrammarRule>{new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true}};
+//    startRule = new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true};
+//    startRule = create_unique<SimpleGrammarRule>(EXPLICIT_START_SYMBOL, {START_SYMBOL}, true);
+//    startRule = std::move(std::unique_ptr<SimpleGrammarRule>(new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true}));
+    startRule = std::make_shared<SimpleGrammarRule>(EXPLICIT_START_SYMBOL, std::vector<UnicodeString>{START_SYMBOL});
     rules[EXPLICIT_START_SYMBOL] = {*startRule};
     nonTerminals[EXPLICIT_START_SYMBOL] = {};
     WordInfo startSymbolInfo {{EXPLICIT_START_SYMBOL, 0}, 0};
@@ -98,10 +105,10 @@ void Grammar::addExplicitRule() {
 }
 
 Grammar::~Grammar() {
-    delete parser;
-    if (startRule) {
-        delete startRule;
-    }
+//    delete parser;
+//    if (startRule) {
+//        delete startRule;
+//    }
 }
 
 void Grammar::readRules() {

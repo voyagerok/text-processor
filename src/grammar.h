@@ -12,12 +12,16 @@
 #include <map>
 #include <unicode/unistr.h>
 #include <set>
+#include <memory>
+
+#include "grammar-parser.h"
+#include "grammar-rule.h"
 
 namespace tproc {
 
 //class UnicodeString;
-class GrammarParser;
-struct SimpleGrammarRule;
+//class GrammarParser;
+//struct SimpleGrammarRule;
 
 struct RuleIndex {
     UnicodeString leftHandle;
@@ -40,6 +44,8 @@ public:
     using iter = std::map<UnicodeString, std::vector<SimpleGrammarRule>>::iterator;
     using const_iter = std::map<UnicodeString, std::vector<SimpleGrammarRule>>::const_iterator;
 
+//    Grammar(const Grammar&) = delete;
+//    Grammar &operator=(const Grammar&) = delete;
     ~Grammar();
     bool initFromFile(const char *filename);
     bool initFromPlainText(const UnicodeString &plainText);
@@ -69,9 +75,12 @@ private:
     std::set<UnicodeString> firstSetForNonTerminal(const UnicodeString &word);
     std::set<UnicodeString> followSetForNonTerminal(const UnicodeString &word);
 
-    SimpleGrammarRule *startRule = nullptr;
+    using SimpleGrammarRulePtr = std::shared_ptr<SimpleGrammarRule>;
+    using GrammarParserPtr = std::shared_ptr<GrammarParser>;
+
+    SimpleGrammarRulePtr startRule {nullptr};
     RulesContainer rules;
-    GrammarParser *parser {nullptr};
+    GrammarParserPtr parser {nullptr};
 
     std::map<UnicodeString, std::set<UnicodeString>> firstSet;
     std::map<UnicodeString, std::set<UnicodeString>> followSet;
