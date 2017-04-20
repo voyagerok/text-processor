@@ -22,6 +22,8 @@
 #include <unicode/ustream.h>
 #include <unicode/schriter.h>
 #include <iostream>
+#include <boost/program_options.hpp>
+#include <fstream>
 
 #include "grammar-parser.h"
 #include "grammar.h"
@@ -52,15 +54,84 @@
  * INTJ - междометие
  * */
 
+namespace po = boost::program_options;
 
-int main(void) {
+struct Arguements {
+    std::string grammarFilename;
+    std::string inputTextFilename;
+};
+
+static bool processArgs(int argc, char *argv[], char **filename) {
+    if (argc == 2) {
+        *filename = argv[1];
+        return true;
+    }
+    return false;
+}
+
+static bool processArgs(int argc, char *argv[], Arguements &result) {
+
+    po::options_description desc {"Program options"};
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("grammar,g", po::value<std::string>(), "grammar filename");
+    desc.add_options()("input-file,i", po::value<std::string>(), "text for parsing");
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("grammar") == 0) {
+        std::cerr << "Error: grammar filename was not set" << std::endl;
+        return false;
+    }
+    if (vm.count("input-file") == 0) {
+        std::cerr << "Error: input file was not set" << std::endl;
+        return false;
+    }
+
+    result.grammarFilename = vm["grammar"].as<std::string>();
+    result.inputTextFilename = vm["input-file"].as<std::string>();
+
+    return true;
+}
+
+static bool readAllTextFromFile(const std::string &filename, UnicodeString &outText) {
+    std::ifstream ifs(filename);
+    if (ifs.fail()) {
+        std::cerr << "Error: failed to open " << filename << std::endl;
+        return false;
+    }
+    std::string text {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+
+    outText = UnicodeString(text.c_str());
+
+    return true;
+}
+
+int main(int argc, char *argv[]) {
     Py_Initialize();
     initmorph();
 
-    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
+//    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
+//    char *grammarFilename;
+//    if (!processArgs(argc, argv, &grammarFilename)) {
+//        std::cerr << "Program usage: text-processor [GRAMMAR FILENAME]" << std::endl;
+//        return 0;
+//    }
+
+    Arguements args;
+    if (!processArgs(argc, argv, args)) {
+        return -1;
+    }
+    UnicodeString inputText;
+    if (!readAllTextFromFile(args.inputTextFilename, inputText)) {
+        return -1;
+    }
+
     tproc::Grammar grammar;
     tproc::LR0ItemSetCollection itemSet;
-    if (grammar.initFromPlainText(ustring)) {
+//    if (grammar.initFromPlainText(ustring)) {
+    if (grammar.initFromFile(args.grammarFilename)) {
         itemSet.build(grammar);
 //        auto items = itemSet.getItemSetCollection();
 //        Logger::getLogger() << "Final itemset is:" << std::endl;
@@ -78,7 +149,7 @@ int main(void) {
         table.printActionTable();
         table.printGotoTable();
 
-        const UnicodeString inputText = "Тридцатого июня был мой первый рабочий день. В тот же день мне исполнлось тридцать лет.";
+//        const UnicodeString inputText = "Сегодня я купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
 //        const UnicodeString inputText = "черный седан.";
         tproc::Parser parser(grammar, table);
         tproc::Tokenizer tokenizer(inputText);

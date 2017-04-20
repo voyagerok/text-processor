@@ -26,7 +26,6 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeSt
             currentSet = parseToken(*it, currentSet, isAccepted);
             if (currentSet.size() > 0) {
                 currentChain.append(it->word + " ");
-                continue;
             } else if (isAccepted || currentSet.size() == 0) {
                 if (isAccepted) {
                     result.push_back(currentChain);

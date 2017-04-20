@@ -45,11 +45,17 @@ set(SRC "src/main.cpp"
     "${GENERATED_SOURCE_DIR}/morph-analyzer.cpp"
     "${GENERATED_SOURCE_DIR}/morph-analyzer.h")
 
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ICU REQUIRED icu-uc icu-io)
 pkg_check_modules(PYTHON REQUIRED python-2.7)
 
-include_directories(src ${GENERATED_SOURCE_DIR} ${ICU_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+include_directories(src
+    ${GENERATED_SOURCE_DIR}
+    ${ICU_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS})
 link_directories(${ICU_LIBRARY_DIRS} ${PYTHON_LIBRARY_DIRS})
 add_definitions(${ICU_CFLAGS_OTHER} ${PYTHON_CFLAGS_OTHER})
 
@@ -57,4 +63,7 @@ add_executable(${PROJECT_NAME} ${SRC})
 add_dependencies(${PROJECT_NAME} RunGenerator)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 
-target_link_libraries(${PROJECT_NAME} ${ICU_LIBRARIES} ${PYTHON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}
+    ${ICU_LIBRARIES}
+    ${PYTHON_LIBRARIES}
+    ${Boost_LIBRARIES})

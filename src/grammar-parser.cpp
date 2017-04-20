@@ -65,19 +65,23 @@ GrammarParser::~GrammarParser() {
 //    delete m_StartRuleMatcher;
 }
 
-bool GrammarParser::beginParseFromFile(const char *filename) {
+bool GrammarParser::beginParseFromFile(const std::string &filename) {
     std::ifstream ifs;
     //    std::string utf8_filename = stdStringFromUnistr(filename);
     ifs.open(filename);
 
     if (ifs.fail()) {
+        Logger::getErrLogger() << "Error: failed to open file with name " << filename << std::endl;
         return false;
     }
 
     std::string next_line;
     while (std::getline(ifs, next_line)) {
+        Logger::getLogger() << "Get line from file: " << next_line << std::endl;
         this->m_GrammarLines.emplace_back(next_line.c_str());
     }
+
+    ifs.close();
 
     currentRule = 0;
 

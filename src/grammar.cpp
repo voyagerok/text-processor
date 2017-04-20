@@ -52,7 +52,7 @@ bool RuleIndex::operator!=(const RuleIndex &other) const {
 //    }
 //}
 
-bool Grammar::initFromFile(const char *filename) {
+bool Grammar::initFromFile(const std::string &filename) {
     try {
         parser = std::make_shared<GrammarParser>();
 //        parser = new GrammarParser();

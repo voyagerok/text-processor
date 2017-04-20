@@ -27,7 +27,7 @@ class GrammarParser {
 public:
     GrammarParser();
     ~GrammarParser();
-    bool beginParseFromFile(const char *filename);
+    bool beginParseFromFile(const std::string &filename);
     bool beginParseFromPlainText(const icu::UnicodeString &grammar);
     bool getNextRule(ComplexGrammarRule &rule);
     std::vector<icu::UnicodeString> gerGrammarLines() { return m_GrammarLines; }

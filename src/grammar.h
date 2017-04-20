@@ -47,7 +47,7 @@ public:
 //    Grammar(const Grammar&) = delete;
 //    Grammar &operator=(const Grammar&) = delete;
     ~Grammar();
-    bool initFromFile(const char *filename);
+    bool initFromFile(const std::string &filename);
     bool initFromPlainText(const UnicodeString &plainText);
 
     std::vector<SimpleGrammarRule> getRulesForLeftHandle(const UnicodeString &leftHandle) const;
