@@ -77,6 +77,10 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
                 for (auto &tag : firstResult.tags) {
                     currentToken.tags.push_back(UnicodeString(tag.c_str()).toLower());
                 }
+                Logger::getLogger() << "Token normal form is " << currentToken.normalForm << std::endl;
+                if (currentToken.tags.size() > 0) {
+                    Logger::getLogger() << "Token tag is " << currentToken.tags.at(0) << std::endl;
+                }
                 currentToken.word = plainToken;
                 currentSentence.push_back(std::move(currentToken));
             }

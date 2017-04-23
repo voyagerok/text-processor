@@ -8,15 +8,18 @@ set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 set(MORPH_ANALYZER_SCRIPT "${CMAKE_SOURCE_DIR}/src/scripts/morph.pyx")
 set(GENERATED_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src/generated")
 
+set_source_files_properties("${GENERATED_SOURCE_DIR}/morph-analyzer.cpp" PROPERTIES GENERATED TRUE)
+set_source_files_properties("${GENERATED_SOURCE_DIR}/morph-analyzer.h" PROPERTIES GENERATED TRUE)
+
 add_custom_command(OUTPUT "${GENERATED_SOURCE_DIR}/morph-analyzer.cpp" "${GENERATED_SOURCE_DIR}/morh-analyzer.h"
     COMMAND mkdir -p ${GENERATED_SOURCE_DIR}
     COMMAND cython ${MORPH_ANALYZER_SCRIPT} -I ${CMAKE_SOURCE_DIR}/src -o ${GENERATED_SOURCE_DIR}/morph-analyzer.cpp -2
     DEPENDS ${MORPH_ANALYZER_SCRIPT}
     COMMENT "Generating cpp source from python code")
 
-add_custom_target(RunGenerator
-    DEPENDS ${MORPH_ANALYZER_SCRIPT}
-    COMMENT "Checking if re-generation is required")
+#add_custom_target(RunGenerator
+#    DEPENDS ${MORPH_ANALYZER_SCRIPT}
+#    COMMENT "Checking if re-generation is required")
 
 set(SRC "src/main.cpp"
     "src/grammar.cpp"
@@ -60,7 +63,7 @@ link_directories(${ICU_LIBRARY_DIRS} ${PYTHON_LIBRARY_DIRS})
 add_definitions(${ICU_CFLAGS_OTHER} ${PYTHON_CFLAGS_OTHER})
 
 add_executable(${PROJECT_NAME} ${SRC})
-add_dependencies(${PROJECT_NAME} RunGenerator)
+#add_dependencies(${PROJECT_NAME} RunGenerator)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 
 target_link_libraries(${PROJECT_NAME}

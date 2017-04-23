@@ -191,7 +191,11 @@ void LR0ItemSetCollection::addItemSetToHistory(const LR0ItemSet &itemSet) {
 }
 
 void LR0ItemSetCollection::closure(const Grammar &grammar, LR0ItemSet &itemSet, const LR0Item &currentItem) {
-    UnicodeString currentWord = currentItem.rule.rightHandle[currentItem.position];
+    if (currentItem.rule.rightHandle.size() <= currentItem.position) {
+        return;
+    }
+    UnicodeString currentWord = currentItem.rule.rightHandle.at(currentItem.position);
+//    UnicodeString currentWord = currentItem.rule.rightHandle[currentItem.position];
 //    Logger::getLogger() << "Closure: currentWord is " << currentWord << std::endl;
     auto rulesForWord = grammar.getRulesForLeftHandle(currentWord);
 //    Logger::getLogger() << "Rules for current word:" << std::endl;

@@ -61,14 +61,6 @@ struct Arguements {
     std::string inputTextFilename;
 };
 
-static bool processArgs(int argc, char *argv[], char **filename) {
-    if (argc == 2) {
-        *filename = argv[1];
-        return true;
-    }
-    return false;
-}
-
 static bool processArgs(int argc, char *argv[], Arguements &result) {
 
     po::options_description desc {"Program options"};
@@ -112,7 +104,7 @@ int main(int argc, char *argv[]) {
     Py_Initialize();
     initmorph();
 
-//    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
+    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
 //    char *grammarFilename;
 //    if (!processArgs(argc, argv, &grammarFilename)) {
 //        std::cerr << "Program usage: text-processor [GRAMMAR FILENAME]" << std::endl;
@@ -151,17 +143,17 @@ int main(int argc, char *argv[]) {
 
 //        const UnicodeString inputText = "Сегодня я купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
 //        const UnicodeString inputText = "черный седан.";
-        tproc::Parser parser(grammar, table);
-        tproc::Tokenizer tokenizer(inputText);
-        auto sentences = tokenizer.getSentences();
-        for (auto &sentence : sentences) {
-            std::vector<UnicodeString> resultChains;
-            parser.tryParse(sentence, resultChains);
-            for (auto &chain : resultChains) {
-                std::cout << "Parser result:" << std::endl;
-                std::cout << chain << std::endl;
-            }
-        }
+//        tproc::Parser parser(grammar, table);
+//        tproc::Tokenizer tokenizer(inputText);
+//        auto sentences = tokenizer.getSentences();
+//        for (auto &sentence : sentences) {
+//            std::vector<UnicodeString> resultChains;
+//            parser.tryParse(sentence, resultChains);
+//            for (auto &chain : resultChains) {
+//                std::cout << "Parser result:" << std::endl;
+//                std::cout << chain << std::endl;
+//            }
+//        }
 //        parser.tryParse()
     }
 
@@ -181,13 +173,13 @@ int main(int argc, char *argv[]) {
 //    const UnicodeString inputText = "Тридцатого июня был мой первый рабочий день.";
 
 //    const UnicodeString inputText = "Красный внедорожник выехал на трассу.";
-//    tproc::Tokenizer tokenizer(inputText);
-//    auto sentences = tokenizer.getSentences();
-//    for (auto &sentence : sentences) {
-//        for (auto &token : sentence) {
-//            Logger::getLogger() << token << std::endl;
-//        }
-//    }
+    tproc::Tokenizer tokenizer(inputText);
+    auto sentences = tokenizer.getSentences();
+    for (auto &sentence : sentences) {
+        for (auto &token : sentence) {
+            tproc::Logger::getLogger() << token << std::endl;
+        }
+    }
 
     Py_Finalize();
 
