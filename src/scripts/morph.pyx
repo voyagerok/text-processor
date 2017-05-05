@@ -21,7 +21,7 @@ cdef public cppclass AnalysisResult:
 
 cdef public analyzeTokens(const vector[string] &tokens, vector[AnalysisResult] &analysis_results):
     morph = pymorphy2.MorphAnalyzer()
-    cdef map[string,string] token_results
+    #cdef map[string,string] token_results
     cdef AnalysisResult result
     for i in xrange(tokens.size()):
         morph_result = morph.parse((tokens[i].c_str()).decode('UTF-8'))

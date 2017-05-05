@@ -40,7 +40,7 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
 //        Logger::getLogger() << "line is: " << lines[i] << std::endl;
         if (!lines[i].isEmpty())
             if (!lines[i].isEmpty())
-                result.push_back(lines[i]);
+                result.push_back(lines[i].trim());
     }
 
     return true;

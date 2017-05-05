@@ -136,10 +136,10 @@ int main(int argc, char *argv[]) {
 //        grammar.printFirstSet();
 //        grammar.printFollowSet();
 
-        tproc::ParserTable table;
-        table.buildTableFromGrammar(grammar);
-        table.printActionTable();
-        table.printGotoTable();
+//        tproc::ParserTable table;
+//        table.buildTableFromGrammar(grammar);
+//        table.printActionTable();
+//        table.printGotoTable();
 
 //        const UnicodeString inputText = "Сегодня я купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
 //        const UnicodeString inputText = "черный седан.";
@@ -160,19 +160,22 @@ int main(int argc, char *argv[]) {
 ////    tproc::analyzeTokens({""});
 ////    std::vector<std::map<std::string, std::string>> result;
 //    std::vector<AnalysisResult> results;
-//    analyzeTokens({"Николай", "медведь", "Камни", "Река"}, results);
+//    std::vector<std::string> tokens { "Николай", "Сергеевич", "Линецкий", "медведь", "Камни", "Река" };
+//    analyzeTokens(tokens, results);
 //    for (auto &result : results) {
-//        Logger::getLogger() << "Tags for " << result.normalForm << std::endl;
+//       tproc::Logger::getLogger() << "Tags for " << result.normalForm << std::endl;
 //        for (auto &tag : result.tags) {
-//            Logger::getLogger() << tag << std::endl;
+//            tproc::Logger::getLogger() << "Tag: " << tag << std::endl;
 //        }
-////        Logger::getLogger() << result.tag.partOfSpeech << std::endl;
-////        Logger::getLogger() << result.tag.number << std::endl;
-////        Logger::getLogger() << result.tag.animacy << std::endl;
+//        Logger::getLogger() << result.tag.partOfSpeech << std::endl;
+//        Logger::getLogger() << result.tag.number << std::endl;
+//        Logger::getLogger() << result.tag.animacy << std::endl;
 //    }
 //    const UnicodeString inputText = "Тридцатого июня был мой первый рабочий день.";
 
 //    const UnicodeString inputText = "Красный внедорожник выехал на трассу.";
+
+    inputText = "Имя его Николай Сергеевич Линецкий";
     tproc::Tokenizer tokenizer(inputText);
     auto sentences = tokenizer.getSentences();
     for (auto &sentence : sentences) {
