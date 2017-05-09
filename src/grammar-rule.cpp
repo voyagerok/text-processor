@@ -10,6 +10,34 @@
 
 namespace tproc {
 
+std::ostream &operator<<(std::ostream &os, const GRuleWord &ruleWord) {
+    os << ruleWord.rawValue;
+    return os;
+}
+
+bool GRuleWord::operator==(const GRuleWord &other) const {
+    return this->rawValue == other.rawValue;
+}
+
+bool GRuleWord::operator!=(const GRuleWord &other) const {
+    return this->rawValue != other.rawValue;
+}
+
+bool GRuleWord::operator==(const UnicodeString &other) const {
+    return this->rawValue == other;
+}
+
+bool GRuleWord::operator!=(const UnicodeString &other) const {
+    return  this->rawValue != other;
+}
+
+void GRuleWord::swap(GRuleWord &other) {
+    this->rawValue.swap(other.rawValue);
+    std::swap(this->maxRep, other.maxRep);
+    std::swap(this->minRep, other.minRep);
+    std::swap(this->propertiesMask, other.propertiesMask);
+}
+
 std::ostream &operator<<(std::ostream &os, const SimpleGrammarRule &rule) {
     os << rule.leftPart << " = ";
     for (auto &word : rule.rightHandle) {
@@ -46,6 +74,22 @@ bool SimpleGrammarRule::operator==(const SimpleGrammarRule &other) const {
 
 bool SimpleGrammarRule::operator!=(const SimpleGrammarRule &other) const {
     return !(*this == other);
+}
+
+void SimpleGrammarRule::swap(SimpleGrammarRule &other) {
+    this->leftPart.swap(other.leftPart);
+    this->rightHandle.swap(other.rightHandle);
+    std::swap(isValid, other.isValid);
+}
+
+void ComplexGrammarRule::append(const std::vector<GRuleWord> &ruleWords) {
+    this->rightHandles.emplace_back(this->leftPart, ruleWords);
+}
+
+void ComplexGrammarRule::swap(ComplexGrammarRule &other) {
+    this->leftPart.swap(other.leftPart);
+    this->rightHandles.swap(other.rightHandles);
+    std::swap(this->isValid, other.isValid);
 }
 
 } /* namespace tproc */

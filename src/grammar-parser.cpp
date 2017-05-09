@@ -134,10 +134,14 @@ bool GrammarParser::getNextRule(ComplexGrammarRule &rule) {
     std::vector<UnicodeString> rightPartRules;
     split_unistring(ruleParts[1], {"\\|"}, rightPartRules);
     for (auto &rawRule : rightPartRules) {
-        std::vector<UnicodeString> ruleWords;
-        split_unistring(rawRule, {"\\s","\\'","\\\""}, ruleWords);
-        if (ruleWords.size() > 0) {
-            SimpleGrammarRule rule {ruleLeftPart, ruleWords, true};
+        std::vector<UnicodeString> rawRuleWords;
+        split_unistring(rawRule, {"\\s","\\'","\\\""}, rawRuleWords);
+        if (rawRuleWords.size() > 0) {
+            std::vector<GRuleWord> ruleWords;
+            for (auto &word : rawRuleWords)
+                ruleWords.emplace_back(word);
+            SimpleGrammarRule rule { ruleLeftPart, ruleWords, true };
+//            SimpleGrammarRule rule {ruleLeftPart, rawRuleWords, true};
             Logger::getLogger() << "Current parsed rule is " << rule << std::endl;
             rulesForLeftPart.push_back(std::move(rule));
         }

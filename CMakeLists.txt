@@ -6,10 +6,9 @@ set(CMAKE_CXX_FLAGS_DEBUG " -O0 -g")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 
 set(MORPH_ANALYZER_SCRIPT "${CMAKE_SOURCE_DIR}/src/scripts/morph.pyx")
+set(BISON_DIR "src/bison")
 
-#set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}//morph-analyzer.cpp" PROPERTIES GENERATED TRUE)
-#set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}//morph-analyzer.h" PROPERTIES GENERATED TRUE)
-
+# ======== custom target for generating cpp source files with cython ====================
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h"
     COMMAND cython ${MORPH_ANALYZER_SCRIPT} -I ${CMAKE_SOURCE_DIR}/src -o "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" -2
     DEPENDS ${MORPH_ANALYZER_SCRIPT}
@@ -17,8 +16,34 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" "${CM
 
 add_custom_target(CYTHON_GENERATOR
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h")
+# ========================================================================================
 
-set(SRC "src/main.cpp"
+# ====== boost ==========
+find_package(Boost REQUIRED COMPONENTS program_options)
+# =======================
+
+# ====== icu and python =====
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ICU REQUIRED icu-uc icu-io)
+pkg_check_modules(PYTHON REQUIRED python-2.7)
+# ===========================
+
+
+# ======= flex and bison ========
+find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
+
+BISON_TARGET(grammar_parser
+             "src/bison/gparser.yy"
+             ${CMAKE_CURRENT_BINARY_DIR}/gparser.tab.cc)
+FLEX_TARGET(grammar_lexer
+            "src/bison/glexer.ll"
+            ${CMAKE_CURRENT_BINARY_DIR}/glexer.yy.cc)
+ADD_FLEX_BISON_DEPENDENCY(grammar_lexer grammar_parser)
+# ===============================
+
+set(SRC
+    "src/main.cpp"
     "src/grammar.cpp"
     "src/grammar.h"
     "src/grammar-parser.h"
@@ -43,19 +68,18 @@ set(SRC "src/main.cpp"
     "src/stack.cpp"
     "src/stack.h"
     "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp"
-    "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h")
-
-find_package(Boost REQUIRED COMPONENTS program_options)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(ICU REQUIRED icu-uc icu-io)
-pkg_check_modules(PYTHON REQUIRED python-2.7)
+    "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h"
+    ${FLEX_grammar_lexer_OUTPUTS}
+    ${BISON_grammar_parser_OUTPUTS}
+    "src/bison/g-parser-driver.hpp"
+    "src/bison/g-parser-driver.cpp")
 
 include_directories(src
     ${CMAKE_BINARY_DIR}
     ${ICU_INCLUDE_DIRS}
     ${PYTHON_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS})
+    ${Boost_INCLUDE_DIRS}
+    ${BISON_DIR})
 link_directories(${ICU_LIBRARY_DIRS} ${PYTHON_LIBRARY_DIRS})
 add_definitions(${ICU_CFLAGS_OTHER} ${PYTHON_CFLAGS_OTHER})
 

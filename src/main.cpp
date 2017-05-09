@@ -33,6 +33,7 @@
 #include "tokenizer.h"
 #include "parser.h"
 #include "utils/logger.h"
+#include "g-parser-driver.hpp"
 
 /*
  * Грамемы:
@@ -120,42 +121,50 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    tproc::Grammar grammar;
-    tproc::LR0ItemSetCollection itemSet;
-//    if (grammar.initFromPlainText(ustring)) {
-    if (grammar.initFromFile(args.grammarFilename)) {
-        itemSet.build(grammar);
-//        auto items = itemSet.getItemSetCollection();
-//        Logger::getLogger() << "Final itemset is:" << std::endl;
-//        for (auto &item : items) {
-//            Logger::getLogger() << "Incoming word is " << item.incomingWord << std::endl;
-//            Logger::getLogger() << "State number is:" << item.itemsetIndex << std::endl;
-//            Logger::getLogger() << item << "\n\n";
-//        }
-
-//        grammar.printFirstSet();
-//        grammar.printFollowSet();
-
-//        tproc::ParserTable table;
-//        table.buildTableFromGrammar(grammar);
-//        table.printActionTable();
-//        table.printGotoTable();
-
-//        const UnicodeString inputText = "Сегодня я купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
-//        const UnicodeString inputText = "черный седан.";
-//        tproc::Parser parser(grammar, table);
-//        tproc::Tokenizer tokenizer(inputText);
-//        auto sentences = tokenizer.getSentences();
-//        for (auto &sentence : sentences) {
-//            std::vector<UnicodeString> resultChains;
-//            parser.tryParse(sentence, resultChains);
-//            for (auto &chain : resultChains) {
-//                std::cout << "Parser result:" << std::endl;
-//                std::cout << chain << std::endl;
-//            }
-//        }
-//        parser.tryParse()
+    tproc::GParserDriver parserDriver;
+    parserDriver.parse(args.grammarFilename);
+    auto rules = parserDriver.getRules();
+    for (auto &rule : rules) {
+        tproc::Logger::getLogger() << rule << std::endl;
     }
+
+
+//    tproc::Grammar grammar;
+//    tproc::LR0ItemSetCollection itemSet;
+////    if (grammar.initFromPlainText(ustring)) {
+//    if (grammar.initFromFile(args.grammarFilename)) {
+//        itemSet.build(grammar);
+////        auto items = itemSet.getItemSetCollection();
+////        Logger::getLogger() << "Final itemset is:" << std::endl;
+////        for (auto &item : items) {
+////            Logger::getLogger() << "Incoming word is " << item.incomingWord << std::endl;
+////            Logger::getLogger() << "State number is:" << item.itemsetIndex << std::endl;
+////            Logger::getLogger() << item << "\n\n";
+////        }
+
+////        grammar.printFirstSet();
+////        grammar.printFollowSet();
+
+////        tproc::ParserTable table;
+////        table.buildTableFromGrammar(grammar);
+////        table.printActionTable();
+////        table.printGotoTable();
+
+////        const UnicodeString inputText = "Сегодня я купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
+////        const UnicodeString inputText = "черный седан.";
+////        tproc::Parser parser(grammar, table);
+////        tproc::Tokenizer tokenizer(inputText);
+////        auto sentences = tokenizer.getSentences();
+////        for (auto &sentence : sentences) {
+////            std::vector<UnicodeString> resultChains;
+////            parser.tryParse(sentence, resultChains);
+////            for (auto &chain : resultChains) {
+////                std::cout << "Parser result:" << std::endl;
+////                std::cout << chain << std::endl;
+////            }
+////        }
+////        parser.tryParse()
+//    }
 
 ////    tproc::analyzeTokens({""});
 ////    std::vector<std::map<std::string, std::string>> result;
@@ -175,14 +184,14 @@ int main(int argc, char *argv[]) {
 
 //    const UnicodeString inputText = "Красный внедорожник выехал на трассу.";
 
-    inputText = "Имя его Николай Сергеевич Линецкий";
-    tproc::Tokenizer tokenizer(inputText);
-    auto sentences = tokenizer.getSentences();
-    for (auto &sentence : sentences) {
-        for (auto &token : sentence) {
-            tproc::Logger::getLogger() << token << std::endl;
-        }
-    }
+//    inputText = "Имя его Николай Сергеевич Линецкий";
+//    tproc::Tokenizer tokenizer(inputText);
+//    auto sentences = tokenizer.getSentences();
+//    for (auto &sentence : sentences) {
+//        for (auto &token : sentence) {
+//            tproc::Logger::getLogger() << token << std::endl;
+//        }
+//    }
 
     Py_Finalize();
 

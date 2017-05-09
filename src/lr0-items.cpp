@@ -18,7 +18,7 @@ bool LR0Item::operator!=(const LR0Item &other) {
 }
 
 UnicodeString LR0Item::getWordAtCurrentPosition() {
-    return this->rule.rightHandle.at(this->position);
+    return this->rule.rightHandle.at(this->position).rawValue;
 }
 
 bool LR0ItemSet::operator==(const LR0ItemSet &other) {
@@ -92,7 +92,7 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
         auto position = itemSet.items[i].position;
         auto rule = itemSet.items[i].rule;
         if (position < rule.rightHandle.size()) {
-            UnicodeString wordToRead = rule.rightHandle[position];
+            UnicodeString wordToRead = rule.rightHandle[position].rawValue;
 //            Logger::getLogger() << "Word to read: " << wordToRead << std::endl;
 //            Logger::getLogger() << "Rule: " << rule << ", position: " << position << std::endl;
 //            auto it = itemSet.transitions.find(wordToRead);
@@ -194,7 +194,7 @@ void LR0ItemSetCollection::closure(const Grammar &grammar, LR0ItemSet &itemSet, 
     if (currentItem.rule.rightHandle.size() <= currentItem.position) {
         return;
     }
-    UnicodeString currentWord = currentItem.rule.rightHandle.at(currentItem.position);
+    UnicodeString currentWord = currentItem.rule.rightHandle.at(currentItem.position).rawValue;
 //    UnicodeString currentWord = currentItem.rule.rightHandle[currentItem.position];
 //    Logger::getLogger() << "Closure: currentWord is " << currentWord << std::endl;
     auto rulesForWord = grammar.getRulesForLeftHandle(currentWord);

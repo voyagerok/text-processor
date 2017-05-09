@@ -98,7 +98,8 @@ void Grammar::addExplicitRule() {
 //    startRule = new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true};
 //    startRule = create_unique<SimpleGrammarRule>(EXPLICIT_START_SYMBOL, {START_SYMBOL}, true);
 //    startRule = std::move(std::unique_ptr<SimpleGrammarRule>(new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true}));
-    startRule = std::make_shared<SimpleGrammarRule>(EXPLICIT_START_SYMBOL, std::vector<UnicodeString>{START_SYMBOL});
+    GRuleWord ruleWord { START_SYMBOL };
+    startRule = std::make_shared<SimpleGrammarRule>(EXPLICIT_START_SYMBOL, std::vector<GRuleWord>{ruleWord});
     rules[EXPLICIT_START_SYMBOL] = {*startRule};
     nonTerminals[EXPLICIT_START_SYMBOL] = {};
     WordInfo startSymbolInfo {{EXPLICIT_START_SYMBOL, 0}, 0};
@@ -144,7 +145,7 @@ void Grammar::readRules() {
         for (int i = 0; i < rule.rightHandles.size(); ++i) {
             auto simpleRule = rule.rightHandles[i];
             for (int j = 0; j < simpleRule.rightHandle.size(); ++j) {
-                auto word = simpleRule.rightHandle[j];
+                auto word = simpleRule.rightHandle[j].rawValue;
                 WordInfo wordInfo {{rule.leftPart, n_of_rules_for_left}, j};
                 auto ntermFound = nonTerminals.find(word);
                 if (ntermFound == nonTerminals.end()) {
@@ -211,7 +212,7 @@ std::set<UnicodeString> Grammar::firstSetForNonTerminal(const UnicodeString &wor
     auto rulesForWord = getRulesForLeftHandle(word);
     for (auto &rule : rulesForWord) {
 //        Logger::getLogger() << "First set: current rule: " << rule << " for nonterminal: " << word << std::endl;
-        auto firstWord = rule.rightHandle[0];
+        auto firstWord = rule.rightHandle[0].rawValue;
 //        Logger::getLogger() << "First word: " << firstWord << " for rule: " << rule << std::endl;
         if (firstWord == word) {
             continue;
@@ -248,7 +249,7 @@ std::set<UnicodeString> Grammar::followSetForNonTerminal(const UnicodeString &wo
         auto simpleRules = rules[ruleIndex.leftHandle];
         SimpleGrammarRule simpleRule = simpleRules[ruleIndex.simpleRuleNumber];
         if (infoRecord.position < simpleRule.rightHandle.size() - 1) {
-            auto nextWord = simpleRule.rightHandle[infoRecord.position + 1];
+            auto nextWord = simpleRule.rightHandle[infoRecord.position + 1].rawValue;
             auto firstSetForNextWord = firstSet[nextWord];
             follow.insert(firstSetForNextWord.begin(), firstSetForNextWord.end());
         } else if (simpleRule.rightHandle[infoRecord.position] != simpleRule.leftPart) {
