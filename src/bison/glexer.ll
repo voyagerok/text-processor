@@ -49,23 +49,19 @@ rbracket ">"
 %}
 
 =           {
-                std::cout << "Found assign at " << loc << std::endl;
                 return token::ASSIGN;
             }
 
 \|          {
-                std::cout << "Found delim at " << loc << std::endl;
                 return token::DELIM;
             }
 
 "max_rep"     {
-                std::cout << "Found max rep at " << loc << std::endl;
                 yylval->build<UnicodeString>(yytext);
                 return token::PROP_MAX_REP_TOK;
             }
 
 "min_rep"     {
-                std::cout << "Found min rep at " << loc << std::endl;
                 yylval->build<UnicodeString>(yytext);
                 return token::PROP_MIN_REP_TOK;
             }
@@ -81,53 +77,48 @@ rbracket ">"
             }
 
 \n          {
-                std::cout << "Found new line at " << loc << std::endl;
                 loc->lines(1);
                 /** return token::NEWLINE; **/
             }
 
 {lword}     {
-                std::cout << "Found word " << yytext << " at " << loc << std::endl;
                yylval->build<UnicodeString>( yytext );
                return( token::WORD );
             }
 
 {cyr_low}+  { 
-                std::cout << "Found cyr low word " << yytext << std::endl;
                 yylval->build<UnicodeString>( yytext );
                 return( token::WORD );
             }
 
 {uword}     {
-                std::cout << "Found capital word " << yytext << " at " << loc << std::endl;
                 yylval->build<UnicodeString>( yytext );
                 return( token::CAPITAL_WORD );
             }
 
 {cyr_cap}+  {
-                std::cout << "Found cyr cap word " << yytext << std::endl;
                 yylval->build<UnicodeString>( yytext );
                 return( token::CAPITAL_WORD );
             }
 
 ";"        {
-                std::cout << "Found semicolon" << std::endl;
                 return token::RULE_END;
             }
 
 [0-9]+      {
-                std::cout << "Found num at " << loc << std::endl;
                 /** yylval->build<int>(yytext); **/
                 int num = atoi(yytext);
                 yylval->build<int>(num);
                 return token::NUM;
             }
 
-[ \t]+      { std::cout << "Found whitespace at" << loc << std::endl; }
+[ \t]+      {  }
 
 {lbracket}  { return token::LBRACKET; }
 
 {rbracket}  { return token::RBRACKET; }
+
+\"          { }
 
 .           { std::cout << "Found unknown character at " << loc << std::endl; }
 

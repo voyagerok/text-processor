@@ -39,21 +39,21 @@ GRuleWord GParserDriver::makeRuleWord(UnicodeString &rawValue, std::vector<std::
     return GRuleWord { rawValue, mask, minRep, maxRep };
 }
 
-void GParserDriver::parse(const std::string &fname) {
+bool GParserDriver::parse(const std::string &fname) {
     std::ifstream ifs { fname };
-    parseHelper(ifs);
+    return parseHelper(ifs);
 }
 
-void GParserDriver::parse(const char *const filename) {
+bool GParserDriver::parse(const char *const filename) {
     std::ifstream ifs { filename };
-    parseHelper(ifs);
+    return parseHelper(ifs);
 }
 
-void GParserDriver::parse(std::istream &iss) {
-    parseHelper(iss);
+bool GParserDriver::parse(std::istream &iss) {
+    return parseHelper(iss);
 }
 
-void GParserDriver::parseHelper(std::istream &iss) {
+bool GParserDriver::parseHelper(std::istream &iss) {
 
     this->scanner = std::make_shared<GScanner>( &iss );
 
@@ -63,8 +63,10 @@ void GParserDriver::parseHelper(std::istream &iss) {
     if( parser->parse() != accept )
     {
        std::cerr << "Parse failed!!\n";
+       return false;
     }
 
+    return true;
 }
 
 }

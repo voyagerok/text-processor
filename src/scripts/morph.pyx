@@ -3,47 +3,67 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.map cimport map
+from libcpp cimport bool
+from libcpp.memory cimport shared_ptr
+from libcpp.memory cimport make_shared
+
+from cython.operator cimport dereference as deref
 
 import pymorphy2
 
-'''
-cdef public cppclass Tag:
-    string partOfSpeech
-    string animacy
-    string morphCase
-    string gender
-    string number
-'''
+cdef extern from "<utility>" namespace "std":
+    cdef T&& std_move "std::move" [T](T&& t)
+
+cdef extern from "<unicode/unistr.h>":
+    cdef cppclass UnicodeString:
+        UnicodeString(const char *codepageData)
+        T& toUTF8String[T](T &result) const
+
+cdef extern from "tokenizer.h" namespace "tproc":
+    cdef enum MorphProperty:
+        FIRST_NAME,
+        SECOND_NAME,
+        PATR,
+        INIT
 
 cdef public cppclass AnalysisResult:
-    vector[string] tags
-    string normalForm
+    UnicodeString normalForm
+    UnicodeString partOfSpeech
+    unsigned int nameCharMask
 
-cdef public analyzeTokens(const vector[string] &tokens, vector[AnalysisResult] &analysis_results):
-    morph = pymorphy2.MorphAnalyzer()
-    #cdef map[string,string] token_results
-    cdef AnalysisResult result
+morph = pymorphy2.MorphAnalyzer()
+
+cdef analyzeToken(const UnicodeString tok, map[UnicodeString, vector[shared_ptr[AnalysisResult]]] &analysis_results):
+    cdef vector[shared_ptr[AnalysisResult]] res_for_tok    
+    cdef shared_ptr[AnalysisResult] analysis_res
+   
+    cdef string utf8_str
+    tok.toUTF8String(utf8_str)
+    morph_results = morph.parse((utf8_str.c_str()).decode('UTF-8'))
+
+    #print(morph_results)
+
+    cdef unsigned propMask
+    for morph_result in morph_results:
+        if morph_result.score < 0.5:
+            continue
+        analysis_res = make_shared[AnalysisResult]()
+        deref(analysis_res).normalForm = UnicodeString(morph_result.normal_form.encode('UTF-8'))
+        propMask = 0 
+        if morph_result.tag.POS is not None:
+            deref(analysis_res).partOfSpeech = UnicodeString(morph_result.tag.POS.encode('UTF-8'))
+        if 'Name' in morph_result.tag:
+            propMask |= FIRST_NAME
+        elif 'Patr' in morph_result.tag:
+            propMask |= PATR
+        elif 'Surn' in morph_result.tag:
+            propMask |= SECOND_NAME
+        elif 'Init' in morph_result.tag:
+            propMask |= INIT
+        deref(analysis_res).nameCharMask = propMask
+        res_for_tok.push_back(analysis_res)
+    analysis_results[tok] = res_for_tok
+
+cdef public analyzeTokens(const vector[UnicodeString] &tokens, map[UnicodeString, vector[shared_ptr[AnalysisResult]]] &analysis_results):
     for i in xrange(tokens.size()):
-        morph_result = morph.parse((tokens[i].c_str()).decode('UTF-8'))
-        #print(morph_result)
-        for res in morph_result:
-            #print(res.tag.number)
-            result.normalForm = res.normal_form.encode('UTF-8')
-            result.tags.clear()
-            '''
-            if res.tag.number is not None:
-                result.tags.push_back(res.tag.number)
-            '''
-            if res.tag.POS is not None:
-                result.tags.push_back(res.tag.POS)
-            '''
-            if res.tag.animacy is not None:
-                result.tags.push_back(res.tag.animacy)
-            if res.tag.case is not None:
-                result.tags.push_back(res.tag.case)
-            if res.tag.gender is not None:
-                result.tags.push_back(res.tag.gender)
-            if res.tag.number is not None:
-                result.tags.push_back(res.tag.number)
-            '''
-            analysis_results.push_back(result)
+        analyzeToken(tokens[i], analysis_results)

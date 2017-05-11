@@ -81,7 +81,7 @@ rule
     ;
 
 simple_rule
-    : CAPITAL_WORD ASSIGN left_handle_chain { std::cout << "Reduce rule" << std::endl; $$ = SimpleGrammarRule { $1, $3}; }
+    : CAPITAL_WORD ASSIGN left_handle_chain { $$ = SimpleGrammarRule { $1, $3}; }
     ;
 
 complex_rule
@@ -95,9 +95,9 @@ left_handle_chain
     ;
 
 left_handle
-    : WORD { std::cout << "Reduce left handle" << std::endl; $$.swap($1); }
-    | CAPITAL_WORD { std::cout << "Reduce left handle" << std::endl; $$.swap($1); }
-    | "\"" WORD "\"" { std::cout << "Reduce left handle" << std::endl; $$.swap($2); }
+    : WORD { $$.swap($1); }
+    | CAPITAL_WORD { $$.swap($1); }
+    | "\"" WORD "\"" { $$.swap($2); }
     ;
 
 labeled_left_handle

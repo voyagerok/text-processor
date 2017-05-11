@@ -7,10 +7,22 @@
 
 namespace tproc {
 
+enum MorphProperty {
+    FIRST_NAME = 01,
+    SECOND_NAME = 02,
+    PATR = 04,
+    INIT = 010
+};
+
+//std::ostream &operator<<(std::ostream &os, MorphProperty nameChar);
+
 struct Token {
     UnicodeString word;
     UnicodeString normalForm;
-    std::vector<UnicodeString> tags;
+//    std::vector<UnicodeString> tags;
+//    unsigned morphPropsMask;
+    UnicodeString partOfSpeech;
+    unsigned propMask = 0;
 
     unsigned long hash() const;
 

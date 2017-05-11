@@ -54,17 +54,19 @@ bool RuleIndex::operator!=(const RuleIndex &other) const {
 
 bool Grammar::initFromFile(const std::string &filename) {
     try {
-        parser = std::make_shared<GrammarParser>();
+//        parser = std::make_shared<GrammarParser>();
 //        parser = new GrammarParser();
 //        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
-        parser->beginParseFromFile(filename);
-        readRules();
-        if (!validateRules()) {
-            return false;
+//        parser->beginParseFromFile(filename);
+        if (parserDriver.parse(filename)) {
+            readRules(parserDriver.getRules());
+            if (!validateRules()) {
+                return false;
+            }
+            addExplicitRule();
+            buildFirstSet();
+            buildFollowSet();
         }
-        addExplicitRule();
-        buildFirstSet();
-        buildFollowSet();
     } catch (GrammarParserException &err) {
         Logger::getErrLogger() << err.what() << std::endl;
         return false;
@@ -74,21 +76,21 @@ bool Grammar::initFromFile(const std::string &filename) {
 }
 
 bool Grammar::initFromPlainText(const UnicodeString &plainText) {
-    try {
-        parser = std::make_shared<GrammarParser>();
-//        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
-        parser->beginParseFromPlainText(plainText);
-        readRules();
-        if (!validateRules()) {
-            return false;
-        }
-        addExplicitRule();
-        buildFirstSet();
-        buildFollowSet();
-    } catch (GrammarParserException &err) {
-        Logger::getErrLogger() << err.what() << std::endl;
-        return false;
-    }
+//    try {
+//        parser = std::make_shared<GrammarParser>();
+////        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
+//        parser->beginParseFromPlainText(plainText);
+//        readRules();
+//        if (!validateRules()) {
+//            return false;
+//        }
+//        addExplicitRule();
+//        buildFirstSet();
+//        buildFollowSet();
+//    } catch (GrammarParserException &err) {
+//        Logger::getErrLogger() << err.what() << std::endl;
+//        return false;
+//    }
 
     return true;
 }
@@ -113,14 +115,19 @@ Grammar::~Grammar() {
 //    }
 }
 
-void Grammar::readRules() {
-    if (!parser) {
-        return;
-    }
+void Grammar::readRules(const std::vector<ComplexGrammarRule> &plainRules) {
+//    if (!parser) {
+//        return;
+//    }
 
-    ComplexGrammarRule rule;
+//    ComplexGrammarRule rule;
     std::map<UnicodeString, std::vector<WordInfo>> tempSet;
-    while(parser->getNextRule(rule)) {
+
+
+    for (auto &rule : plainRules) {
+
+//    }
+//    while(parser->getNextRule(rule)) {
 //        rules.insert(std::make_pair(std::move(rule.leftPart), std::move(rule.rightHandles)));
 //        Logger::getLogger() << "get next rule: current rule is " << rule << std::endl;
 

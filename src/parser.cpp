@@ -312,15 +312,19 @@ std::map<UnicodeString, ParserTable::ParserActionSet> Parser::getActionSetForTok
 
     if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;
-        auto &tags = token.tags;
-        if (tags.size() > 0) {
-            auto partOfSpeechTag = tags[0];
-            if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
-                Logger::getLogger() << "Found action for part of speech" << std::endl;
-    //            actionSet.insert(tagActionSet.begin(), tagActionSet.end());
-                actionSet[partOfSpeechTag] = tagActionSet;
-            }
+        if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, tagActionSet)) {
+            Logger::getLogger() << "Found action for part of speech" << std::endl;
+            actionSet[token.partOfSpeech] = tagActionSet;
         }
+//        auto &tags = token.tags;
+//        if (tags.size() > 0) {
+//            auto partOfSpeechTag = tags[0];
+//            if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
+//                Logger::getLogger() << "Found action for part of speech" << std::endl;
+//    //            actionSet.insert(tagActionSet.begin(), tagActionSet.end());
+//                actionSet[partOfSpeechTag] = tagActionSet;
+//            }
+//        }
     }
 
     if (actionSet.size() == 0) {
@@ -345,15 +349,19 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
 
     if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;
-        auto &tags = token.tags;
-        if (tags.size() > 0) {
-            auto partOfSpeechTag = tags[0];
-            if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
-                Logger::getLogger() << "Found action for part of speech" << std::endl;
-                actionSet.insert(tagActionSet.begin(), tagActionSet.end());
-    //            actionSet[partOfSpeechTag] = tagActionSet;
-            }
+        if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, tagActionSet)) {
+            Logger::getLogger() << "Found action for part of speech" << std::endl;
+            actionSet.insert(tagActionSet.begin(), tagActionSet.end());
         }
+//        auto &tags = token.tags;
+//        if (tags.size() > 0) {
+//            auto partOfSpeechTag = tags[0];
+//            if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
+//                Logger::getLogger() << "Found action for part of speech" << std::endl;
+//                actionSet.insert(tagActionSet.begin(), tagActionSet.end());
+//    //            actionSet[partOfSpeechTag] = tagActionSet;
+//            }
+//        }
     }
 
     if (actionSet.size() == 0) {

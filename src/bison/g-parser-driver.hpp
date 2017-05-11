@@ -43,14 +43,14 @@ public:
 
     std::vector<ComplexGrammarRule> &getRules() { return this->rules; }
 
-    void parse( const char * const filename );
-    void parse( std::istream &iss );
-    void parse(const std::string &fname);
+    bool parse( const char * const filename );
+    bool parse( std::istream &iss );
+    bool parse(const std::string &fname);
 
     void appendRule(ComplexGrammarRule &rule);
     GRuleWord makeRuleWord(UnicodeString &rawValue, std::vector<std::shared_ptr<Property>> &props);
 private:
-    void parseHelper(std::istream &iss);
+    bool parseHelper(std::istream &iss);
 
     std::vector<ComplexGrammarRule> rules;
 

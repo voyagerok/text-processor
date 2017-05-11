@@ -16,6 +16,8 @@
 
 #include "grammar-parser.h"
 #include "grammar-rule.h"
+#include "g-parser-driver.hpp"
+
 
 namespace tproc {
 
@@ -67,7 +69,8 @@ public:
     const_iter end() const;
 
 private:
-    void readRules();
+//    void readRules();
+    void readRules(const std::vector<ComplexGrammarRule> &plainRules) ;
     bool validateRules();
     void buildFirstSet();
     void buildFollowSet();
@@ -87,6 +90,9 @@ private:
 
     std::set<UnicodeString> terminals;
     std::map<UnicodeString, std::vector<WordInfo>> nonTerminals;
+
+    GParserDriver parserDriver;
+
 };
 
 } /* namespace tproc */
