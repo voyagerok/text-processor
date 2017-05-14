@@ -4,6 +4,7 @@
 #define START_SYMBOL "S"
 #define EXPLICIT_START_SYMBOL "S'"
 #define END_OF_INPUT "$"
+#define EMPTY "empty"
 
 #define ENABLE_LOG 1
 

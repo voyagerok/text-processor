@@ -5,20 +5,21 @@
 namespace tproc {
 
 std::ostream &operator<<(std::ostream &os, const LR0Item &item) {
-    os << item.rule << ", " << item.position;
+//    os << item.rule << ", " << item.position;
     return os;
 }
 
 bool LR0Item::operator==(const LR0Item &other) {
-    return position == other.position && rule == other.rule;
+    return wordIndex == other.wordIndex && rule == other.rule;
 }
 
 bool LR0Item::operator!=(const LR0Item &other) {
     return !(*this == other);
 }
 
-UnicodeString LR0Item::getWordAtCurrentPosition() {
-    return this->rule.rightHandle.at(this->position).rawValue;
+GRuleWordPtr LR0Item::getWordAtCurrentPosition() {
+//    return this->rule.rhs.at(this->position).rawValue;
+    return this->rule->getChildWords().at(wordIndex.ruleIndex).at(wordIndex.position);
 }
 
 bool LR0ItemSet::operator==(const LR0ItemSet &other) {
@@ -40,7 +41,7 @@ std::ostream &operator<<(std::ostream &os, const LR0ItemSet &itemSet) {
     return os;
 }
 
-int LR0ItemSet::getNextStateForWord(const UnicodeString &word) {
+int LR0ItemSet::getNextStateForWord(const GRuleWordPtr &word) {
     auto it = transitions.find(word);
     if (it != transitions.end()) {
         return it->second;
@@ -56,14 +57,15 @@ LR0ItemSetCollection::LR0ItemSetCollection() {
 bool LR0ItemSetCollection::build(const Grammar &grammar) {
     history.clear();
 //    Logger::getLogger() << "get start rule" << std::endl;
-    SimpleGrammarRule startRule = grammar.getStartRule();
+//    SimpleGrammarRule startRule = grammar.getStartRule();
+    GRuleWordPtr root = grammar.getRoot();
 //    Logger::getLogger() << "got start rule:" << startRule << std::endl;
-    if (!startRule.isValid) {
-        return false;
-    }
+//    if (!startRule.isValid) {
+//        return false;
+//    }
 //    Logger::getLogger() << "Building start item" << std::endl;
     LR0ItemSet startItemSet;
-    startItemSet.addItem({startRule, 0});
+    startItemSet.addItem({root, 0, 0});
 //    Logger::getLogger() << "start item is " << startItem << std::endl;
     build(grammar, startItemSet, 0);
 
@@ -79,7 +81,7 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 //    Logger::getLogger() << "Starting iteration for item with index: " << itemIndex << std::endl;
     for (auto i = 0; i < itemSet.items.size(); ++i) {
 //        Logger::getLogger() << "closure for item " << item << "and rule " << item.rules[i] << std::endl;
-        closure(grammar, itemSet, itemSet.items[i]);
+        closure(itemSet, itemSet.items[i]);
     }
 
 //    Logger::getLogger() << "Item after clousre, index:" << itemSetIndex << std::endl;
@@ -87,12 +89,15 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 
 //    auto nextItemSetIndex = itemSetCollection.size();
 //    std::map<int, std::shared_ptr<LR0Item>> nextItems;
-    std::map<UnicodeString, LR0ItemSet> nextItemSets;
+    std::map<GRuleWordPtr, LR0ItemSet> nextItemSets;
     for (auto i = 0; i < itemSet.items.size(); ++i) {
-        auto position = itemSet.items[i].position;
+        auto wordIndex = itemSet.items[i].wordIndex;
         auto rule = itemSet.items[i].rule;
-        if (position < rule.rightHandle.size()) {
-            UnicodeString wordToRead = rule.rightHandle[position].rawValue;
+        if (wordIndex.ruleIndex < rule->getChildWords().size() &&
+                wordIndex.position < rule->getChildWords().at(wordIndex.ruleIndex).size())
+        {
+//            UnicodeString wordToRead = rule.rightHandle[wordIndex].rawValue;
+            GRuleWordPtr wordToRead = rule->getChildWords().at(wordIndex.ruleIndex).at(wordIndex.position);
 //            Logger::getLogger() << "Word to read: " << wordToRead << std::endl;
 //            Logger::getLogger() << "Rule: " << rule << ", position: " << position << std::endl;
 //            auto it = itemSet.transitions.find(wordToRead);
@@ -100,7 +105,7 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
             if (it == nextItemSets.end()) {
 //                ++nextItemSetIndex;
                 LR0ItemSet nextItemSet;
-                nextItemSet.addItem({rule, position + 1});
+                nextItemSet.addItem({rule, wordIndex.ruleIndex, wordIndex.position + 1});
                 nextItemSet.incomingWord = wordToRead;
                 nextItemSets[wordToRead] = nextItemSet;
 //                nextItemSets.push_back(nextItemSet);
@@ -109,7 +114,7 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 //                itemSet.transitions[wordToRead] = nextItemSetIndex;
             } else {
                 auto &nextItemSet = it->second;
-                nextItemSet.addItem({rule, position + 1});
+                nextItemSet.addItem({rule, wordIndex.ruleIndex, wordIndex.position + 1});
             }
         }
     }
@@ -119,7 +124,7 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
     for (auto &nextItemSetWordPair : nextItemSets) {
         auto nextItemSet = nextItemSetWordPair.second;
         bool itemSetFound = false;
-        if (!nextItemSet.incomingWord.isEmpty()) {
+        if (nextItemSet.incomingWord != nullptr) {
             auto wordItemPair = history.find(nextItemSet.incomingWord);
             if (wordItemPair != history.end()) {
                 auto items = wordItemPair->second;
@@ -190,26 +195,39 @@ void LR0ItemSetCollection::addItemSetToHistory(const LR0ItemSet &itemSet) {
     }
 }
 
-void LR0ItemSetCollection::closure(const Grammar &grammar, LR0ItemSet &itemSet, const LR0Item &currentItem) {
-    if (currentItem.rule.rightHandle.size() <= currentItem.position) {
+void LR0ItemSetCollection::closure(LR0ItemSet &itemSet, const LR0Item &currentItem) {
+    if (currentItem.rule->getChildWords().size() <= currentItem.wordIndex.ruleIndex ||
+            currentItem.rule->getChildWords().at(currentItem.wordIndex.ruleIndex).size() <= currentItem.wordIndex.position)
+    {
         return;
     }
-    UnicodeString currentWord = currentItem.rule.rightHandle.at(currentItem.position).rawValue;
+//    UnicodeString currentWord = currentItem.rule.rhs.at(currentItem.position).rawValue;
+    WordIndex currentItemIndex = currentItem.wordIndex;
+    GRuleWordPtr currentWord = currentItem.rule->getChildWords().at(currentItemIndex.ruleIndex).at(currentItemIndex.position);
 //    UnicodeString currentWord = currentItem.rule.rightHandle[currentItem.position];
 //    Logger::getLogger() << "Closure: currentWord is " << currentWord << std::endl;
-    auto rulesForWord = grammar.getRulesForLeftHandle(currentWord);
+//    auto rulesForWord = grammar.getRulesForLeftHandle(currentWord);
+//    auto rulesForWord = currentWord->getChildWords();
 //    Logger::getLogger() << "Rules for current word:" << std::endl;
 //    for (auto &rule : rulesForWord) {
 //        Logger::getLogger() << rule << std::endl;
 //    }
-    for (int i = 0; i < rulesForWord.size(); ++i) {
-        LR0Item itemRule {rulesForWord[i], 0};
-//        Logger::getLogger() << "got item for rule: " << itemRule << std::endl;
+
+//    for (int i = 0; i < rulesForWord.size(); ++i) {
+//        LR0Item itemRule {rulesForWord[i], 0};
+////        Logger::getLogger() << "got item for rule: " << itemRule << std::endl;
+//        if (itemRule != currentItem) {
+////            Logger::getLogger() << "recurs closure call for rule " << itemRule << std::endl;
+//            closure(grammar, itemSet, itemRule);
+////            Logger::getLogger() << "adding rule " << itemRule << " in item " << item << std::endl;
+//            itemSet.addItem(itemRule);
+//        }
+//    }
+    for (int i = 0; i < currentWord->getChildWords().size(); ++i) {
+        LR0Item itemRule { currentWord, i, 0 };
         if (itemRule != currentItem) {
-//            Logger::getLogger() << "recurs closure call for rule " << itemRule << std::endl;
-            closure(grammar, itemSet, itemRule);
-//            Logger::getLogger() << "adding rule " << itemRule << " in item " << item << std::endl;
-            itemSet.addItem(itemRule);
+            closure(itemSet, itemRule);
+            itemSet.addItem(std::move(itemRule));
         }
     }
 }

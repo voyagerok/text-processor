@@ -11,10 +11,14 @@
 namespace tproc {
 
 struct LR0Item {
-    SimpleGrammarRule rule;
-    int position;
-    UnicodeString getWordAtCurrentPosition();
-    bool atEndPosition() { return rule.rightHandle.size() <= position; }
+    GRuleWordPtr rule;
+//    int position;
+    WordIndex wordIndex;
+    GRuleWordPtr getWordAtCurrentPosition();
+//    bool atEndPosition() { return rule-> <= position; }
+    bool atEndPosition() {
+        return rule->getChildWords().at(wordIndex.ruleIndex).size() <= wordIndex.position;
+    }
 
     bool operator==(const LR0Item &other);
     bool operator!=(const LR0Item &other);
@@ -25,14 +29,20 @@ struct LR0ItemSet {
     using iter = std::vector<LR0Item>::iterator;
     using const_iter = std::vector<LR0Item>::const_iterator;
 
-    UnicodeString incomingWord;
+//    UnicodeString incomingWord;
+    GRuleWordPtr incomingWord = nullptr;
     int itemsetIndex = 0;
     std::vector<LR0Item> items;
-    std::map<UnicodeString, int> transitions;
+    std::map<GRuleWordPtr, int> transitions;
 
     void addItem(const LR0Item &item) { items.push_back(item); }
-    int getNextStateForWord(const UnicodeString &word);
-    std::map<UnicodeString, int> getTransitions() const { return transitions; }
+    void addItem(LR0Item &&item) { items.push_back(std::move(item)); }
+
+    template<class ...Args>
+    void emplaceItem(Args&&...args) { items.emplace_back(&args...); }
+
+    int getNextStateForWord(const GRuleWordPtr &word);
+    std::map<GRuleWordPtr, int> getTransitions() const { return transitions; }
 
     iter begin() { return items.begin(); }
     iter end() { return items.end(); }
@@ -51,11 +61,11 @@ public:
     int size() const { return itemSetCollection.size(); }
 private:
     void build(const Grammar &grammar, LR0ItemSet &itemSet, int itemSetIndex);
-    void closure(const Grammar &grammar, LR0ItemSet &itemSet, const LR0Item &currentItem);
+    void closure(LR0ItemSet &itemSet, const LR0Item &currentItem);
     void addItemSetToHistory(const LR0ItemSet &itemSet);
 
     std::vector<LR0ItemSet> itemSetCollection;
-    std::map<UnicodeString, std::vector<LR0ItemSet>> history;
+    std::map<GRuleWordPtr, std::vector<LR0ItemSet>> history;
 };
 
 }

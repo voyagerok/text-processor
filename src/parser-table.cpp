@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unicode/ustream.h>
+#include <algorithm>
 
 #include "parser-table.h"
 #include "grammar.h"
@@ -114,7 +115,7 @@ bool ReduceAction::equals(const ParserActionPtr &other) const {
 
 unsigned long ReduceAction::hash() const {
     int rawValue = static_cast<int>(this->actionName);
-    return std::hash<int>()(rawValue) + this->ruleIndex.hash();
+    return std::hash<int>()(rawValue) + ruleIndex.hash();
 }
 
 ParserTable::~ParserTable() {
@@ -147,14 +148,15 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
 
     auto itemSets = itemsetCollection.getItemSetCollection();
     for (int i = 0; i < itemSets.size(); ++i) {
-        LR0ItemSet currentItemSet = itemSets[i];
+        LR0ItemSet &currentItemSet = itemSets[i];
         for (auto &item : currentItemSet) {
             if (item.atEndPosition()) {
-                std::set<UnicodeString> followWords;
-                if (grammar.followWordsForNterminal(item.rule.leftPart, followWords)) {
-                    auto ruleIndex = grammar.getRuleIndex(item.rule);
+                std::set<GRuleWordPtr> followWords;
+                if (grammar.followWordsForNterminal(item.rule, followWords)) {
+                    RuleIndex ruleIndex { item.rule, item.wordIndex.ruleIndex };
                     for (auto &followWord : followWords) {
-                        if (grammar.isEndOfInput(followWord) && grammar.isStartRule(item.rule)) {
+//                        if (grammar.isEndOfInput(followWord) && grammar.isStartRule(item.rule)) {
+                        if (followWord->isEndOfInput() && followWord == grammar.getRoot()) {
                             addNewAction(i, followWord, std::make_shared<ParserAction> (ActionName::ACCEPT));
                         } else {
                             addNewAction(i, followWord, std::make_shared<ReduceAction> (ruleIndex));
@@ -165,8 +167,10 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
                     return false;
                 }
             } else {
-                UnicodeString nextWord = item.getWordAtCurrentPosition();
-                if (!grammar.isNonTerminal(nextWord)) {
+//                UnicodeString nextWord = item.getWordAtCurrentPosition();
+                GRuleWordPtr nextWord = item.getWordAtCurrentPosition();
+//                if (!grammar.isNonTerminal(nextWord)) {
+                if(!nextWord->isNonTerminal()) {
                     int nextState = currentItemSet.getNextStateForWord(nextWord);
                     addNewAction(i, nextWord, std::make_shared<ShiftAction> (nextState));
                 }
@@ -174,9 +178,12 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
         }
 
         auto transitions = currentItemSet.getTransitions();
-        std::map<UnicodeString, int> ntermTransitions;
+        std::map<GRuleWordPtr, int> ntermTransitions;
         for (auto &transition : transitions) {
-            if (grammar.isNonTerminal(transition.first)) {
+//            if (grammar.isNonTerminal(transition.first)) {
+//                ntermTransitions.insert(transition);
+//            }
+            if (transition.first->isNonTerminal()) {
                 ntermTransitions.insert(transition);
             }
         }
@@ -186,7 +193,7 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
     return true;
 }
 
-void ParserTable::addNewAction(int currentState, const UnicodeString &currentWord, std::shared_ptr<ParserAction> action) {
+void ParserTable::addNewAction(int currentState, const GRuleWordPtr &currentWord, std::shared_ptr<ParserAction> action) {
     if (actionTable == nullptr) {
         return;
     }
@@ -239,7 +246,10 @@ bool ParserTable::getActionsForStateAndWord(int state, const UnicodeString &word
         return false;
     }
     auto &actionsForState = actionTable->at(state);
-    auto actionsForWord = actionsForState.find(word);
+//    auto actionsForWord = actionsForState.find(word);
+    auto actionsForWord = std::find_if(actionsForState.begin(), actionsForState.end(), [&word] (auto &actionInfo){
+        return actionInfo.first->getRawValue() == word;
+    });
     if (actionsForWord == actionsForState.end()) {
         return false;
     }
@@ -252,12 +262,28 @@ bool ParserTable::getGotoStateForStateAndNterm(int state, const UnicodeString &n
         return false;
     }
     auto &jumpsForState = gotoTable->at(state);
-    auto jumpForNterm = jumpsForState.find(nterm);
+//    auto jumpForNterm = jumpsForState.find(nterm);
+    auto jumpForNterm = std::find_if(jumpsForState.begin(), jumpsForState.end(), [&nterm] (auto &jumpInfo) {
+        return jumpInfo.first->getRawValue() == nterm;
+    });
     if (jumpForNterm == jumpsForState.end()) {
         return false;
     }
     targetState = jumpForNterm->second;
     return true;
+}
+
+std::map<ReservedWord, UnicodeString> reservedWordsTable = {
+    {ReservedWord::INIT, "init"},
+    {ReservedWord::ANYWORD, "word"},
+    {ReservedWord::NAME, "name"},
+    {ReservedWord::PATR, "patr"},
+    {ReservedWord::SURNAME, "surn"}
+};
+
+bool ParserTable::getActionsForStateAndReservedWord(int state, ReservedWord reservedWordType, ParserActionSet &actionSet) const {
+    UnicodeString &reservedWord = reservedWordsTable[reservedWordType];
+    return this->getActionsForStateAndWord(state, reservedWord, actionSet);
 }
 
 }

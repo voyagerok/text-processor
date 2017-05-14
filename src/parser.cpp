@@ -196,16 +196,18 @@ void Parser::reducer(const Token &token, ActiveSet &activeSet, ActiveSet &curren
 //    ReduceInfo reduceInfo = *reduceSet.end();//reduceSet.front();
 //    reduceSet.erase(reduceSet.end());
 //    auto reductionRule = grammar.getRuleForRuleIndex(reduceInfo.ruleIndex)
-    SimpleGrammarRule reductionRule;
-    if (!grammar.getRuleForRuleIndex(reduceInfo.ruleIndex, reductionRule)) {
-        Logger::getErrLogger() << "Failed to get reduction rule for index" << std::endl;
-        return;
-    }
+//    SimpleGrammarRule reductionRule;
+//    if (!grammar.getRuleForRuleIndex(reduceInfo.ruleIndex, reductionRule)) {
+//        Logger::getErrLogger() << "Failed to get reduction rule for index" << std::endl;
+//        return;
+//    }
+//    GRuleWordPtr reductionRule = reduceInfo.rule;
+    GRuleWordPtr reductionRule = reduceInfo.ruleIndex.nterm;
     Logger::getLogger() << "Reducer: found grammar rule: " << reductionRule << std::endl;
 
-    auto nterm = reductionRule.leftPart;
+    auto nterm = reductionRule->getRawValue();
     auto startNode = reduceInfo.endNode;
-    int reductionPathLength = 2 * reductionRule.rightHandle.size() - 1;
+    int reductionPathLength = 2 * reductionRule->getChildWords().at(reduceInfo.ruleIndex.index).size() - 1;
     auto pathEndNodes = findAllDestsForPath(startNode, reductionPathLength);
 
     Logger::getLogger() << "Reducer: reduction path end nodes:" << std::endl;
@@ -346,6 +348,8 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
         actionSet.insert(rawActionSet.begin(), rawActionSet.end());
 //        actionSet[token.normalForm] = rawActionSet;
     }
+
+//    if ()
 
     if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;

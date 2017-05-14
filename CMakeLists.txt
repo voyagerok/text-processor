@@ -46,8 +46,6 @@ set(SRC
     "src/main.cpp"
     "src/grammar.cpp"
     "src/grammar.h"
-    "src/grammar-parser.h"
-    "src/grammar-parser.cpp"
     "src/grammar-rule.cpp"
     "src/grammar-rule.h"
     "src/utils/converter.h"
@@ -72,7 +70,11 @@ set(SRC
     ${FLEX_grammar_lexer_OUTPUTS}
     ${BISON_grammar_parser_OUTPUTS}
     "src/bison/g-parser-driver.hpp"
-    "src/bison/g-parser-driver.cpp")
+    "src/bison/g-parser-driver.cpp"
+    "src/action.cpp"
+    "src/action.hpp"
+    "src/predicate.cpp"
+    "src/predicate.hpp")
 
 include_directories(src
     ${CMAKE_BINARY_DIR}

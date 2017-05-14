@@ -51,10 +51,12 @@ protected:
     std::ostream &print(std::ostream &os) const override;
 };
 
+
 class ReduceAction : public ParserAction {
 public:
     ReduceAction(RuleIndex ruleIndex) : ParserAction {ActionName::REDUCE}, ruleIndex {ruleIndex} {}
     RuleIndex ruleIndex;
+//    GRuleWordPtr rule;
 
     bool equals(const ParserActionPtr &other) const override;
     unsigned long hash() const override;
@@ -78,11 +80,19 @@ public:
     }
 };
 
+enum class ReservedWord {
+    NAME,
+    SURNAME,
+    PATR,
+    INIT,
+    ANYWORD
+};
+
 class ParserTable {
 public:
     using ParserActionSet = std::unordered_set<std::shared_ptr<ParserAction>, ParserActionHash, ParserActionEquality>;
-    using ActionTable = std::vector<std::map<UnicodeString, ParserActionSet>>;
-    using GotoTable = std::vector<std::map<UnicodeString, int>>;
+    using ActionTable = std::vector<std::map<GRuleWordPtr, ParserActionSet>>;
+    using GotoTable = std::vector<std::map<GRuleWordPtr, int>>;
     using ActionTablePtr = std::shared_ptr<ActionTable>;
     using GotoTablePtr = std::shared_ptr<GotoTable>;
 
@@ -92,13 +102,14 @@ public:
 
     bool getActionsForStateAndWord(int state, const UnicodeString &word, ParserActionSet &actionSet) const;
     bool getGotoStateForStateAndNterm(int state, const UnicodeString &nterm, int &targetState) const;
+    bool getActionsForStateAndReservedWord(int state, ReservedWord reservedWrod, ParserActionSet &actionSet) const;
 
     bool buildTableFromGrammar(const Grammar &grammar);
 
     void printActionTable();
     void printGotoTable();
 private:
-    void addNewAction(int currentState, const UnicodeString &currentWord, ParserActionPtr action);
+    void addNewAction(int currentState, const GRuleWordPtr &currentWord, ParserActionPtr action);
 //    std::set<UnicodeString> followSetForWord(const Grammar &grammar, const UnicodeString &word);
 //    std::set<UnicodeString> firstSetForWord(const Grammar &grammar, const UnicodeString &word);
 

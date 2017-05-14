@@ -14,10 +14,10 @@
 #include <set>
 #include <memory>
 
-#include "grammar-parser.h"
+//#include "grammar-parser.h"
 #include "grammar-rule.h"
 #include "g-parser-driver.hpp"
-
+#include "action.hpp"
 
 namespace tproc {
 
@@ -25,26 +25,11 @@ namespace tproc {
 //class GrammarParser;
 //struct SimpleGrammarRule;
 
-struct RuleIndex {
-    UnicodeString leftHandle;
-    int simpleRuleNumber;
-    bool operator==(const RuleIndex &other) const;
-    bool operator!=(const RuleIndex &other) const;
-    unsigned long hash() const { return leftHandle.hashCode() + std::hash<int>()(simpleRuleNumber); }
-};
-
-struct WordInfo {
-    RuleIndex ruleIndex;
-    int position;
-};
-
-std::ostream &operator<<(std::ostream &os, RuleIndex ruleIndex);
-
 class Grammar {
-    using RulesContainer = std::map<UnicodeString, std::vector<SimpleGrammarRule>>;
+//    using RulesContainer = std::set<GRuleWordPtr>;
 public:
-    using iter = std::map<UnicodeString, std::vector<SimpleGrammarRule>>::iterator;
-    using const_iter = std::map<UnicodeString, std::vector<SimpleGrammarRule>>::const_iterator;
+//    using iter = std::map<UnicodeString, std::vector<SimpleGrammarRule>>::iterator;
+//    using const_iter = std::map<UnicodeString, std::vector<SimpleGrammarRule>>::const_iterator;
 
 //    Grammar(const Grammar&) = delete;
 //    Grammar &operator=(const Grammar&) = delete;
@@ -52,21 +37,25 @@ public:
     bool initFromFile(const std::string &filename);
     bool initFromPlainText(const UnicodeString &plainText);
 
-    std::vector<SimpleGrammarRule> getRulesForLeftHandle(const UnicodeString &leftHandle) const;
-    SimpleGrammarRule &getStartRule() const;
-    bool isNonTerminal(const UnicodeString &word) const { return rules.find(word) != rules.end(); }
-    RuleIndex getRuleIndex(const SimpleGrammarRule &rule) const;
-    bool followWordsForNterminal(const UnicodeString &nterm, std::set<UnicodeString> &followWords) const;
-    bool isEndOfInput(const UnicodeString &word) const;
-    bool isStartRule(const SimpleGrammarRule &rule) const;
+//    std::vector<SimpleGrammarRule> getRulesForLeftHandle(const UnicodeString &leftHandle) const;
+//    SimpleGrammarRule &getStartRule() const;
+//    bool isNonTerminal(const UnicodeString &word) const { return rules.find(word) != rules.end(); }
+//    RuleIndex getRuleIndex(const SimpleGrammarRule &rule) const;
+    bool followWordsForNterminal(const GRuleWordPtr &nterm, std::set<GRuleWordPtr> &followWords) const;
+    GRuleWordPtr getRoot() const { return this->root; }
+//    bool isEndOfInput(const UnicodeString &word) const;
+//    bool isStartRule(const SimpleGrammarRule &rule) const;
     void printFirstSet();
     void printFollowSet();
-    bool getRuleForRuleIndex(const RuleIndex &index, SimpleGrammarRule &rule) const;
+//    bool getRuleForRuleIndex(const RuleIndex &index, SimpleGrammarRule &rule) const;
 
-    iter begin();
-    iter end();
-    const_iter begin() const;
-    const_iter end() const;
+//    RulesContainer &getRules() { return parserDriver.getDefinedNterms(); }
+//    GRuleWordPtr getRoot() { return parserDriver.getRootNterm(); }
+
+//    iter begin();
+//    iter end();
+//    const_iter begin() const;
+//    const_iter end() const;
 
 private:
 //    void readRules();
@@ -75,23 +64,26 @@ private:
     void buildFirstSet();
     void buildFollowSet();
     void addExplicitRule();
-    std::set<UnicodeString> firstSetForNonTerminal(const UnicodeString &word);
-    std::set<UnicodeString> followSetForNonTerminal(const UnicodeString &word);
+    std::set<GRuleWordPtr> firstSetForNonTerminal(const GRuleWordPtr &word);
+    std::set<GRuleWordPtr> followSetForNonTerminal(const GRuleWordPtr &word);
 
     using SimpleGrammarRulePtr = std::shared_ptr<SimpleGrammarRule>;
-    using GrammarParserPtr = std::shared_ptr<GrammarParser>;
+//    using GrammarParserPtr = std::shared_ptr<GrammarParser>;
 
-    SimpleGrammarRulePtr startRule {nullptr};
-    RulesContainer rules;
-    GrammarParserPtr parser {nullptr};
+//    SimpleGrammarRulePtr startRule {nullptr};
+//    GrammarParserPtr parser {nullptr};
+    GRuleWordPtr root = nullptr;
 
-    std::map<UnicodeString, std::set<UnicodeString>> firstSet;
-    std::map<UnicodeString, std::set<UnicodeString>> followSet;
+    std::vector<ActionPtr> pendingActions;
 
-    std::set<UnicodeString> terminals;
-    std::map<UnicodeString, std::vector<WordInfo>> nonTerminals;
+    std::map<GRuleWordPtr, std::set<GRuleWordPtr>> firstSet;
+    std::map<GRuleWordPtr, std::set<GRuleWordPtr>> followSet;
 
-    GParserDriver parserDriver;
+    std::set<GRuleWordPtr> terminals;
+    std::set<GRuleWordPtr> nterminals;
+//    std::map<UnicodeString, std::vector<WordIndex>> nonTerminals;
+
+//    GParserDriver parserDriver;
 
 };
 

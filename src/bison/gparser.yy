@@ -43,9 +43,7 @@
 %token END 0 "end of file"
 %token <UnicodeString> WORD
 %token <int> NUM
-%token <UnicodeString> PROP_MAX_REP_TOK
-%token <UnicodeString> PROP_MIN_REP_TOK
-%token <UnicodeString> PROP_QUOTED_TOK
+%token <UnicodeString> ACTION_QUOTED_TOK
 %token <UnicodeString> PROP_START_UPPER_TOK
 %token ASSIGN
 %token DELIM
@@ -54,18 +52,23 @@
 %token RBRACKET
 %token LBRACKET
 %token RULE_END
+%token ACTION_RANGE ACTION_MIN_REP_TOK ACTION_MAX_REP_TOK
+%token ELLIPSIS
+%token ACT_SECT
+%token PRED_SECT
+%token COLON
+%token <UnicodeString> START_RULE_SYMBOL EMPTY_WORD
 
-%type <std::vector<ComplexGrammarRule>> rule_list
-%type <ComplexGrammarRule> rule
-%type <SimpleGrammarRule> simple_rule
-%type <ComplexGrammarRule> complex_rule
-%type <std::vector<GRuleWord>> left_handle_chain
-%type <GRuleWord> labeled_left_handle
-%type <UnicodeString> left_handle
-%type <std::vector<std::shared_ptr<Property>>> prop_list
-%type <std::shared_ptr<Property>> prop
-%type <std::shared_ptr<Property>> complex_prop_num
-%type <std::shared_ptr<Property>> simple_prop
+%type <std::vector<GRuleWordPtr>> rule_list
+%type <GRuleWordPtr> rule complex_rule
+%type <GRuleWordPtr> simple_rule
+%type <std::vector<GRuleWordPtr>> rhs_chain rhs_term_chain rhs_nterm_chain
+%type <GRuleWordPtr> labeled_rhs_term labeled_rhs_nterm
+%type <UnicodeString> rhs_term rhs_nterm rhs_term_empty
+%type <std::vector<PredicatePtr>> prop_list
+%type <PredicatePtr> prop simple_prop
+%type <ActionPtr> action
+%type <std::vector<ActionPtr>> action_list
 
 %locations
 
@@ -77,53 +80,83 @@ rule_list
     ;
 
 rule 
-    : complex_rule RULE_END { $$.swap($1); }
+    : complex_rule RULE_END { $$ = $1; }
     ;
 
 simple_rule
-    : CAPITAL_WORD ASSIGN left_handle_chain { $$ = SimpleGrammarRule { $1, $3}; }
+    : CAPITAL_WORD ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal> ( std::move($1), std::move($3)); driver.fixParentInfo($$); }
+    | START_RULE_SYMBOL ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal>(std::move($1), std::move($3)); }
     ;
 
 complex_rule
-    : simple_rule { $$ = ComplexGrammarRule { $1 }; }
-    | complex_rule DELIM left_handle_chain { $1.append($3); $$.swap($1); }
+    : simple_rule { $$ = $1; }
+    | complex_rule DELIM rhs_chain { $1->getChildWords().push_back($3); $$.swap($1); driver.fixParentInfo($$); }
     ;
 
-left_handle_chain 
-    : labeled_left_handle { $$ = { $1 }; }
-    | left_handle_chain labeled_left_handle { $1.push_back($2); $$.swap($1); }
+rhs_chain
+    : rhs_term_chain
+    | rhs_nterm_chain
     ;
 
-left_handle
+rhs_term_chain 
+    : labeled_rhs_term { $$ = { $1 }; }
+    | rhs_term_chain labeled_rhs_term { $1.push_back($2); $$.swap($1); }
+    ;
+
+rhs_nterm_chain
+    : labeled_rhs_nterm { $$ = { $1 }; }
+    | rhs_nterm_chain labeled_rhs_nterm { $1.push_back($2); $$.swap($1); }
+    ;
+
+rhs_nterm
+    : CAPITAL_WORD { $$.swap($1); }
+    ;
+
+labeled_rhs_nterm
+    : rhs_nterm { $$ = driver.handleNtermReduction ( std::move($1) ); }
+    | rhs_nterm LBRACKET action_list RBRACKET { $$ = driver.handleNtermReduction ( std::move($1) ); driver.fixAndSaveActionList($$, std::move($3)); }
+    ;
+
+rhs_term
     : WORD { $$.swap($1); }
-    | CAPITAL_WORD { $$.swap($1); }
     | "\"" WORD "\"" { $$.swap($2); }
     ;
 
-labeled_left_handle
-    : left_handle { $$ = GRuleWord { $1 }; }
-    | left_handle LBRACKET prop_list RBRACKET { GRuleWord temp = driver.makeRuleWord($1, $3); $$.swap(temp); }
+rhs_term_empty
+    : EMPTY_WORD { $$.swap($1); }
+    ;
+
+labeled_rhs_term
+    : rhs_term_empty { $$ = StandardTerminalStorage::getEmptyTerminal(); }
+    | rhs_term { $$ = driver.handleTermReduction(std::move($1)); }
+    | rhs_term LBRACKET prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($3));  }
+    | rhs_term LBRACKET action_list RBRACKET { $$ = driver.handleTermReduction(std::move($1)); driver.fixAndSaveActionList($$, std::move($3)); }
+    | rhs_term LBRACKET action_list prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($4)); driver.fixAndSaveActionList($$, std::move($3)); }
+    ;
+
+action_list
+    : ACT_SECT COLON action { $$ = { $3 }; }
+    | action_list action { $1.push_back($2); $$.swap($1); }
+    ;
+
+action
+    : ACTION_RANGE ASSIGN NUM ELLIPSIS NUM { $$ = std::make_shared<MinMaxAction>($3, $5); }
+    | ACTION_QUOTED_TOK { $$ = std::make_shared<QuoteAction>(); }
     ;
 
 prop_list
-    : prop { $$ = std::vector<std::shared_ptr<Property>> { $1 }; }
+    : PRED_SECT COLON prop { $$ = { $3 }; }
     | prop_list prop { $1.push_back($2); $$.swap($1); }
     ;
 
 prop
-    : complex_prop_num
-    | simple_prop
-    ;
-
-complex_prop_num
-    : PROP_MIN_REP_TOK ASSIGN NUM { $$ = std::make_shared<ComplexNumProperty> ( GRuleWordPropType::MIN_REP, $3 ); }
-    | PROP_MAX_REP_TOK ASSIGN NUM { $$ = std::make_shared<ComplexNumProperty> ( GRuleWordPropType::MAX_REP, $3 ); }
+    : simple_prop
     ;
 
 simple_prop
-    : PROP_QUOTED_TOK { $$ = std::make_shared<SimpleProperty> ( GRuleWordPropType::QUOTED ); }
-    | PROP_START_UPPER_TOK { $$ = std::make_shared<SimpleProperty> ( GRuleWordPropType::START_UPPER ); }
+    : PROP_START_UPPER_TOK { $$ = std::make_shared<UpperCaseFirstPredicate> (); }
     ;
+
 
 %%
 

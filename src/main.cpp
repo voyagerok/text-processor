@@ -25,7 +25,6 @@
 #include <boost/program_options.hpp>
 #include <fstream>
 
-#include "grammar-parser.h"
 #include "grammar.h"
 #include "lr0-items.h"
 #include "parser-table.h"

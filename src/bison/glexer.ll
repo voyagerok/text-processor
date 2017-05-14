@@ -40,87 +40,121 @@ cyr_low {cyr_pref1}{cyr_suf1}|{cyr_pref2}{cyr_suf2}
 
 lword [a-z][a-z]*\_*[a-z]*
 uword [A-ZА-Я][a-zа-я]*\_*[a-zа-я]*
-lbracket "<"
-rbracket ">"
+lbracket "("
+rbracket ")"
+predicate_section "predicates"
+action_section "actions"
+colon ":"
 
 %%
 %{          /** Code executed at the beginning of yylex **/
             yylval = lval;
 %}
 
-=           {
-                return token::ASSIGN;
-            }
+=               {
+                    return token::ASSIGN;
+                }
 
-\|          {
-                return token::DELIM;
-            }
+\|              {
+                    return token::DELIM;
+                }
 
-"max_rep"     {
-                yylval->build<UnicodeString>(yytext);
-                return token::PROP_MAX_REP_TOK;
-            }
+"predicates"    {
+                    return token::PRED_SECT;
+                }
 
-"min_rep"     {
-                yylval->build<UnicodeString>(yytext);
-                return token::PROP_MIN_REP_TOK;
-            }
+"actions"       {
+                    return token::ACT_SECT;
+                }
 
-"quoted"      {
-                yylval->build<UnicodeString>(yytext);
-                return token::PROP_QUOTED_TOK;
-            }
+{colon}         {
+                    return token::COLON;
+                }
 
-"upper1"      {
-                yylval->build<UnicodeString>(yytext);
-                return token::PROP_START_UPPER_TOK; 
-            }
 
-\n          {
-                loc->lines(1);
-                /** return token::NEWLINE; **/
-            }
+"max_rep"       {
+                    /** yylval->build<UnicodeString>(yytext); **/
+                    return token::ACTION_MAX_REP_TOK;
+                }
 
-{lword}     {
-               yylval->build<UnicodeString>( yytext );
-               return( token::WORD );
-            }
+"min_rep"       {
+                    /** yylval->build<UnicodeString>(yytext); **/
+                    return token::ACTION_MIN_REP_TOK;
+                }
 
-{cyr_low}+  { 
-                yylval->build<UnicodeString>( yytext );
-                return( token::WORD );
-            }
+"range"         {
+                    return token::ACTION_RANGE;
+                }
 
-{uword}     {
-                yylval->build<UnicodeString>( yytext );
-                return( token::CAPITAL_WORD );
-            }
+"\.\.\."        {
+                    return token::ELLIPSIS;
+                }
 
-{cyr_cap}+  {
-                yylval->build<UnicodeString>( yytext );
-                return( token::CAPITAL_WORD );
-            }
+"quoted"        {
+                    /** yylval->build<UnicodeString>(yytext); **/
+                    return token::ACTION_QUOTED_TOK;
+                }
 
-";"        {
-                return token::RULE_END;
-            }
+"upper1"        {
+                    yylval->build<UnicodeString>(yytext);
+                    return token::PROP_START_UPPER_TOK; 
+                }
 
-[0-9]+      {
-                /** yylval->build<int>(yytext); **/
-                int num = atoi(yytext);
-                yylval->build<int>(num);
-                return token::NUM;
-            }
+"S"             {
+                    yylval->build<UnicodeString>(yytext);
+                    return token::START_RULE_SYMBOL;
+                }
 
-[ \t]+      {  }
+"empty"         {
+                    yylval->build<UnicodeString>(yytext);
+                    return token::EMPTY_WORD;
+                }
 
-{lbracket}  { return token::LBRACKET; }
+\n              {
+                    loc->lines(1);
+                    /** return token::NEWLINE; **/
+                }
 
-{rbracket}  { return token::RBRACKET; }
+{lword}         {
+                    yylval->build<UnicodeString>( yytext );
+                    return( token::WORD );
+                }
 
-\"          { }
+{cyr_low}+      { 
+                    yylval->build<UnicodeString>( yytext );
+                    return( token::WORD );
+                }
 
-.           { std::cout << "Found unknown character at " << loc << std::endl; }
+{uword}         {
+                    yylval->build<UnicodeString>( yytext );
+                    return( token::CAPITAL_WORD );
+                }
+
+{cyr_cap}+      {
+                    yylval->build<UnicodeString>( yytext );
+                    return( token::CAPITAL_WORD );
+                }
+
+";"             {
+                    return token::RULE_END;
+                }
+
+[0-9]+          {
+                    /** yylval->build<int>(yytext); **/
+                    int num = atoi(yytext);
+                    yylval->build<int>(num);
+                    return token::NUM;
+                }
+
+[ \t]+          {  }
+
+{lbracket}      { return token::LBRACKET; }
+
+{rbracket}      { return token::RBRACKET; }
+
+\"              { }
+
+.               { std::cout << "Found unknown character at " << loc << std::endl; }
 
 %%
 
