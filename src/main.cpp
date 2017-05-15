@@ -132,17 +132,20 @@ int main(int argc, char *argv[]) {
     tproc::LR0ItemSetCollection itemSet;
 ////    if (grammar.initFromPlainText(ustring)) {
     if (grammar.initFromFile(args.grammarFilename)) {
-        itemSet.build(grammar);
+//        grammar.printFirstSet();
+//        grammar.printFollowSet();
+
+//        itemSet.build(grammar);
 //        auto items = itemSet.getItemSetCollection();
 //        tproc::Logger::getLogger() << "Final itemset is:" << std::endl;
 //        for (auto &item : items) {
-//            tproc::Logger::getLogger() << "Incoming word is " << item.incomingWord << std::endl;
+//            tproc::Logger::getLogger() << "Incoming word is ";// << item.incomingWord->getRawValue() << std::endl;
+//            item.incomingWord ? tproc::Logger::getLogger() << item.incomingWord->getRawValue() :
+//                                                              tproc::Logger::getLogger() << "empty";
+//            tproc::Logger::getLogger() << std::endl;
 //            tproc::Logger::getLogger() << "State number is:" << item.itemsetIndex << std::endl;
 //            tproc::Logger::getLogger() << item << "\n\n";
 //        }
-
-////        grammar.printFirstSet();
-////        grammar.printFollowSet();
 
         tproc::ParserTable table;
         table.buildTableFromGrammar(grammar);
@@ -150,7 +153,7 @@ int main(int argc, char *argv[]) {
 //        table.printGotoTable();
 
         const UnicodeString inputText = "Сегодня Алексей Михайлович купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
-////        const UnicodeString inputText = "черный седан.";
+//////        const UnicodeString inputText = "черный седан.";
         tproc::Parser parser(grammar, table);
         tproc::Tokenizer tokenizer(inputText);
         auto sentences = tokenizer.getSentences();

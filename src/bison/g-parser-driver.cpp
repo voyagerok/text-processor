@@ -2,9 +2,11 @@
 
 #include <fstream>
 #include <sstream>
+#include <unicode/ustream.h>
 
 #include "gparser.tab.hh"
 #include "g-scanner.hpp"
+#include "utils/logger.h"
 
 namespace tproc {
 
@@ -50,6 +52,7 @@ void GParserDriver::appendRule(const GRuleWordPtr &ntermPtr) {
 //    currentRuleWordNum =0;
 //    incSimpleRuleIndex();
 
+    Logger::getLogger() << "appendRule: " << ntermPtr << std::endl;
 
     auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&ntermPtr](auto &wordPtr){
         return wordPtr->getRawValue() == ntermPtr->getRawValue();
@@ -62,10 +65,10 @@ void GParserDriver::appendRule(const GRuleWordPtr &ntermPtr) {
 
     auto pendFound = std::find_if(pendingNterms.begin(), pendingNterms.end(), [&ntermPtr](auto &wordPtr){ return wordPtr->getRawValue() == ntermPtr->getRawValue(); });
     if (pendFound != pendingNterms.end()) {
-        auto childWords = (*pendFound)->getChildWords();
-        childWords.swap(ntermPtr->getChildWords());
-        definedNterms.insert(*pendFound);
+        GRuleWordPtr pendPtr = *pendFound;
         pendingNterms.erase(pendFound);
+        std::move(ntermPtr->getChildWords().begin(), ntermPtr->getChildWords().end(), std::back_inserter(pendPtr->getChildWords()));
+        definedNterms.insert(pendPtr);
         return;
     }
 
@@ -82,6 +85,8 @@ void GParserDriver::fixAndSaveActionList(const GRuleWordPtr &actionWord, std::ve
 }
 
 void GParserDriver::fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ const GRuleWordPtr &parent/*, int baseRuleIndex*/) {
+    Logger::getLogger() << "Fix parent info: " << parent->getRawValue() << std::endl;
+
     std::vector<GRuleWordPtr> &words = parent->getChildWords().back();
     int baseRuleIndex = parent->getChildWords().size() - 1;
 
@@ -94,14 +99,16 @@ void GParserDriver::fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ co
 //        word->getParentNterms().push_back(parent);
 //        rootCandidates.erase(word);
         ParentInfo wordIndex { parent, baseRuleIndex, i };
-        words[i]->getParentNterms().push_back(std::move(wordIndex));
+        words[i]->getParentNterms().push_back(wordIndex);
         rootCandidates.erase(words[i]);
     }
 }
 
 GRuleWordPtr GParserDriver::handleNtermReduction(UnicodeString &&rawValue) {
-    auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&rawValue](auto &wordPtr){ return wordPtr->getRawValue() == rawValue; });
+    Logger::getLogger() << "handleNtermReduction: " << rawValue << std::endl;
+    auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&rawValue](const GRuleWordPtr &wordPtr){ return wordPtr->getRawValue() == rawValue; });
     if (defFound != definedNterms.end()) {
+        rootCandidates.erase(*defFound);
         return (*defFound);
     } else {
         auto pendingNterm = std::make_shared<NonTerminal>(std::move(rawValue));
@@ -111,7 +118,8 @@ GRuleWordPtr GParserDriver::handleNtermReduction(UnicodeString &&rawValue) {
 }
 
 GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue) {
-    auto termFoud = std::find_if(terminals.begin(), terminals.end(), [&rawValue](auto &wordPtr){
+    Logger::getLogger() << "handleTermReduction: " << rawValue << std::endl;
+    auto termFoud = std::find_if(terminals.begin(), terminals.end(), [&rawValue](const GRuleWordPtr &wordPtr){
         if (wordPtr->getRawValue() != rawValue) return false;
         auto termPtr = std::dynamic_pointer_cast<Terminal>(wordPtr);
         return (termPtr != nullptr && termPtr->getPredicates().size() == 0);
@@ -126,7 +134,7 @@ GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue) {
 }
 
 GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue, std::vector<PredicatePtr> &&predicates) {
-    auto termFoud = std::find_if(terminals.begin(), terminals.end(), [&rawValue, &predicates](auto &wordPtr){
+    auto termFoud = std::find_if(terminals.begin(), terminals.end(), [&rawValue, &predicates](const GRuleWordPtr &wordPtr){
         if (wordPtr->getRawValue() != rawValue)
             return false;
         auto termPtr = std::dynamic_pointer_cast<Terminal>(wordPtr);

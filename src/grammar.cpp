@@ -65,6 +65,12 @@ bool Grammar::initFromFile(const std::string &filename) {
         this->pendingActions = std::move(parserDriver.getPendingActions());
 
         addExplicitRule();
+
+        Logger::getLogger() << "Rules are:" << std::endl;
+        for (auto &nterm : nterminals) {
+            Logger::getLogger() << nterm << std::endl;
+        }
+
         buildFirstSet();
         buildFollowSet();
     }
@@ -306,12 +312,13 @@ std::set<GRuleWordPtr> Grammar::followSetForNonTerminal(const GRuleWordPtr &word
 //        return {END_OF_INPUT};
 //    }
 
+
+    Logger::getLogger() << "followSetForNonTerminal: " << word->getRawValue() << std::endl;
+
     auto followForWord = followSet.find(word);
     if (followForWord != followSet.end()) {
         return  followForWord->second;
     }
-
-    Logger::getLogger() << "word: " << word << std::endl;
 
     std::set<GRuleWordPtr> follow;
     auto wordIndexInfo = word->getParentNterms();
@@ -415,7 +422,7 @@ bool Grammar::followWordsForNterminal(const GRuleWordPtr &nterm, std::set<GRuleW
 
 void Grammar::printFirstSet() {
     for (auto &set : firstSet) {
-        Logger::getLogger() << "First set for word: " << set.first << std::endl;
+        Logger::getLogger() << "First set for word: " << set.first->getRawValue() << std::endl;
         for (auto &word : set.second) {
             Logger::getLogger() << "Word in first set: " << word << std::endl;
         }
@@ -424,7 +431,7 @@ void Grammar::printFirstSet() {
 
 void Grammar::printFollowSet() {
     for (auto &set : followSet) {
-        Logger::getLogger() << "Follow set for word: " << set.first << std::endl;
+        Logger::getLogger() << "Follow set for nterm: " << set.first->getRawValue() << std::endl;
         for (auto &word : set.second) {
             Logger::getLogger() << "Word in follow set: " << word << std::endl;
         }

@@ -8,6 +8,7 @@
 %code requires{
 #include <memory>
 #include <unicode/unistr.h>
+#include <unicode/ustream.h>
 
 #include "g-parser-driver.hpp"
 #include "grammar-rule.h"
@@ -43,8 +44,7 @@
 %token END 0 "end of file"
 %token <UnicodeString> WORD
 %token <int> NUM
-%token <UnicodeString> ACTION_QUOTED_TOK
-%token <UnicodeString> PROP_START_UPPER_TOK
+%token ACTION_QUOTED_TOK PROP_START_UPPER_TOK
 %token ASSIGN
 %token DELIM
 %token NEWLINE
@@ -62,7 +62,7 @@
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
 %type <GRuleWordPtr> simple_rule
-%type <std::vector<GRuleWordPtr>> rhs_chain rhs_term_chain rhs_nterm_chain
+%type <std::vector<GRuleWordPtr>> rhs_chain
 %type <GRuleWordPtr> labeled_rhs_term labeled_rhs_nterm
 %type <UnicodeString> rhs_term rhs_nterm rhs_term_empty
 %type <std::vector<PredicatePtr>> prop_list
@@ -85,7 +85,7 @@ rule
 
 simple_rule
     : CAPITAL_WORD ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal> ( std::move($1), std::move($3)); driver.fixParentInfo($$); }
-    | START_RULE_SYMBOL ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal>(std::move($1), std::move($3)); }
+    | START_RULE_SYMBOL ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal>(std::move($1), std::move($3)); driver.fixParentInfo($$); }
     ;
 
 complex_rule
@@ -94,18 +94,10 @@ complex_rule
     ;
 
 rhs_chain
-    : rhs_term_chain
-    | rhs_nterm_chain
-    ;
-
-rhs_term_chain 
     : labeled_rhs_term { $$ = { $1 }; }
-    | rhs_term_chain labeled_rhs_term { $1.push_back($2); $$.swap($1); }
-    ;
-
-rhs_nterm_chain
-    : labeled_rhs_nterm { $$ = { $1 }; }
-    | rhs_nterm_chain labeled_rhs_nterm { $1.push_back($2); $$.swap($1); }
+    | rhs_chain labeled_rhs_term { $1.push_back($2); $$.swap($1); }
+    | labeled_rhs_nterm { $$ = { $1 }; }
+    | rhs_chain labeled_rhs_nterm { $1.push_back($2); $$.swap($1); }
     ;
 
 rhs_nterm
@@ -118,12 +110,12 @@ labeled_rhs_nterm
     ;
 
 rhs_term
-    : WORD { $$.swap($1); }
-    | "\"" WORD "\"" { $$.swap($2); }
+    : WORD {$$.swap($1); }
+    | "\"" WORD "\"" {$$.swap($2); }
     ;
 
 rhs_term_empty
-    : EMPTY_WORD { $$.swap($1); }
+    : EMPTY_WORD {$$.swap($1); }
     ;
 
 labeled_rhs_term
@@ -150,7 +142,7 @@ prop_list
     ;
 
 prop
-    : simple_prop
+    : simple_prop { $$.swap($1); }
     ;
 
 simple_prop

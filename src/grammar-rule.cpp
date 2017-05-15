@@ -10,6 +10,10 @@
 
 namespace tproc {
 
+//std::ostream &printRule(const GRuleWordPtr &rule, ) {
+
+//}
+
 std::ostream &operator<<(std::ostream &os, RuleIndex ruleIndex) {
     os << "word: " << ruleIndex.nterm << ", ruleNumber" << ruleIndex.index << std::endl;
     return os;
@@ -68,7 +72,18 @@ bool RuleIndex::operator!=(const RuleIndex &other) const {
 //}
 
 std::ostream &NonTerminal::print(std::ostream &os) const {
-    os << this->rawValue;
+//    os << this->rawValue;
+    for (int i = 0; i < childWords.size(); ++i) {
+        auto &ruleBody = childWords[i];
+        os << this->rawValue << " =";
+        for (auto &ruleWord : ruleBody) {
+            os << " " << ruleWord->getRawValue();
+        }
+        if (i < childWords.size() - 1) {
+            os << std::endl;
+        }
+    }
+
     return os;
 }
 

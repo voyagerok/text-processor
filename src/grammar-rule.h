@@ -192,11 +192,15 @@ public:
 //    bool operator==(const Terminal &other) const; //{ return  this->rawValue == other.rawValue && propsMask == other.propsMask; }
 //    bool operator!=(const Terminal &other) const; //{ return  this->rawValue != other.rawValue || propsMask != other.propsMask; }
 
-    std::vector<ChildWords> &getChildWords() override { throw std::runtime_error("bad call: Terminal class has no implementation for getChildWords()"); }
+    std::vector<ChildWords> &getChildWords() override {
+        throw std::runtime_error("bad call: Terminal class has no implementation for getChildWords()");
+    }
     std::vector<PredicatePtr> &getPredicates() { return predicates; }
 
 //    unsigned long hash_code() const override {
 };
+
+void printRule(const GRuleWordPtr &rule);
 
 struct StandardTerminalStorage {
     static GRuleWordPtr getEndOfInputTerminal() {

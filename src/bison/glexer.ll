@@ -86,7 +86,7 @@ colon ":"
                     return token::ACTION_RANGE;
                 }
 
-"\.\.\."        {
+"\.\."        {
                     return token::ELLIPSIS;
                 }
 
@@ -96,7 +96,7 @@ colon ":"
                 }
 
 "upper1"        {
-                    yylval->build<UnicodeString>(yytext);
+                    /** yylval->build<UnicodeString>(yytext); **/
                     return token::PROP_START_UPPER_TOK; 
                 }
 
@@ -146,9 +146,9 @@ colon ":"
                     return token::NUM;
                 }
 
-[ \t]+          {  }
+[ \t]+          { std::cout << "Found whitespace" << std::endl;  }
 
-{lbracket}      { return token::LBRACKET; }
+{lbracket}      { std::cout << "Found left bracket" << std::endl; return token::LBRACKET; }
 
 {rbracket}      { return token::RBRACKET; }
 

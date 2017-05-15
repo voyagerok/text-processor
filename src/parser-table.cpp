@@ -218,7 +218,7 @@ void ParserTable::printActionTable() {
         Logger::getLogger() << "Actions for state " << i << std::endl;
         auto actions = actionTable->at(i);
         for (auto &action : actions) {
-            Logger::getLogger() << "Word: " << action.first << std::endl;
+            Logger::getLogger() << "Word: " << action.first->getRawValue() << std::endl;
             for (auto &parserAction : action.second) {
                 Logger::getLogger() << "Action: " << *parserAction << std::endl;
             }
@@ -235,7 +235,7 @@ void ParserTable::printGotoTable() {
         Logger::getLogger() << "Goto for state: " << i << std::endl;
         auto gotos = gotoTable->at(i);
         for (auto &gotoJump : gotos) {
-            Logger::getLogger() << "Word: " << gotoJump.first << std::endl;
+            Logger::getLogger() << "Word: " << gotoJump.first->getRawValue() << std::endl;
             Logger::getLogger() << "State: " << gotoJump.second << std::endl;
         }
     }
