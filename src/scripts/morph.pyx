@@ -6,6 +6,7 @@ from libcpp.map cimport map
 from libcpp cimport bool
 from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport make_shared
+from libcpp.utility cimport pair
 
 from cython.operator cimport dereference as deref
 
@@ -26,6 +27,9 @@ cdef extern from "tokenizer.h" namespace "tproc":
         PATR,
         INIT
 
+cdef extern from "<utility>" namespace "std":
+    cdef pair[T1,T2] make_pair[T1,T2](T1 t1, T2 t2)
+
 cdef public cppclass AnalysisResult:
     UnicodeString normalForm
     UnicodeString partOfSpeech
@@ -33,7 +37,7 @@ cdef public cppclass AnalysisResult:
 
 morph = pymorphy2.MorphAnalyzer()
 
-cdef analyzeToken(const UnicodeString tok, map[UnicodeString, vector[shared_ptr[AnalysisResult]]] &analysis_results):
+cdef analyzeToken(const UnicodeString tok, vector[pair[UnicodeString, vector[shared_ptr[AnalysisResult]]]] &analysis_results):
     cdef vector[shared_ptr[AnalysisResult]] res_for_tok    
     cdef shared_ptr[AnalysisResult] analysis_res
    
@@ -45,7 +49,7 @@ cdef analyzeToken(const UnicodeString tok, map[UnicodeString, vector[shared_ptr[
 
     cdef unsigned propMask
     for morph_result in morph_results:
-        if morph_result.score < 0.5:
+        if morph_result.score < 0.1:
             continue
         analysis_res = make_shared[AnalysisResult]()
         deref(analysis_res).normalForm = UnicodeString(morph_result.normal_form.encode('UTF-8'))
@@ -62,8 +66,9 @@ cdef analyzeToken(const UnicodeString tok, map[UnicodeString, vector[shared_ptr[
             propMask |= INIT
         deref(analysis_res).nameCharMask = propMask
         res_for_tok.push_back(analysis_res)
-    analysis_results[tok] = res_for_tok
+    #analysis_results[tok] = res_for_tok
+    analysis_results.push_back(pair[UnicodeString, vector[shared_ptr[AnalysisResult]]](tok, res_for_tok))
 
-cdef public analyzeTokens(const vector[UnicodeString] &tokens, map[UnicodeString, vector[shared_ptr[AnalysisResult]]] &analysis_results):
+cdef public analyzeTokens(const vector[UnicodeString] &tokens, vector[pair[UnicodeString, vector[shared_ptr[AnalysisResult]]]] &analysis_results):
     for i in xrange(tokens.size()):
         analyzeToken(tokens[i], analysis_results)

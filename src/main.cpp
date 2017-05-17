@@ -149,10 +149,11 @@ int main(int argc, char *argv[]) {
 
         tproc::ParserTable table;
         table.buildTableFromGrammar(grammar);
-//        table.printActionTable();
-//        table.printGotoTable();
+        table.printActionTable();
+        table.printGotoTable();
 
-        const UnicodeString inputText = "Сегодня Алексей Михайлович купиил новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
+//        const UnicodeString inputText = "Сегодня Алексей Михайлович купил Новую машину. Это отличная тачка!! Больше не придется ездить на общественном транспорте.";
+//        const UnicodeString inputText = "Алексей \"игрок\" в покер.";
 //////        const UnicodeString inputText = "черный седан.";
         tproc::Parser parser(grammar, table);
         tproc::Tokenizer tokenizer(inputText);

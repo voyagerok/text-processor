@@ -59,6 +59,8 @@ enum class GRuleWordPropType {
 //};
 
 
+class Token;
+
 class GRuleWord;
 
 using GRuleWordPtr = std::shared_ptr<GRuleWord>;
@@ -127,8 +129,9 @@ public:
     virtual ~GRuleWord() = default;
     UnicodeString &getRawValue() { return this->rawValue; }
 //    virtual bool checkProperty(GRuleWordPropType prop) const = 0;
-    virtual bool checkToken(const UnicodeString&) const = 0;
+    virtual bool checkToken(const Token&, const UnicodeString &word) const = 0;
     virtual bool isNonTerminal() const = 0;
+    virtual unsigned getPredciatesSize() const = 0;
 //    friend bool operator==(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) { return lhs->equals(rhs); }
 //    friend bool operator!=(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) { return !(lhs->equals(rhs)); }
     friend std::ostream &operator<<(std::ostream &os, const GRuleWordPtr &word) { return word->print(os); }
@@ -137,12 +140,19 @@ public:
     std::vector<ParentInfo> &getParentNterms() { return  this->parentNterms; }
     bool isEndOfInput() { return rawValue == END_OF_INPUT; }
     bool isEmptyWord() { return rawValue == EMPTY; }
-    bool isRhsEmpty() {
+    bool isRhsEmpty(int index) {
         auto childWords = getChildWords();
-        if (childWords.size() == 1 && childWords[0].size() == 1) {
-            return childWords[0][0]->isEmptyWord();
+        if (childWords[index].size() == 1) {
+            return childWords[index][0]->isEmptyWord();
         }
         return false;
+    }
+    int getRhsLength(int index) {
+        if (isRhsEmpty(index)) {
+            return 0;
+        } else {
+            return getChildWords().at(index).size();
+        }
     }
 
 //    virtual unsigned long hash_code() const = 0;
@@ -161,7 +171,10 @@ public:
     NonTerminal(UnicodeString &&word, ChildWords &&words) : GRuleWord { std::move(word) }, childWords { { std::move(words) } } {}
     bool isNonTerminal() const override { return true; }
 //    bool checkProperty(GRuleWordPropType) const override { throw std::runtime_error("bad call"); }
-    bool checkToken(const UnicodeString&) const override { throw std::runtime_error("bad call: NonTerminal class has no implementation for checkToken(const UnicodeString&)"); }
+    bool checkToken(const Token&, const UnicodeString &word) const override {
+        throw std::runtime_error("bad call: NonTerminal class has no implementation for checkToken(const UnicodeString&)");
+    }
+    unsigned getPredciatesSize() const override { throw std::runtime_error("bad call: NonTermonal class has no implementation for getPredicatesSize()"); }
 //    bool operator==(const NonTerminal &other) const { return this->rawValue == other.rawValue; }
 //    bool operator!=(const NonTerminal &other) const { return this->rawValue == other.rawValue; }
     void swap(NonTerminal &other);
@@ -187,7 +200,8 @@ public:
     bool isNonTerminal() const override { return false; }
 //    unsigned &getPropertyMask() { return propsMask; }
 
-    bool checkToken(const UnicodeString&) const override;
+    bool checkToken(const Token&, const UnicodeString & word) const override;
+    unsigned getPredciatesSize() const override { return predicates.size(); }
 //    bool checkProperty(GRuleWordPropType propType) const override;
 //    bool operator==(const Terminal &other) const; //{ return  this->rawValue == other.rawValue && propsMask == other.propsMask; }
 //    bool operator!=(const Terminal &other) const; //{ return  this->rawValue != other.rawValue || propsMask != other.propsMask; }

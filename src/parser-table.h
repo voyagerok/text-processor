@@ -80,6 +80,13 @@ public:
     }
 };
 
+class RuleWordComparator {
+public:
+    bool operator()(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) const {
+        return lhs->getPredciatesSize() < rhs->getPredciatesSize();
+    }
+};
+
 enum class ReservedWord {
     NAME,
     SURNAME,
@@ -88,10 +95,13 @@ enum class ReservedWord {
     ANYWORD
 };
 
+class Token;
+
 class ParserTable {
 public:
     using ParserActionSet = std::unordered_set<std::shared_ptr<ParserAction>, ParserActionHash, ParserActionEquality>;
-    using ActionTable = std::vector<std::map<GRuleWordPtr, ParserActionSet>>;
+//    using ActionTable = std::vector<std::map<GRuleWordPtr, ParserActionSet>>;
+    using ActionTable = std::vector<std::map<UnicodeString, std::map<GRuleWordPtr, ParserActionSet, RuleWordComparator>>>;
     using GotoTable = std::vector<std::map<GRuleWordPtr, int>>;
     using ActionTablePtr = std::shared_ptr<ActionTable>;
     using GotoTablePtr = std::shared_ptr<GotoTable>;
@@ -100,9 +110,9 @@ public:
 //    ParserTable(const ParserTable&) = delete;
 //    ParserTable &operator=(const ParserTable&) = delete;
 
-    bool getActionsForStateAndWord(int state, const UnicodeString &word, ParserActionSet &actionSet) const;
+    bool getActionsForStateAndWord(int state, const UnicodeString &word, const Token &token, ParserActionSet &actionSet) const;
     bool getGotoStateForStateAndNterm(int state, const UnicodeString &nterm, int &targetState) const;
-    bool getActionsForStateAndReservedWord(int state, ReservedWord reservedWrod, ParserActionSet &actionSet) const;
+    bool getActionsForStateAndReservedWord(int state, ReservedWord reservedWrod, const Token &token, ParserActionSet &actionSet) const;
 
     bool buildTableFromGrammar(const Grammar &grammar);
 

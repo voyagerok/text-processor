@@ -24,6 +24,12 @@ struct Token {
     UnicodeString partOfSpeech;
     unsigned propMask = 0;
 
+    Token(UnicodeString &&word, UnicodeString &&norm) :
+        word { std::move (word) }, normalForm { std::move(norm) } {}
+    Token(const UnicodeString &word, const UnicodeString &norm) :
+        word { word }, normalForm { norm } {}
+    Token() = default;
+
     unsigned long hash() const;
 
     bool operator==(const Token &other);

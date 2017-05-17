@@ -48,40 +48,56 @@ namespace tproc {
 //    }
 //}
 
+static void printParents(const GRuleWordPtr &ruleWord) {
+    Logger::getLogger() << "Parent:" << std::endl;
+    for (auto &parent : ruleWord->getParentNterms()) {
+        Logger::getLogger() << parent.nterm << std::endl;
+    }
+}
+
 void GParserDriver::appendRule(const GRuleWordPtr &ntermPtr) {
 //    currentRuleWordNum =0;
 //    incSimpleRuleIndex();
 
     Logger::getLogger() << "appendRule: " << ntermPtr << std::endl;
+//    Logger::getLogger() << "Nterm parents:" << std::endl;
 
-    auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&ntermPtr](auto &wordPtr){
-        return wordPtr->getRawValue() == ntermPtr->getRawValue();
-    });
-    if (defFound != definedNterms.end()) {
-        auto childWords = (*defFound)->getChildWords();
-        childWords.insert(childWords.end(), ntermPtr->getChildWords().begin(), ntermPtr->getChildWords().end());
-        return;
-    }
+//    auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&ntermPtr](auto &wordPtr){
+//        return wordPtr->getRawValue() == ntermPtr->getRawValue();
+//    });
+//    if (defFound != definedNterms.end()) {
+//        auto &childWords = (*defFound)->getChildWords();
+//        childWords.insert(childWords.end(), ntermPtr->getChildWords().begin(), ntermPtr->getChildWords().end());
+//        return;
+//    }
 
-    auto pendFound = std::find_if(pendingNterms.begin(), pendingNterms.end(), [&ntermPtr](auto &wordPtr){ return wordPtr->getRawValue() == ntermPtr->getRawValue(); });
-    if (pendFound != pendingNterms.end()) {
-        GRuleWordPtr pendPtr = *pendFound;
-        pendingNterms.erase(pendFound);
-        std::move(ntermPtr->getChildWords().begin(), ntermPtr->getChildWords().end(), std::back_inserter(pendPtr->getChildWords()));
-        definedNterms.insert(pendPtr);
-        return;
-    }
+//    auto pendFound = std::find_if(pendingNterms.begin(), pendingNterms.end(), [&ntermPtr](auto &wordPtr){ return wordPtr->getRawValue() == ntermPtr->getRawValue(); });
+//    if (pendFound != pendingNterms.end()) {
+//        GRuleWordPtr pendPtr = *pendFound;
+//        pendingNterms.erase(pendFound);
+//        std::move(ntermPtr->getChildWords().begin(), ntermPtr->getChildWords().end(), std::back_inserter(pendPtr->getChildWords()));
+//        definedNterms.insert(pendPtr);
+//        return;
+//    }
 
-//    auto newNterm = std::make_shared<NonTerminal>(lhs, rhs);
+////    auto newNterm = std::make_shared<NonTerminal>(lhs, rhs);
+//    definedNterms.insert(ntermPtr);
+//    rootCandidates.insert(ntermPtr);
+
+//    auto pendFound = pendingNterms.find(ntermPtr);
+//    if (pendFound != pendingNterms.end()) {
+//        pendingNterms.erase(pendFound);
+//    } else {
+//        rootCandidates.insert(ntermPtr);
+//    }
     definedNterms.insert(ntermPtr);
-    rootCandidates.insert(ntermPtr);
 }
 
 void GParserDriver::fixAndSaveActionList(const GRuleWordPtr &actionWord, std::vector<ActionPtr> &&actions) {
     for (auto &action : actions) {
         action->getRuleWord() = actionWord;
     }
-    std::move(pendingActions.begin(), pendingActions.end(), std::back_inserter(actions));
+    std::move(actions.begin(), actions.end(), std::back_inserter(pendingActions));
 }
 
 void GParserDriver::fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ const GRuleWordPtr &parent/*, int baseRuleIndex*/) {
@@ -90,17 +106,23 @@ void GParserDriver::fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ co
     std::vector<GRuleWordPtr> &words = parent->getChildWords().back();
     int baseRuleIndex = parent->getChildWords().size() - 1;
 
-    auto defFound = definedNterms.find(parent);
-    if (defFound != definedNterms.end()) {
-        baseRuleIndex += (*defFound)->getChildWords().size();
-    }
+//    auto defFound = definedNterms.find(parent);
+//    if (defFound != definedNterms.end()) {
+//        baseRuleIndex += (*defFound)->getChildWords().size();
+//    }
 
     for (int i = 0; i < words.size(); ++i) {
 //        word->getParentNterms().push_back(parent);
 //        rootCandidates.erase(word);
+        Logger::getLogger() << "Fixing for " << words[i]->getRawValue() << std::endl;
+        Logger::getLogger() << "Before fixing" << std::endl;
+        printParents(words[i]);
         ParentInfo wordIndex { parent, baseRuleIndex, i };
         words[i]->getParentNterms().push_back(wordIndex);
         rootCandidates.erase(words[i]);
+        Logger::getLogger() << "After fixing" << std::endl;
+        printParents(words[i]);
+        Logger::getLogger() << "Done" << std::endl;
     }
 }
 
@@ -110,11 +132,16 @@ GRuleWordPtr GParserDriver::handleNtermReduction(UnicodeString &&rawValue) {
     if (defFound != definedNterms.end()) {
         rootCandidates.erase(*defFound);
         return (*defFound);
-    } else {
-        auto pendingNterm = std::make_shared<NonTerminal>(std::move(rawValue));
-        pendingNterms.insert(pendingNterm);
-        return pendingNterm;
     }
+
+    auto pendFound = std::find_if(pendingNterms.begin(), pendingNterms.end(),[&rawValue](const GRuleWordPtr &wordPtr){ return wordPtr->getRawValue() == rawValue; });
+    if (pendFound != pendingNterms.end()) {
+        return *pendFound;
+    }
+
+    auto newPendingNterm = std::make_shared<NonTerminal>(std::move(rawValue));
+    pendingNterms.insert(newPendingNterm);
+    return newPendingNterm;
 }
 
 GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue) {
@@ -134,6 +161,7 @@ GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue) {
 }
 
 GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue, std::vector<PredicatePtr> &&predicates) {
+    Logger::getLogger() << "handleTermReduction: " << rawValue << std::endl;
     auto termFoud = std::find_if(terminals.begin(), terminals.end(), [&rawValue, &predicates](const GRuleWordPtr &wordPtr){
         if (wordPtr->getRawValue() != rawValue)
             return false;
@@ -155,6 +183,32 @@ GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue, std::v
         terminals.insert(newTerm);
         return newTerm;
     }
+}
+
+GRuleWordPtr GParserDriver::createRule(UnicodeString &&word, std::vector<GRuleWordPtr> &&wordChain) {
+    auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&word](auto &wordPtr){
+        return  wordPtr->getRawValue() == word;
+    });
+    if (defFound != definedNterms.end()) {
+        (*defFound)->getChildWords().push_back(std::move(wordChain));
+        return *defFound;
+    }
+
+    auto pendFound = std::find_if(pendingNterms.begin(), pendingNterms.end(), [&word](auto &wordPtr){
+        return  wordPtr->getRawValue() == word;
+    });
+    if (pendFound != pendingNterms.end()) {
+        GRuleWordPtr pendPtr = *pendFound;
+        pendingNterms.erase(pendFound);
+        pendPtr->getChildWords().push_back(std::move(wordChain));
+//        definedNterms.insert(pendPtr);
+        return pendPtr;
+    }
+
+    GRuleWordPtr newRule = std::make_shared<NonTerminal>(std::move(word), std::move(wordChain));
+//    definedNterms.insert(newRule);
+    rootCandidates.insert(newRule);
+    return newRule;
 }
 
 bool GParserDriver::parse(const std::string &fname) {

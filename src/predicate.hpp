@@ -10,12 +10,14 @@ class Predicate;
 
 using PredicatePtr = std::shared_ptr<Predicate>;
 
+class Token;
+
 class Predicate {
 protected:
     virtual bool equals(const PredicatePtr &other) const = 0;
 public:
     virtual ~Predicate() = default;
-    virtual bool operator()(const UnicodeString &token) = 0;
+    virtual bool operator()(const Token &token) = 0;
     friend bool operator==(const PredicatePtr &lhs, const PredicatePtr &rhs) { return lhs->equals(rhs); }
     friend bool operator!=(const PredicatePtr &lhs, const PredicatePtr &rhs) { return !(lhs->equals(rhs)); }
 };
@@ -25,7 +27,7 @@ protected:
     bool equals(const PredicatePtr &other) const override { return typeid(this) == typeid (other.get()); }
 public:
     UpperCaseFirstPredicate() = default;
-    bool operator()(const UnicodeString &token) override;
+    bool operator()(const Token &token) override;
 };
 
 }

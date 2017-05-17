@@ -127,8 +127,8 @@ bool Terminal::equals(const GRuleWordPtr &wordPtr) const {
     return true;
 }
 
-bool Terminal::checkToken(const UnicodeString &token) const {
-    if (this->rawValue != token) {
+bool Terminal::checkToken(const Token &token, const UnicodeString &word) const {
+    if (this->rawValue != word) {
         return false;
     }
 

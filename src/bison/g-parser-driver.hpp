@@ -81,6 +81,7 @@ public:
 
 //    void appendActionsForRule(std::vector<ActionPtr> &actions) { actionsForRule.insert(actionsForRule.end(), actions.begin(), actions.end()); }
     void fixAndSaveActionList(const GRuleWordPtr &actionWord, std::vector<ActionPtr> &&actions);
+    GRuleWordPtr createRule(UnicodeString &&word, std::vector<GRuleWordPtr> &&wordChain);
 
     GRuleWordPtr handleNtermReduction(UnicodeString &&rawValue);
     GRuleWordPtr handleTermReduction(UnicodeString &&rawValue);

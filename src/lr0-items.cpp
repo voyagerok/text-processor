@@ -89,7 +89,22 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 //    Logger::getLogger() << "Starting iteration for item with index: " << itemIndex << std::endl;
     for (auto i = 0; i < itemSet.items.size(); ++i) {
 //        Logger::getLogger() << "closure for item " << item << "and rule " << item.rules[i] << std::endl;
-        Logger::getLogger() << "build: clousre for itemset " << itemSet << ", rule:\n" << itemSet.items[i] << std::endl;
+//        Logger::getLogger() << "build: clousre for itemset " << itemSet << ", rule:\n" << itemSet.items[i] << std::endl;
+//        auto &rule = itemSet.items[i].rule;
+//        auto &ruleIndex = itemSet.items[i].wordIndex;
+//        auto &targetWords = rule->getChildWords().at(ruleIndex.ruleIndex);
+//        if (ruleIndex.position < targetWords.size()) {
+//            auto &targetWord = targetWords.at(ruleIndex.position);
+//            if (targetWord->isNonTerminal()) {
+//                auto &targetChildWords = targetWord->getChildWords();
+//                for (auto i = 0; i < targetChildWords.size(); ++i) {
+//                    if (targetWord->isNonTerminal() && targetWord->isRhsEmpty(i)) {
+//                        LR0Item newItem { rule, ruleIndex.ruleIndex, ruleIndex.position + 1 };
+//                        itemSet.addItem(std::move(newItem));
+//                    }
+//                }
+//            }
+//        }
         closure(itemSet, itemSet.items[i]);
     }
 
@@ -237,7 +252,11 @@ void LR0ItemSetCollection::closure(LR0ItemSet &itemSet, const LR0Item &currentIt
 //        }
 //    }
     for (int i = 0; i < currentWord->getChildWords().size(); ++i) {
-        LR0Item itemRule { currentWord, i, 0 };
+        int position = 0;
+        if (currentWord->isRhsEmpty(i)) {
+            ++position;
+        }
+        LR0Item itemRule { currentWord, i, position };
         if (itemRule != currentItem) {
             closure(itemSet, itemRule);
             itemSet.addItem(itemRule);

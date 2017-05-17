@@ -24,16 +24,18 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeSt
         UnicodeString currentChain;
         for (auto it = sentenceBegin; it != sentence.end(); ++it) {
             currentSet = parseToken(*it, currentSet, isAccepted);
-            if (currentSet.size() > 0) {
-                currentChain.append(it->word + " ");
-            } else if (isAccepted || currentSet.size() == 0) {
+            if (isAccepted || currentSet.size() == 0 || it == sentence.end() - 1) {
                 if (isAccepted) {
+//                    Logger::getLogger() << "Accepted: " << currentChain << std::endl;
                     result.push_back(currentChain);
                     isAccepted = false;
                 }
                 currentSet = {std::make_shared<GSSStateNode>(0)};
                 sentenceBegin++;
                 break;
+            } else if (currentSet.size() > 0) {
+                Logger::getLogger() << "Appending current chain: " << it->word << std::endl;
+                currentChain.append(it->word + " ");
             }
         }
     }
@@ -60,6 +62,7 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeSt
 }
 
 Parser::ActiveSet Parser::parseToken(const Token &token, ActiveSet &currentLevelSet, bool &accepted) {
+    Logger::getLogger() << "parseToken: " << token.word << std::endl;
     ActiveSet activeNodes = currentLevelSet;
     ActiveSet nextLevelNodes;
     ReduceSet reduceSet;
@@ -207,8 +210,13 @@ void Parser::reducer(const Token &token, ActiveSet &activeSet, ActiveSet &curren
 
     auto nterm = reductionRule->getRawValue();
     auto startNode = reduceInfo.endNode;
-    int reductionPathLength = 2 * reductionRule->getChildWords().at(reduceInfo.ruleIndex.index).size() - 1;
-    auto pathEndNodes = findAllDestsForPath(startNode, reductionPathLength);
+//    int reductionPathLength = 2 * reductionRule->getChildWords().at(reduceInfo.ruleIndex.index).size() - 1;
+    int reductionPathLength = 2 * reductionRule->getRhsLength(reduceInfo.ruleIndex.index) - 1;
+//    int reductionPathLength = reductionRule->isRhsEmpty(reduceInfo.ruleIndex.index) ? 0 :
+//                                                                                      2 * reductionRule->getChildWords().at(reduceInfo.ruleIndex.index).size() - 1;
+//    auto pathEndNodes = findAllDestsForPath(startNode, reductionPathLength);
+    auto pathEndNodes = reductionPathLength > 0 ? findAllDestsForPath(startNode, reductionPathLength) :
+                                                  std::vector<GSSNodePtr> { reduceInfo.startNode };
 
     Logger::getLogger() << "Reducer: reduction path end nodes:" << std::endl;
     for (auto &endNode : pathEndNodes) {
@@ -307,14 +315,15 @@ std::map<UnicodeString, ParserTable::ParserActionSet> Parser::getActionSetForTok
 
     // check for raw word first
     ParserTable::ParserActionSet rawActionSet;
-    if (parserTable.getActionsForStateAndWord(state, token.normalForm, rawActionSet)) {
+    if (parserTable.getActionsForStateAndWord(state, token.normalForm, token, rawActionSet)) {
+        Logger::getLogger() << "Found action for normal form" << std::endl;
 //        actionSet.insert(rawActionSet.begin(), rawActionSet.end());
         actionSet[token.normalForm] = rawActionSet;
     }
 
     if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;
-        if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, tagActionSet)) {
+        if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, token, tagActionSet)) {
             Logger::getLogger() << "Found action for part of speech" << std::endl;
             actionSet[token.partOfSpeech] = tagActionSet;
         }
@@ -330,8 +339,16 @@ std::map<UnicodeString, ParserTable::ParserActionSet> Parser::getActionSetForTok
     }
 
     if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet anyWordActionSet;
+        if (parserTable.getActionsForStateAndReservedWord(state, ReservedWord::ANYWORD, token, anyWordActionSet)) {
+            Logger::getLogger() << "Found action for anyword" << std::endl;
+            actionSet[token.word] = anyWordActionSet;
+        }
+    }
+
+    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet endOfInputActions;
-        if (parserTable.getActionsForStateAndWord(state, "$", endOfInputActions)) {
+        if (parserTable.getActionsForStateAndWord(state, "$", token, endOfInputActions)) {
             actionSet["$"] = endOfInputActions;
         }
     }
@@ -344,7 +361,7 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
 
     // check for raw word first
     ParserTable::ParserActionSet rawActionSet;
-    if (parserTable.getActionsForStateAndWord(state, token.normalForm, rawActionSet)) {
+    if (parserTable.getActionsForStateAndWord(state, token.normalForm, token, rawActionSet)) {
         actionSet.insert(rawActionSet.begin(), rawActionSet.end());
 //        actionSet[token.normalForm] = rawActionSet;
     }
@@ -353,7 +370,7 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
 
     if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;
-        if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, tagActionSet)) {
+        if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, token, tagActionSet)) {
             Logger::getLogger() << "Found action for part of speech" << std::endl;
             actionSet.insert(tagActionSet.begin(), tagActionSet.end());
         }
@@ -369,8 +386,17 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
     }
 
     if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet anyWordActionSet;
+        if (parserTable.getActionsForStateAndReservedWord(state, ReservedWord::ANYWORD, token, anyWordActionSet)) {
+            Logger::getLogger() << "Found action for anyword" << std::endl;
+//            actionSet[token.word] = anyWordActionSet;
+            actionSet.insert(anyWordActionSet.begin(), anyWordActionSet.end());
+        }
+    }
+
+    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet endOfInputActions;
-        if (parserTable.getActionsForStateAndWord(state, "$", endOfInputActions)) {
+        if (parserTable.getActionsForStateAndWord(state, "$", token, endOfInputActions)) {
             actionSet.insert(endOfInputActions.begin(), endOfInputActions.end());
         }
     }

@@ -84,8 +84,8 @@ rule
     ;
 
 simple_rule
-    : CAPITAL_WORD ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal> ( std::move($1), std::move($3)); driver.fixParentInfo($$); }
-    | START_RULE_SYMBOL ASSIGN rhs_chain { $$ = std::make_shared<NonTerminal>(std::move($1), std::move($3)); driver.fixParentInfo($$); }
+    : CAPITAL_WORD ASSIGN rhs_chain { $$ = driver.createRule ( std::move($1), std::move($3)); driver.fixParentInfo($$); }
+    | START_RULE_SYMBOL ASSIGN rhs_chain { $$ = driver.createRule (std::move($1), std::move($3)); driver.fixParentInfo($$); }
     ;
 
 complex_rule
@@ -98,6 +98,7 @@ rhs_chain
     | rhs_chain labeled_rhs_term { $1.push_back($2); $$.swap($1); }
     | labeled_rhs_nterm { $$ = { $1 }; }
     | rhs_chain labeled_rhs_nterm { $1.push_back($2); $$.swap($1); }
+    | rhs_term_empty { $$ = { StandardTerminalStorage::getEmptyTerminal() }; }
     ;
 
 rhs_nterm
@@ -119,8 +120,7 @@ rhs_term_empty
     ;
 
 labeled_rhs_term
-    : rhs_term_empty { $$ = StandardTerminalStorage::getEmptyTerminal(); }
-    | rhs_term { $$ = driver.handleTermReduction(std::move($1)); }
+    : rhs_term { $$ = driver.handleTermReduction(std::move($1)); }
     | rhs_term LBRACKET prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($3));  }
     | rhs_term LBRACKET action_list RBRACKET { $$ = driver.handleTermReduction(std::move($1)); driver.fixAndSaveActionList($$, std::move($3)); }
     | rhs_term LBRACKET action_list prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($4)); driver.fixAndSaveActionList($$, std::move($3)); }

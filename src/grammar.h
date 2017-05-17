@@ -67,6 +67,8 @@ private:
     std::set<GRuleWordPtr> firstSetForNonTerminal(const GRuleWordPtr &word);
     std::set<GRuleWordPtr> followSetForNonTerminal(const GRuleWordPtr &word);
 
+    void applyPendingActions();
+
     using SimpleGrammarRulePtr = std::shared_ptr<SimpleGrammarRule>;
 //    using GrammarParserPtr = std::shared_ptr<GrammarParser>;
 

@@ -6,6 +6,7 @@
 #include "grammar.h"
 #include "lr0-items.h"
 #include "utils/logger.h"
+#include "tokenizer.h"
 
 namespace tproc {
 
@@ -156,7 +157,7 @@ bool ParserTable::buildTableFromGrammar(const Grammar &grammar) {
                     RuleIndex ruleIndex { item.rule, item.wordIndex.ruleIndex };
                     for (auto &followWord : followWords) {
 //                        if (grammar.isEndOfInput(followWord) && grammar.isStartRule(item.rule)) {
-                        if (followWord->isEndOfInput() && followWord == grammar.getRoot()) {
+                        if (followWord->isEndOfInput() && item.rule == grammar.getRoot()) {
                             addNewAction(i, followWord, std::make_shared<ParserAction> (ActionName::ACCEPT));
                         } else {
                             addNewAction(i, followWord, std::make_shared<ReduceAction> (ruleIndex));
@@ -200,13 +201,25 @@ void ParserTable::addNewAction(int currentState, const GRuleWordPtr &currentWord
     if (actionTable->size() <= currentState) {
         return;
     }
-    auto &actionForState = actionTable->at(currentState);
-    auto it = actionForState.find(currentWord);
-    if (it != actionForState.end()) {
-        it->second.insert(action);
+    auto &actionsForState = actionTable->at(currentState);
+    auto wordFound = actionsForState.find(currentWord->getRawValue());
+    if (wordFound != actionsForState.end()) {
+        auto &actionsForRuleWord = wordFound->second;
+        auto ruleWordFound = actionsForRuleWord.find(currentWord);
+        if (ruleWordFound != actionsForRuleWord.end()) {
+            ruleWordFound->second.insert(action);
+        } else {
+            actionsForRuleWord[currentWord] = { action };
+        }
     } else {
-        actionForState[currentWord] = {action};
+        actionsForState[currentWord->getRawValue()][currentWord] = { action };
     }
+//    auto it = actionForState.find(currentWord);
+//    if (it != actionForState.end()) {
+//        it->second.insert(action);
+//    } else {
+//        actionForState[currentWord] = {action};
+//    }
 }
 
 void ParserTable::printActionTable() {
@@ -218,9 +231,11 @@ void ParserTable::printActionTable() {
         Logger::getLogger() << "Actions for state " << i << std::endl;
         auto actions = actionTable->at(i);
         for (auto &action : actions) {
-            Logger::getLogger() << "Word: " << action.first->getRawValue() << std::endl;
-            for (auto &parserAction : action.second) {
-                Logger::getLogger() << "Action: " << *parserAction << std::endl;
+            for (auto &ruleWordActs : action.second) {
+                Logger::getLogger() << "Word: " << ruleWordActs.first->getRawValue() << std::endl;
+                for (auto &parserAction : ruleWordActs.second) {
+                    Logger::getLogger() << "Action: " << *parserAction << std::endl;
+                }
             }
         }
     }
@@ -241,20 +256,34 @@ void ParserTable::printGotoTable() {
     }
 }
 
-bool ParserTable::getActionsForStateAndWord(int state, const UnicodeString &word, ParserActionSet &actionSet) const {
+bool ParserTable::getActionsForStateAndWord(int state, const UnicodeString &word, const Token &token, ParserActionSet &actionSet) const {
+//    Logger::getLogger() << "Word: " << word << std::endl;
     if (state < 0 || state >= actionTable->size()) {
         return false;
     }
     auto &actionsForState = actionTable->at(state);
 //    auto actionsForWord = actionsForState.find(word);
-    auto actionsForWord = std::find_if(actionsForState.begin(), actionsForState.end(), [&word] (auto &actionInfo){
-        return actionInfo.first->getRawValue() == word;
-    });
-    if (actionsForWord == actionsForState.end()) {
+//    auto actionsForWord = std::find_if(actionsForState.begin(), actionsForState.end(), [&word] (auto &actionInfo){
+////        Logger::getLogger() << "Word: " << word << std::endl;
+////        Logger::getLogger() << "Raw value: " << actionInfo.first->getRawValue() << std::endl;
+//        return actionInfo.first->getRawValue() == word;
+//    });
+//    if (actionsForWord == actionsForState.end()) {
+//        return false;
+//    }
+//    actionSet = actionsForWord->second;
+    auto actionsForLiteral = actionsForState.find(word);
+    if (actionsForLiteral == actionsForState.end()) {
         return false;
     }
-    actionSet = actionsForWord->second;
-    return true;
+//    actionSet = actionsForLiteral->second.rbegin()->second;
+    for (auto ruleWordActions = actionsForLiteral->second.rbegin(); ruleWordActions != actionsForLiteral->second.rend(); ++ruleWordActions) {
+        if (ruleWordActions->first->checkToken(token, word)) {
+            actionSet = ruleWordActions->second;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool ParserTable::getGotoStateForStateAndNterm(int state, const UnicodeString &nterm, int &targetState) const {
@@ -281,9 +310,9 @@ std::map<ReservedWord, UnicodeString> reservedWordsTable = {
     {ReservedWord::SURNAME, "surn"}
 };
 
-bool ParserTable::getActionsForStateAndReservedWord(int state, ReservedWord reservedWordType, ParserActionSet &actionSet) const {
+bool ParserTable::getActionsForStateAndReservedWord(int state, ReservedWord reservedWordType, const Token &token, ParserActionSet &actionSet) const {
     UnicodeString &reservedWord = reservedWordsTable[reservedWordType];
-    return this->getActionsForStateAndWord(state, reservedWord, actionSet);
+    return this->getActionsForStateAndWord(state, reservedWord, token, actionSet);
 }
 
 }

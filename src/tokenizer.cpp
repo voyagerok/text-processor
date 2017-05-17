@@ -99,15 +99,21 @@ std::ostream &operator<<(std::ostream &os, const Token &token) {
 
 Tokenizer::Tokenizer(const UnicodeString &plainText) {
     std::vector<UnicodeString> plainSentences;
-    split_unistring(plainText, {"\\?","\\.","\\!"}, plainSentences);
+//    split_unistring(plainText, {"\\?","\\.","\\!"}, plainSentences);
+    split_unistring(plainText, {"\n"}, plainSentences);
+    Token endOfInput {"$", "$" };
     for (auto &plainSentence : plainSentences) {
         Logger::getLogger() << plainSentence << std::endl;
         std::vector<UnicodeString> plainTokens;
         split_unistring(plainSentence, {"\\s","\\;","\\:","\\,"}, plainTokens);
+        Logger::getLogger() << "PlainTokens Count: " << plainTokens.size() << std::endl;
+//        split_unistring(plainSentence, {"\\s"}, plainTokens);
         Sentence currentSentence;
 
-        std::map<UnicodeString, std::vector<std::shared_ptr<AnalysisResult>>> analysisResults;
+        std::vector<std::pair<UnicodeString, std::vector<std::shared_ptr<AnalysisResult>>>> analysisResults;
         analyzeTokens(plainTokens, analysisResults);
+
+        Logger::getLogger() << "Analysis result Count: " << analysisResults.size() << std::endl;
 
         for (auto &resultsForWord : analysisResults) {
             if (resultsForWord.second.empty()) {
@@ -133,8 +139,8 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
 //            currentToken.propMask = resultsForWord
 
             currentToken.word = std::move(resultsForWord.first);
-            currentToken.normalForm = std::move(resultsForWord.second[0]->normalForm);
-            currentToken.partOfSpeech = std::move(resultsForWord.second[0]->partOfSpeech);
+            currentToken.normalForm = std::move(resultsForWord.second[0]->normalForm.toLower());
+            currentToken.partOfSpeech = std::move(resultsForWord.second[0]->partOfSpeech.toLower());
 
             Logger::getLogger() << "Current token: " << currentToken << std::endl;
 
@@ -161,6 +167,7 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
 ////            }
 //        }
         //currentSentence.push_back({"$","$",{"none"}});
+        currentSentence.push_back(endOfInput);
 
         this->sentences.push_back(std::move(currentSentence));
     }

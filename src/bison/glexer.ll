@@ -3,6 +3,7 @@
 #include <string>
 #include <unicode/unistr.h>
 #include "gparser.tab.hh"
+#include "utils/logger.h"
 
 /* Implementation of yyFlexScanner */ 
 #include "g-scanner.hpp"
@@ -38,8 +39,8 @@ cyr_suf2 [\x80-\x8f]
 cyr_cap {cyr_pref1}{cyr_cap_suf}
 cyr_low {cyr_pref1}{cyr_suf1}|{cyr_pref2}{cyr_suf2}
 
-lword [a-z][a-z]*\_*[a-z]*
-uword [A-ZА-Я][a-zа-я]*\_*[a-zа-я]*
+lword [a-z][a-z]*(\_*[a-z]*)*
+uword [A-ZА-Я][a-zа-я]*(\_*[a-zа-я]*)*
 lbracket "("
 rbracket ")"
 predicate_section "predicates"
@@ -48,14 +49,16 @@ colon ":"
 
 %%
 %{          /** Code executed at the beginning of yylex **/
-            yylval = lval;
+    yylval = lval;
 %}
 
 =               {
+                    Logger::getLogger() << "Found assign" << std::endl;
                     return token::ASSIGN;
                 }
 
 \|              {
+                    Logger::getLogger() << "Found delimeter" << std::endl;
                     return token::DELIM;
                 }
 
@@ -106,6 +109,7 @@ colon ":"
                 }
 
 "empty"         {
+                    Logger::getLogger() << "Found empty word" << std::endl;
                     yylval->build<UnicodeString>(yytext);
                     return token::EMPTY_WORD;
                 }
@@ -116,26 +120,31 @@ colon ":"
                 }
 
 {lword}         {
+                    Logger::getLogger() << "Found word" << std::endl;
                     yylval->build<UnicodeString>( yytext );
                     return( token::WORD );
                 }
 
-{cyr_low}+      { 
+{cyr_low}+      {
+                    Logger::getLogger() << "Found word" << std::endl; 
                     yylval->build<UnicodeString>( yytext );
                     return( token::WORD );
                 }
 
 {uword}         {
+                    Logger::getLogger() << "Found capital word" << std::endl;
                     yylval->build<UnicodeString>( yytext );
                     return( token::CAPITAL_WORD );
                 }
 
 {cyr_cap}+      {
+                    Logger::getLogger() << "Found capital word" << std::endl;
                     yylval->build<UnicodeString>( yytext );
                     return( token::CAPITAL_WORD );
                 }
 
 ";"             {
+                    Logger::getLogger() << "Found semicolon" << std::endl;
                     return token::RULE_END;
                 }
 
@@ -153,6 +162,7 @@ colon ":"
 {rbracket}      { return token::RBRACKET; }
 
 \"              { }
+
 
 .               { std::cout << "Found unknown character at " << loc << std::endl; }
 

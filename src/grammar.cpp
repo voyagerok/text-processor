@@ -66,9 +66,15 @@ bool Grammar::initFromFile(const std::string &filename) {
 
         addExplicitRule();
 
+        applyPendingActions();
+
         Logger::getLogger() << "Rules are:" << std::endl;
         for (auto &nterm : nterminals) {
             Logger::getLogger() << nterm << std::endl;
+//            Logger::getLogger() << "Parent rules:" << std::endl;
+//            for (auto &parent : nterm->getParentNterms()) {
+//                Logger::getLogger() << parent.nterm << std::endl;
+//            }
         }
 
         buildFirstSet();
@@ -80,6 +86,12 @@ bool Grammar::initFromFile(const std::string &filename) {
 //    }
 
     return true;
+}
+
+void Grammar::applyPendingActions() {
+    for (auto &action : this->pendingActions) {
+        action->operator()(*this);
+    }
 }
 
 bool Grammar::initFromPlainText(const UnicodeString &plainText) {
