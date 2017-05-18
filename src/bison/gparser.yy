@@ -149,7 +149,6 @@ simple_prop
     : PROP_START_UPPER_TOK { $$ = std::make_shared<UpperCaseFirstPredicate> (); }
     ;
 
-
 %%
 
 

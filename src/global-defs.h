@@ -6,6 +6,6 @@
 #define END_OF_INPUT "$"
 #define EMPTY "empty"
 
-#define ENABLE_LOG 1
+#define ENABLE_LOG 0
 
 #endif //GLOBAL_DEFS_H_

@@ -34,10 +34,10 @@ find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
 BISON_TARGET(grammar_parser
-             "src/bison/gparser.yy"
+             "${BISON_DIR}/gparser.yy"
              ${CMAKE_CURRENT_BINARY_DIR}/gparser.tab.cc)
 FLEX_TARGET(grammar_lexer
-            "src/bison/glexer.ll"
+            "${BISON_DIR}/glexer.ll"
             ${CMAKE_CURRENT_BINARY_DIR}/glexer.yy.cc)
 ADD_FLEX_BISON_DEPENDENCY(grammar_lexer grammar_parser)
 # ===============================
@@ -69,8 +69,8 @@ set(SRC
     "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h"
     ${FLEX_grammar_lexer_OUTPUTS}
     ${BISON_grammar_parser_OUTPUTS}
-    "src/bison/g-parser-driver.hpp"
-    "src/bison/g-parser-driver.cpp"
+    "${BISON_DIR}/g-parser-driver.hpp"
+    "${BISON_DIR}/g-parser-driver.cpp"
     "src/action.cpp"
     "src/action.hpp"
     "src/predicate.cpp"

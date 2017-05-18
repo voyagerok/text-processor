@@ -321,37 +321,59 @@ std::map<UnicodeString, ParserTable::ParserActionSet> Parser::getActionSetForTok
         actionSet[token.normalForm] = rawActionSet;
     }
 
-    if (actionSet.size() == 0) {
+//    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;
         if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, token, tagActionSet)) {
             Logger::getLogger() << "Found action for part of speech" << std::endl;
             actionSet[token.partOfSpeech] = tagActionSet;
         }
-//        auto &tags = token.tags;
-//        if (tags.size() > 0) {
-//            auto partOfSpeechTag = tags[0];
-//            if (parserTable.getActionsForStateAndWord(state, partOfSpeechTag, tagActionSet)) {
-//                Logger::getLogger() << "Found action for part of speech" << std::endl;
-//    //            actionSet.insert(tagActionSet.begin(), tagActionSet.end());
-//                actionSet[partOfSpeechTag] = tagActionSet;
-//            }
-//        }
-    }
+//    }
 
-    if (actionSet.size() == 0) {
+    // check name
+//    if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet nameCheckActionSet;
+        ReservedWord namePart = ReservedWord::NONE;
+        if ((token.propMask & MorphProperty::PATR)) {
+            namePart = ReservedWord::PATR;
+        } else if ((token.propMask & MorphProperty::SECOND_NAME)) {
+            namePart = ReservedWord::SURNAME;
+        } else if ((token.propMask & MorphProperty::FIRST_NAME)) {
+            namePart = ReservedWord::NAME;
+        }
+        if (namePart != ReservedWord::NONE) {
+            if (parserTable.getActionsForStateAndReservedWord(state, namePart, token, nameCheckActionSet)) {
+                Logger::getLogger() << "Found action for name part" << std::endl;
+//                actionSet.insert(nameCheckActionSet.begin(), nameCheckActionSet.end());
+                actionSet[token.word] = nameCheckActionSet;
+            }
+        }
+//    }
+
+//    if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet initActionSet;
+        if ((token.propMask & MorphProperty::INIT)) {
+            if (parserTable.getActionsForStateAndReservedWord(state, ReservedWord::INIT, token, initActionSet)) {
+                Logger::getLogger() << "Found action for init" << std::endl;
+//                actionSet.insert(initActionSet.begin(), initActionSet.end());
+                actionSet[token.word] = initActionSet;
+            }
+        }
+//    }
+
+//    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet anyWordActionSet;
         if (parserTable.getActionsForStateAndReservedWord(state, ReservedWord::ANYWORD, token, anyWordActionSet)) {
             Logger::getLogger() << "Found action for anyword" << std::endl;
             actionSet[token.word] = anyWordActionSet;
         }
-    }
+//    }
 
-    if (actionSet.size() == 0) {
+//    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet endOfInputActions;
         if (parserTable.getActionsForStateAndWord(state, "$", token, endOfInputActions)) {
             actionSet["$"] = endOfInputActions;
         }
-    }
+//    }
 
     return actionSet;
 }
@@ -366,9 +388,36 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
 //        actionSet[token.normalForm] = rawActionSet;
     }
 
-//    if ()
+    // check name
+//    if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet nameCheckActionSet;
+        ReservedWord namePart = ReservedWord::NONE;
+        if ((token.propMask & MorphProperty::PATR)) {
+            namePart = ReservedWord::PATR;
+        } else if ((token.propMask & MorphProperty::SECOND_NAME)) {
+            namePart = ReservedWord::SURNAME;
+        } else if ((token.propMask & MorphProperty::FIRST_NAME)) {
+            namePart = ReservedWord::NAME;
+        }
+        if (namePart != ReservedWord::NONE) {
+            if (parserTable.getActionsForStateAndReservedWord(state, namePart, token, nameCheckActionSet)) {
+                Logger::getLogger() << "Found action for name part" << std::endl;
+                actionSet.insert(nameCheckActionSet.begin(), nameCheckActionSet.end());
+            }
+        }
+//    }
 
-    if (actionSet.size() == 0) {
+//    if (actionSet.size() == 0) {
+        ParserTable::ParserActionSet initActionSet;
+        if ((token.propMask & MorphProperty::INIT)) {
+            if (parserTable.getActionsForStateAndReservedWord(state, ReservedWord::INIT, token, initActionSet)) {
+                Logger::getLogger() << "Found action for init" << std::endl;
+                actionSet.insert(initActionSet.begin(), initActionSet.end());
+            }
+        }
+//    }
+
+//    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet tagActionSet;
         if (parserTable.getActionsForStateAndWord(state, token.partOfSpeech, token, tagActionSet)) {
             Logger::getLogger() << "Found action for part of speech" << std::endl;
@@ -383,23 +432,23 @@ ParserTable::ParserActionSet Parser::getActionSetForToken(const Token &token, in
 //    //            actionSet[partOfSpeechTag] = tagActionSet;
 //            }
 //        }
-    }
+//    }
 
-    if (actionSet.size() == 0) {
+//    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet anyWordActionSet;
         if (parserTable.getActionsForStateAndReservedWord(state, ReservedWord::ANYWORD, token, anyWordActionSet)) {
             Logger::getLogger() << "Found action for anyword" << std::endl;
 //            actionSet[token.word] = anyWordActionSet;
             actionSet.insert(anyWordActionSet.begin(), anyWordActionSet.end());
         }
-    }
+//    }
 
-    if (actionSet.size() == 0) {
+//    if (actionSet.size() == 0) {
         ParserTable::ParserActionSet endOfInputActions;
         if (parserTable.getActionsForStateAndWord(state, "$", token, endOfInputActions)) {
             actionSet.insert(endOfInputActions.begin(), endOfInputActions.end());
         }
-    }
+//    }
 
     return actionSet;
 }

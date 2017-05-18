@@ -92,7 +92,8 @@ enum class ReservedWord {
     SURNAME,
     PATR,
     INIT,
-    ANYWORD
+    ANYWORD,
+    NONE
 };
 
 class Token;
