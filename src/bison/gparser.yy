@@ -164,7 +164,7 @@ dep_section
     ;
 
 rule_section
-    : RULE_SECTION_HEADER rule_list
+    : RULE_SECTION_HEADER rule_list { driver.applyPendingActions(); }
     ;
 
 command_section

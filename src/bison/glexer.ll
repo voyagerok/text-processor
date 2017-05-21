@@ -196,9 +196,9 @@ after "after"
                     return token::NUM;
                 }
 
-[ \t]+          { std::cout << "Found whitespace" << std::endl;  }
+[ \t]+          { Logger::getLogger() << "Found whitespace" << std::endl;  }
 
-{lbracket}      { std::cout << "Found left bracket" << std::endl; return token::LBRACKET; }
+{lbracket}      { Logger::getLogger() << "Found left bracket" << std::endl; return token::LBRACKET; }
 
 {rbracket}      { return token::RBRACKET; }
 

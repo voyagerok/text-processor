@@ -141,6 +141,8 @@ public:
         return depRule;
     }
 
+    void applyPendingActions();
+
 //    template<class ActionType, class ...Args>
 //    std::shared_ptr<ActionType> buildAction(Args&&...args) {
 //        WordInfo wordInfo { currentNterm, currentSimpleRuleNum, currentRuleWordNum };

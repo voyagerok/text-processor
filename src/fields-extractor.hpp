@@ -38,9 +38,9 @@ struct ParserWrapper {
 
 class FieldsExtractor {
 public:
-    FieldsExtractor(const char *grammarFilename);
+//    FieldsExtractor(const char *grammarFilename);
     FieldsExtractor(const std::string &grammarFilename);
-    std::vector<FieldInfo> extractFromFile(const char *fileName);
+//    std::vector<FieldInfo> extractFromFile(const char *fileName);
     std::vector<FieldInfo> extractFromFile(const std::string &fileName);
 private:
     void processDependencyRules(const std::set<DependencyRulePtr> &depRules);

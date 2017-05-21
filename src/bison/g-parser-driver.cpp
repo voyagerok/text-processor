@@ -433,6 +433,12 @@ void GParserDriver::processCommandList(std::vector<DependencyRulePtr> &&commands
     std::move(commands.begin(), commands.end(), std::inserter(targetRules, targetRules.begin()));
 }
 
+void GParserDriver::applyPendingActions() {
+    for (auto &action : pendingActions) {
+        action->operator()();
+    }
+}
+
 bool GParserDriver::parse(const std::string &fname) {
     std::ifstream ifs { fname };
     return parseHelper(ifs);

@@ -16,7 +16,7 @@ bool QuoteAction::equals(const ActionPtr &other) const {
     return typeid (this) == typeid (other.get());
 }
 
-void QuoteAction::operator()(const Grammar &grammar/*, const ParentInfo &wordInfo*/) {
+void QuoteAction::operator()(/*const Grammar &grammar, const ParentInfo &wordInfo*/) {
     auto &ruleWord = getRuleWord();
     if (ruleWord->isNonTerminal()) {
         //TODO: implement

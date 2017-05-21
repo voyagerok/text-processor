@@ -33,6 +33,7 @@
 #include "parser.h"
 #include "utils/logger.h"
 #include "g-parser-driver.hpp"
+#include "fields-extractor.hpp"
 
 /*
  * Грамемы:
@@ -87,24 +88,24 @@ static bool processArgs(int argc, char *argv[], Arguements &result) {
     return true;
 }
 
-static bool readAllTextFromFile(const std::string &filename, UnicodeString &outText) {
-    std::ifstream ifs(filename);
-    if (ifs.fail()) {
-        std::cerr << "Error: failed to open " << filename << std::endl;
-        return false;
-    }
-    std::string text {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+//static bool readAllTextFromFile(const std::string &filename, UnicodeString &outText) {
+//    std::ifstream ifs(filename);
+//    if (ifs.fail()) {
+//        std::cerr << "Error: failed to open " << filename << std::endl;
+//        return false;
+//    }
+//    std::string text {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
 
-    outText = UnicodeString(text.c_str());
+//    outText = UnicodeString(text.c_str());
 
-    return true;
-}
+//    return true;
+//}
 
 int main(int argc, char *argv[]) {
     Py_Initialize();
     initmorph();
 
-    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
+//    icu::UnicodeString ustring = "S = numr \"год\"\nS = numr \"день\"\nS = adjf MONTHSUMMER\nMONTHSUMMER = \"июнь\"\nMONTHSUMMER = \"июль\"\nMONTHSUMMER = \"август\"";
 //    char *grammarFilename;
 //    if (!processArgs(argc, argv, &grammarFilename)) {
 //        std::cerr << "Program usage: text-processor [GRAMMAR FILENAME]" << std::endl;
@@ -115,9 +116,20 @@ int main(int argc, char *argv[]) {
     if (!processArgs(argc, argv, args)) {
         return -1;
     }
-    UnicodeString inputText;
-    if (!readAllTextFromFile(args.inputTextFilename, inputText)) {
-        return -1;
+//    UnicodeString inputText;
+//    if (!readAllTextFromFile(args.inputTextFilename, inputText)) {
+//        return -1;
+//    }
+
+    tproc::FieldsExtractor extractor {args.grammarFilename};
+    auto result = extractor.extractFromFile(args.inputTextFilename);
+    std::cout << "Extraction result:" << std::endl;
+    if (result.size() == 0) {
+        std::cout << "No fields extracted." << std::endl;
+    } else {
+        for (auto &resultRecord : result) {
+            std::cout << "Field name: " << resultRecord.fieldName << ", field value: " << resultRecord.fieldValue << std::endl;
+        }
     }
 
 //    tproc::GParserDriver parserDriver;

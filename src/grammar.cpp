@@ -109,7 +109,7 @@ bool Grammar::initFromFile(const std::string &filename) {
 
 void Grammar::applyPendingActions() {
     for (auto &action : this->pendingActions) {
-        action->operator()(*this);
+        action->operator()();
     }
 }
 
@@ -150,8 +150,8 @@ void Grammar::addExplicitRule() {
 //    startRule = std::make_shared<SimpleGrammarRule>(EXPLICIT_START_SYMBOL, std::vector<GRuleWordPtr> { currentStartNterm });
 //    rules[EXPLICIT_START_SYMBOL] = { *startRule };
 
-//    auto newRoot = std::make_shared<NonTerminal>(EXPLICIT_START_SYMBOL);
-    auto newRoot = GWordStorage::getNonTerminal(EXPLICIT_START_SYMBOL);
+    auto newRoot = std::make_shared<NonTerminal>(EXPLICIT_START_SYMBOL);
+//    auto newRoot = GWordStorage::getNonTerminal(EXPLICIT_START_SYMBOL);
     newRoot->getChildWords().push_back({ root });
 //    WordIndex oldRootIndex { newRoot, 0, 0};
     root->getParentNterms().emplace_back(newRoot, 0, 0);

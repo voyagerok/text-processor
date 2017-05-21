@@ -1,5 +1,6 @@
 #include <sstream>
 #include <algorithm>
+#include <fstream>
 
 #include "fields-extractor.hpp"
 #include "grammar.h"
@@ -12,7 +13,32 @@
 
 namespace tproc {
 
-FieldsExtractor::FieldsExtractor(const char *grammarFilename) {
+static bool readAllTextFromFile(const std::string &filename, UnicodeString &outText) {
+    std::ifstream ifs(filename);
+    if (ifs.fail()) {
+        std::cerr << "Error: failed to open " << filename << std::endl;
+        return false;
+    }
+    std::string text {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+
+    outText = UnicodeString(text.c_str());
+
+    return true;
+}
+
+//FieldsExtractor::FieldsExtractor(const char *grammarFilename) {
+//    GParserDriver parserDriver;
+//    if (parserDriver.parse(grammarFilename)) {
+////        processDependencyRules(parserDriver.getTargetRules());
+//        processRulesWithoutDependencies(parserDriver.getTargetRules());
+//    } else {
+//        std::ostringstream os;
+//        os << "Failed to parse file named " << grammarFilename;
+//        throw std::runtime_error(os.str());
+//    }
+//}
+
+FieldsExtractor::FieldsExtractor(const std::string &grammarFilename) {
     GParserDriver parserDriver;
     if (parserDriver.parse(grammarFilename)) {
 //        processDependencyRules(parserDriver.getTargetRules());
@@ -24,15 +50,23 @@ FieldsExtractor::FieldsExtractor(const char *grammarFilename) {
     }
 }
 
-FieldsExtractor::FieldsExtractor(const std::string &grammarFilename) {
-    GParserDriver parserDriver;
-    if (parserDriver.parse(grammarFilename)) {
-//        processDependencyRules(parserDriver.getTargetRules());
-        processRulesWithoutDependencies(parserDriver.getTargetRules());
+//std::vector<FieldInfo> FieldsExtractor::extractFromFile(const char *filename) {
+//    UnicodeString plainText;
+//    if (readAllTextFromFile(filename, plainText)) {
+//        return extract(plainText);
+//    } else {
+//        std::cerr << "Failed to read file with text." << std::endl;
+//        return {};
+//    }
+//}
+
+std::vector<FieldInfo> FieldsExtractor::extractFromFile(const std::string &filename) {
+    UnicodeString plainText;
+    if (readAllTextFromFile(filename, plainText)) {
+        return extract(plainText);
     } else {
-        std::ostringstream os;
-        os << "Failed to parse file named " << grammarFilename;
-        throw std::runtime_error(os.str());
+        std::cerr << "Failed to read file with text." << std::endl;
+        return {};
     }
 }
 
@@ -79,6 +113,8 @@ void FieldsExtractor::processRulesWithoutDependencies(const std::set<DependencyR
         grammar->initFromDependencyRule(depRule);
         ParserTable parserTable;
         parserTable.buildTableFromGrammar(*grammar);
+        parserTable.printActionTable();
+        parserTable.printGotoTable();
         Parser parser { *grammar, parserTable };
         definedParsers.push_back({parser, depRule->hintWords});
     }

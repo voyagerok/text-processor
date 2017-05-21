@@ -26,7 +26,7 @@ public:
 
     GRuleWordPtr &getRuleWord() { return ruleWord; }
 
-    virtual void operator()(const Grammar &grammar/*, const ParentInfo &wordInfo*/) = 0;
+    virtual void operator()(/*const Grammar &grammar, const ParentInfo &wordInfo*/) = 0;
     friend bool operator==(const ActionPtr &lhs, const ActionPtr &rhs) { return lhs->equals(rhs); }
     friend bool operator!=(const ActionPtr &lhs, const ActionPtr &rhs) { return !(lhs->equals(rhs)); }
 };
@@ -44,7 +44,7 @@ public:
         Action(nullptr), minOccurences { minOccur}, maxOccurences { maxOccur } {}
     int getMinOccurences() const { return this->minOccurences; }
     int getMaxOccurences () const { return this->maxOccurences; }
-    void operator()(const Grammar &grammar/*, const ParentInfo &wordInfo*/) override {}
+    void operator()(/*const Grammar &grammar, const ParentInfo &wordInfo*/) override {}
 };
 
 class QuoteAction final: public Action {
@@ -54,7 +54,7 @@ public:
     QuoteAction(const GRuleWordPtr &ruleWord):
         Action(ruleWord) {}
     QuoteAction() : Action(nullptr) {}
-    void operator()(const Grammar &grammar/*, const ParentInfo &wordInfo*/) override;
+    void operator()(/*const Grammar &grammar, const ParentInfo &wordInfo*/) override;
 };
 
 template<class ActionType, class ...Args>
