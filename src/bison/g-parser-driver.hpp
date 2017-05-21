@@ -24,20 +24,58 @@ class GScanner;
 //    PROP_MAX_REP
 //};
 
-struct Property {
+//struct Property {
 
-    virtual ~Property() {}
+//    virtual ~Property() {}
+//};
+
+//struct SimpleProperty: public Property {
+//    SimpleProperty(GRuleWordPropType propType): propType { propType } {}
+//    GRuleWordPropType propType;
+//};
+
+//struct ComplexNumProperty: public Property {
+//    ComplexNumProperty(GRuleWordPropType propType, int propValue): propType { propType }, propValue { propValue } {}
+//    GRuleWordPropType propType;
+//    int propValue;
+//};
+
+struct DependencyRule;
+using DependencyRulePtr = std::shared_ptr<DependencyRule>;
+struct DependencyRule {
+    DependencyRule() = default;
+    DependencyRule(const GRuleWordPtr &root): root { root } {}
+    GRuleWordPtr root;
+    std::set<GRuleWordPtr> nterms;
+    std::set<GRuleWordPtr> terms;
+    std::vector<UnicodeString> hintWords;
+    std::set<DependencyRulePtr> backwardDeps;
+    std::set<DependencyRulePtr> forwardDeps;
 };
 
-struct SimpleProperty: public Property {
-    SimpleProperty(GRuleWordPropType propType): propType { propType } {}
-    GRuleWordPropType propType;
+enum class DependencyType {
+    FAR, NEAR
 };
 
-struct ComplexNumProperty: public Property {
-    ComplexNumProperty(GRuleWordPropType propType, int propValue): propType { propType }, propValue { propValue } {}
-    GRuleWordPropType propType;
-    int propValue;
+struct DependencyStruct {
+    DependencyStruct() = default;
+    DependencyStruct(const GRuleWordPtr &target, DependencyType depType):
+        target { target }, depType { depType } {}
+    DependencyStruct(const GRuleWordPtr &target, std::vector<GRuleWordPtr> &&symbols, DependencyType depType):
+        target { target }, depSymbols { std::move(symbols)}, depType { depType } {}
+//    DependencyStruct(std::vector<UnicodeString> &&symbols, DependencyType depType) :
+//        depSymbols { std::move(symbols) }, depType { depType } {}
+
+    GRuleWordPtr target;
+    std::vector<GRuleWordPtr> depSymbols;
+    DependencyType depType;
+
+    void appendSymbol(const GRuleWordPtr &rule) { depSymbols.push_back(rule); }
+    void swap(DependencyStruct &other) {
+        target.swap(other.target);
+        depSymbols.swap(other.depSymbols);
+        std::swap(depType, other.depType);
+    }
 };
 
 class GParserDriver {
@@ -56,6 +94,7 @@ public:
     }
     std::set<GRuleWordPtr> getTerminals() { return terminals; }
     bool hasPendingNterms() { return pendingNterms.size() > 0;}
+    std::set<DependencyRulePtr> getTargetRules() { return targetRules; }
 
     UnicodeString &getCurrentNterm() { return this->currentNterm; }
     int &getCurrentSimpleRuleNum() { return this->currentSimpleRuleNum; }
@@ -73,19 +112,34 @@ public:
     bool parse( std::istream &iss );
     bool parse(const std::string &fname);
 
-//    void appendRule(ComplexGrammarRule &rule);
     void appendRule(const GRuleWordPtr &nterm);
-//    GRuleWordPtr makeRuleWord(UnicodeString &rawValue, std::vector<std::shared_ptr<Property>> &props);
-//    void appendAction(ActionPtr &&action) { pendingActions.push(std::move(action)); }
     void fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ const GRuleWordPtr &parent/*, int baseRuleIndex*/);
-
-//    void appendActionsForRule(std::vector<ActionPtr> &actions) { actionsForRule.insert(actionsForRule.end(), actions.begin(), actions.end()); }
     void fixAndSaveActionList(const GRuleWordPtr &actionWord, std::vector<ActionPtr> &&actions);
     GRuleWordPtr createRule(UnicodeString &&word, std::vector<GRuleWordPtr> &&wordChain);
 
     GRuleWordPtr handleNtermReduction(UnicodeString &&rawValue);
     GRuleWordPtr handleTermReduction(UnicodeString &&rawValue);
     GRuleWordPtr handleTermReduction(UnicodeString &&rawValue, std::vector<PredicatePtr> &&predicates);
+
+    void handleDependencies(std::vector<DependencyStruct> &storage);
+//    DependencyStruct createDependencyStruct(UnicodeString &&target, UnicodeString &&fSym, UnicodeString &&secSym);
+    bool createDependencyStruct(const UnicodeString &target,
+                               const UnicodeString &firstSym,
+                               const UnicodeString &secondSym,
+                               DependencyType depType,
+                               DependencyStruct &outStruct,
+                               std::string &errMessage);
+    bool appendDependencyStruct(const UnicodeString &symbol,
+                                DependencyStruct &outStruct,
+                                std::string &errMessage);
+
+    bool handleCommandFindReduction(UnicodeString &rawWord, DependencyRulePtr &result, std::string &errMsg);
+    void processCommandList(std::vector<DependencyRulePtr> &&commandList);
+
+    DependencyRulePtr handleHintWords(DependencyRulePtr &depRule, std::vector<UnicodeString> &&hintWords) {
+        depRule->hintWords = std::move(hintWords);
+        return depRule;
+    }
 
 //    template<class ActionType, class ...Args>
 //    std::shared_ptr<ActionType> buildAction(Args&&...args) {
@@ -95,6 +149,7 @@ public:
 //    }
 
 private:
+
     UnicodeString currentNterm;
     int currentSimpleRuleNum = 0;
     int currentRuleWordNum = 0;
@@ -104,6 +159,10 @@ private:
 //    std::vector<ComplexGrammarRule> rules;
     std::vector<ActionPtr> pendingActions;
 
+    // fields to find
+    std::set<DependencyRulePtr> targetRules;
+    std::set<DependencyRulePtr> definedDepRules;
+    std::set<DependencyRulePtr> pendingDepRules;
 
     std::shared_ptr<GParser> parser { nullptr };
     std::shared_ptr<GScanner> scanner { nullptr };

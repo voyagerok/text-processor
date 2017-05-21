@@ -12,7 +12,7 @@ std::ostream &operator<<(std::ostream &os, const ShiftInfo &shift) {
     return os;
 }
 
-bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeString> &result) {
+bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<std::pair<UnicodeString, int>> &result) {
     bool isAccepted = false;
 
     ActiveSet currentSet;
@@ -22,12 +22,13 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeSt
 
     while (sentenceBegin != sentence.end()) {
         UnicodeString currentChain;
+        int position = -1;
         for (auto it = sentenceBegin; it != sentence.end(); ++it) {
             currentSet = parseToken(*it, currentSet, isAccepted);
             if (isAccepted || currentSet.size() == 0 || it == sentence.end() - 1) {
                 if (isAccepted) {
 //                    Logger::getLogger() << "Accepted: " << currentChain << std::endl;
-                    result.push_back(currentChain);
+                    result.push_back(std::make_pair(currentChain, position));
                     isAccepted = false;
                 }
                 currentSet = {std::make_shared<GSSStateNode>(0)};
@@ -35,6 +36,9 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<UnicodeSt
                 break;
             } else if (currentSet.size() > 0) {
                 Logger::getLogger() << "Appending current chain: " << it->word << std::endl;
+                if (currentChain.isEmpty()) {
+                    position = it - sentence.begin();
+                }
                 currentChain.append(it->word + " ");
             }
         }

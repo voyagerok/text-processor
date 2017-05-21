@@ -36,6 +36,7 @@ public:
     ~Grammar();
     bool initFromFile(const std::string &filename);
     bool initFromPlainText(const UnicodeString &plainText);
+    void initFromDependencyRule(const DependencyRulePtr &depRulePtr);
 
 //    std::vector<SimpleGrammarRule> getRulesForLeftHandle(const UnicodeString &leftHandle) const;
 //    SimpleGrammarRule &getStartRule() const;

@@ -17,6 +17,7 @@
         class GScanner;
         class GRuleWord;
    }
+#include "grammar-words-storage.hpp"
 
 // The following definitions is missing when %locations isn't used
 # ifndef YY_NULLPTR
@@ -51,13 +52,14 @@
 %token <UnicodeString> CAPITAL_WORD
 %token RBRACKET
 %token LBRACKET
-%token RULE_END
+%token SEMICOLON
 %token ACTION_RANGE ACTION_MIN_REP_TOK ACTION_MAX_REP_TOK
 %token ELLIPSIS
-%token ACT_SECT
-%token PRED_SECT
+%token ACT_SECT PRED_SECT HINT_WORDS_SECT
 %token COLON
 %token <UnicodeString> START_RULE_SYMBOL EMPTY_WORD
+%token RULE_SECTION_HEADER COMMAND_SECTION_HEADER DEP_SECTION_HEADER
+%token NEAR_BEFORE_KEYWORD NEAR_AFTER_KEYWORD BEFORE_KEYWORD AFTER_KEYWORD FIND
 
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
@@ -69,10 +71,18 @@
 %type <PredicatePtr> prop simple_prop
 %type <ActionPtr> action
 %type <std::vector<ActionPtr>> action_list
+%type <DependencyStruct> dependency dep_rhs_chain long_dep_rhs_chain
+%type <std::vector<DependencyStruct>> dep_list
+%type <DependencyRulePtr> command, command_find
+%type <std::vector<DependencyRulePtr>> command_list
+%type <std::vector<UnicodeString>> hint_word_list
 
 %locations
 
 %%
+section_list
+    : rule_section dep_section command_section
+    ;
 
 rule_list
     : %empty
@@ -80,12 +90,11 @@ rule_list
     ;
 
 rule 
-    : complex_rule RULE_END { $$ = $1; }
+    : complex_rule SEMICOLON { $$ = $1; }
     ;
 
 simple_rule
     : CAPITAL_WORD ASSIGN rhs_chain { $$ = driver.createRule ( std::move($1), std::move($3)); driver.fixParentInfo($$); }
-    | START_RULE_SYMBOL ASSIGN rhs_chain { $$ = driver.createRule (std::move($1), std::move($3)); driver.fixParentInfo($$); }
     ;
 
 complex_rule
@@ -98,7 +107,7 @@ rhs_chain
     | rhs_chain labeled_rhs_term { $1.push_back($2); $$.swap($1); }
     | labeled_rhs_nterm { $$ = { $1 }; }
     | rhs_chain labeled_rhs_nterm { $1.push_back($2); $$.swap($1); }
-    | rhs_term_empty { $$ = { StandardTerminalStorage::getEmptyTerminal() }; }
+    | rhs_term_empty { $$ = { GWordStorage::getEmptyTerminal() }; }
     ;
 
 rhs_nterm
@@ -148,6 +157,59 @@ prop
 simple_prop
     : PROP_START_UPPER_TOK { $$ = std::make_shared<UpperCaseFirstPredicate> (); }
     ;
+
+dep_section
+    : %empty
+    | DEP_SECTION_HEADER dep_list { driver.handleDependencies($2); }
+    ;
+
+rule_section
+    : RULE_SECTION_HEADER rule_list
+    ;
+
+command_section
+    : COMMAND_SECTION_HEADER command_list { driver.processCommandList(std::move($2)); }
+    ;
+
+command_list
+    : command { $$ = { $1 }; }
+    | command_list command { $1.push_back($2); $$.swap($1); }
+    ;
+
+command
+    : command_find SEMICOLON { $$.swap($1); }
+    | command_find LBRACKET hint_word_list RBRACKET { auto res = driver.handleHintWords($$, std::move($3)); $$.swap(res); }
+    ;
+
+command_find
+    : FIND CAPITAL_WORD { std::string err; if(!driver.handleCommandFindReduction($2,$$,err)) { error(@1,err); return -1; } }
+    ;
+
+hint_word_list
+    : HINT_WORDS_SECT COLON "\"" WORD "\"" { $$ = { $4 }; }
+    | hint_word_list "\"" WORD "\"" { $1.push_back($3); $$.swap($1); }
+    ;
+
+dep_list
+    : dependency { $$ = { $1 }; } 
+    | dep_list dependency { $1.push_back($2); $$.swap($1); }
+    ;
+
+dependency
+    : dep_rhs_chain SEMICOLON { $$.swap($1); }
+    | long_dep_rhs_chain SEMICOLON { $$.swap($1); }
+    ;
+
+dep_rhs_chain
+    : CAPITAL_WORD COLON CAPITAL_WORD NEAR_AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.createDependencyStruct($1, $3, $5, DependencyType::NEAR, $$, errMsg)) { error(@1, errMsg); return -1; } }
+    | dep_rhs_chain NEAR_AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.appendDependencyStruct($3, $1, errMsg)) { error(@1, errMsg); return -1; } $$.swap($1); }
+    ;
+
+long_dep_rhs_chain
+    : CAPITAL_WORD COLON CAPITAL_WORD AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.createDependencyStruct($1, $3, $5, DependencyType::FAR, $$, errMsg)) { error(@1, errMsg); return -1; } }
+    | long_dep_rhs_chain AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.appendDependencyStruct($3, $1, errMsg)) { error(@1, errMsg); return -1; } $$.swap($1); }
+    ;
+
 
 %%
 

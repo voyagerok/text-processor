@@ -132,6 +132,7 @@ public:
     virtual bool checkToken(const Token&, const UnicodeString &word) const = 0;
     virtual bool isNonTerminal() const = 0;
     virtual unsigned getPredciatesSize() const = 0;
+    virtual std::vector<PredicatePtr> &getPredicates() = 0;
 //    friend bool operator==(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) { return lhs->equals(rhs); }
 //    friend bool operator!=(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) { return !(lhs->equals(rhs)); }
     friend std::ostream &operator<<(std::ostream &os, const GRuleWordPtr &word) { return word->print(os); }
@@ -168,6 +169,7 @@ public:
     NonTerminal(const UnicodeString &word) : GRuleWord { word } {}
     NonTerminal(UnicodeString &&word): GRuleWord { std::move(word) } {}
     NonTerminal(const UnicodeString &word, const ChildWords &words) : GRuleWord { word }, childWords { { words } } {}
+    NonTerminal(const UnicodeString &word, ChildWords &&words) : GRuleWord { word }, childWords { { std::move(words) } } {}
     NonTerminal(UnicodeString &&word, ChildWords &&words) : GRuleWord { std::move(word) }, childWords { { std::move(words) } } {}
     bool isNonTerminal() const override { return true; }
 //    bool checkProperty(GRuleWordPropType) const override { throw std::runtime_error("bad call"); }
@@ -175,6 +177,7 @@ public:
         throw std::runtime_error("bad call: NonTerminal class has no implementation for checkToken(const UnicodeString&)");
     }
     unsigned getPredciatesSize() const override { throw std::runtime_error("bad call: NonTermonal class has no implementation for getPredicatesSize()"); }
+    std::vector<PredicatePtr> &getPredicates() override { throw std::runtime_error("bad call: NonTermonal class has no implementation for getPredicates()"); }
 //    bool operator==(const NonTerminal &other) const { return this->rawValue == other.rawValue; }
 //    bool operator!=(const NonTerminal &other) const { return this->rawValue == other.rawValue; }
     void swap(NonTerminal &other);
@@ -197,6 +200,7 @@ public:
     Terminal(UnicodeString &&word, std::vector<PredicatePtr> &&predicates):
         GRuleWord { std::move(word) }, predicates { std::move (predicates) } {}
     Terminal(UnicodeString &&word): GRuleWord(std::move(word)) {}
+    Terminal(const UnicodeString &word): GRuleWord(word) {}
     bool isNonTerminal() const override { return false; }
 //    unsigned &getPropertyMask() { return propsMask; }
 
@@ -209,29 +213,30 @@ public:
     std::vector<ChildWords> &getChildWords() override {
         throw std::runtime_error("bad call: Terminal class has no implementation for getChildWords()");
     }
-    std::vector<PredicatePtr> &getPredicates() { return predicates; }
+//    std::vector<PredicatePtr> &getPredicates() { return predicates; }
+    std::vector<PredicatePtr> &getPredicates() override { return predicates; }
 
 //    unsigned long hash_code() const override {
 };
 
 void printRule(const GRuleWordPtr &rule);
 
-struct StandardTerminalStorage {
-    static GRuleWordPtr getEndOfInputTerminal() {
-        static GRuleWordPtr endOfInputTerm = nullptr;
-        if (!endOfInputTerm) {
-            endOfInputTerm = std::make_shared<Terminal>(END_OF_INPUT);
-        }
-        return endOfInputTerm;
-    }
-    static GRuleWordPtr getEmptyTerminal() {
-        static GRuleWordPtr emptyTerm = nullptr;
-        if (!emptyTerm) {
-            emptyTerm = std::make_shared<Terminal>(EMPTY);
-        }
-        return emptyTerm;
-    }
-};
+//struct StandardTerminalStorage {
+//    static GRuleWordPtr getEndOfInputTerminal() {
+//        static GRuleWordPtr endOfInputTerm = nullptr;
+//        if (!endOfInputTerm) {
+//            endOfInputTerm = std::make_shared<Terminal>(END_OF_INPUT);
+//        }
+//        return endOfInputTerm;
+//    }
+//    static GRuleWordPtr getEmptyTerminal() {
+//        static GRuleWordPtr emptyTerm = nullptr;
+//        if (!emptyTerm) {
+//            emptyTerm = std::make_shared<Terminal>(EMPTY);
+//        }
+//        return emptyTerm;
+//    }
+//};
 
 struct SimpleGrammarRule {
     SimpleGrammarRule() {}

@@ -20,6 +20,7 @@ public:
     virtual bool operator()(const Token &token) = 0;
     friend bool operator==(const PredicatePtr &lhs, const PredicatePtr &rhs) { return lhs->equals(rhs); }
     friend bool operator!=(const PredicatePtr &lhs, const PredicatePtr &rhs) { return !(lhs->equals(rhs)); }
+    virtual unsigned long hash() const = 0;
 };
 
 class UpperCaseFirstPredicate final: public Predicate {
@@ -28,6 +29,7 @@ protected:
 public:
     UpperCaseFirstPredicate() = default;
     bool operator()(const Token &token) override;
+    unsigned long hash() const override { return typeid (this).hash_code(); }
 };
 
 }

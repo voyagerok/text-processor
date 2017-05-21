@@ -74,7 +74,13 @@ set(SRC
     "src/action.cpp"
     "src/action.hpp"
     "src/predicate.cpp"
-    "src/predicate.hpp")
+    "src/predicate.hpp"
+    "src/grammar-rules-generator.cpp"
+    "src/grammar-rules-generator.hpp"
+    "src/grammar-words-storage.cpp"
+    "src/grammar-words-storage.hpp"
+    "src/fields-extractor.cpp"
+    "src/fields-extractor.hpp")
 
 include_directories(src
     ${CMAKE_BINARY_DIR}
