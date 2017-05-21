@@ -40,12 +40,17 @@ cyr_cap {cyr_pref1}{cyr_cap_suf}
 cyr_low {cyr_pref1}{cyr_suf1}|{cyr_pref2}{cyr_suf2}
 
 lword [a-z][a-z]*(\_*[a-z]*)*
-uword [A-ZА-Я][a-zа-я]*(\_*[a-zа-я]*)*
+uword [A-Z][a-zA-Z]*(\_*[a-zA-Z]*)*
 lbracket "("
 rbracket ")"
 predicate_section "predicates"
 action_section "actions"
 colon ":"
+find_keyword [Ff][Ii][Nn][Dd]
+near_before "near_before"
+near_after "near_after"
+before "before"
+after "after"
 
 %%
 %{          /** Code executed at the beginning of yylex **/
@@ -68,6 +73,10 @@ colon ":"
 
 "actions"       {
                     return token::ACT_SECT;
+                }
+
+"hint_words"    {
+                    return token::HINT_WORDS_SECT;
                 }
 
 {colon}         {
@@ -114,6 +123,38 @@ colon ":"
                     return token::EMPTY_WORD;
                 }
 
+"%rules"        {
+                    return token::RULE_SECTION_HEADER;
+                }
+
+"%commands"     {
+                    return token::COMMAND_SECTION_HEADER;
+                }
+
+"%dependencies" {
+                    return token::DEP_SECTION_HEADER;
+                }
+
+{near_before}   {
+                    return token::NEAR_BEFORE_KEYWORD;
+                }
+
+{near_after}    {
+                    return token::NEAR_AFTER_KEYWORD;
+                }
+
+{before}        {
+                    return token::BEFORE_KEYWORD;
+                }
+
+{after}         {
+                    return token::AFTER_KEYWORD;
+                }
+
+{find_keyword}  {
+                    return token::FIND;
+                }
+
 \n              {
                     loc->lines(1);
                     /** return token::NEWLINE; **/
@@ -145,7 +186,7 @@ colon ":"
 
 ";"             {
                     Logger::getLogger() << "Found semicolon" << std::endl;
-                    return token::RULE_END;
+                    return token::SEMICOLON;
                 }
 
 [0-9]+          {
@@ -155,9 +196,9 @@ colon ":"
                     return token::NUM;
                 }
 
-[ \t]+          { std::cout << "Found whitespace" << std::endl;  }
+[ \t]+          { Logger::getLogger() << "Found whitespace" << std::endl;  }
 
-{lbracket}      { std::cout << "Found left bracket" << std::endl; return token::LBRACKET; }
+{lbracket}      { Logger::getLogger() << "Found left bracket" << std::endl; return token::LBRACKET; }
 
 {rbracket}      { return token::RBRACKET; }
 

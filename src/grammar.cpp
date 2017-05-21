@@ -16,6 +16,7 @@
 #include "grammar.h"
 #include "grammar-rule.h"
 #include "utils/logger.h"
+#include "grammar-words-storage.hpp"
 
 namespace tproc {
 
@@ -38,6 +39,24 @@ namespace tproc {
 //        Logger::getErrLogger() << err.what() << std::endl;
 //    }
 //}
+
+void Grammar::initFromDependencyRule(const DependencyRulePtr &depRulePtr) {
+    root = depRulePtr->root;
+    nterminals = depRulePtr->nterms;
+    terminals = depRulePtr->terms;
+    addExplicitRule();
+    Logger::getLogger() << "Rules are:" << std::endl;
+    for (auto &nterm : nterminals) {
+        Logger::getLogger() << nterm << std::endl;
+//            Logger::getLogger() << "Parent rules:" << std::endl;
+//            for (auto &parent : nterm->getParentNterms()) {
+//                Logger::getLogger() << parent.nterm << std::endl;
+//            }
+    }
+    buildFirstSet();
+    buildFollowSet();
+//    return true;
+}
 
 bool Grammar::initFromFile(const std::string &filename) {
 //    try {
@@ -90,7 +109,7 @@ bool Grammar::initFromFile(const std::string &filename) {
 
 void Grammar::applyPendingActions() {
     for (auto &action : this->pendingActions) {
-        action->operator()(*this);
+        action->operator()();
     }
 }
 
@@ -132,6 +151,7 @@ void Grammar::addExplicitRule() {
 //    rules[EXPLICIT_START_SYMBOL] = { *startRule };
 
     auto newRoot = std::make_shared<NonTerminal>(EXPLICIT_START_SYMBOL);
+//    auto newRoot = GWordStorage::getNonTerminal(EXPLICIT_START_SYMBOL);
     newRoot->getChildWords().push_back({ root });
 //    WordIndex oldRootIndex { newRoot, 0, 0};
     root->getParentNterms().emplace_back(newRoot, 0, 0);
@@ -243,7 +263,8 @@ void Grammar::buildFollowSet() {
 //        auto nterm_word = nterm.first;
 //        followSet[nterm_word] = followSetForNonTerminal(nterm_word);
 //    }
-    followSet[root] = { StandardTerminalStorage::getEndOfInputTerminal() };
+//    followSet[root] = { StandardTerminalStorage::getEndOfInputTerminal() };
+    followSet[root] = { GWordStorage::getEOITerminal() };
     for (auto &nterm : nterminals) {
         if (nterm == root)
             continue;
@@ -298,7 +319,8 @@ std::set<GRuleWordPtr> Grammar::firstSetForNonTerminal(const GRuleWordPtr &nterm
                     auto result = firstSetForNonTerminal(firstWord);
                     if (result.size() > 0) {
                         int resultSize = result.size();
-                        result.erase(StandardTerminalStorage::getEmptyTerminal());
+//                        result.erase(StandardTerminalStorage::getEmptyTerminal());
+                        result.erase(GWordStorage::getEmptyTerminal());
                         firstSet.insert(result.begin(), result.end());
                         if (result.size() == resultSize) {
                             shouldInsertEmptyWord = false;
@@ -308,7 +330,8 @@ std::set<GRuleWordPtr> Grammar::firstSetForNonTerminal(const GRuleWordPtr &nterm
                     }
                 }
                 if (shouldInsertEmptyWord) {
-                    firstSet.insert(StandardTerminalStorage::getEmptyTerminal());
+//                    firstSet.insert(StandardTerminalStorage::getEmptyTerminal());
+                    firstSet.insert(GWordStorage::getEmptyTerminal());
                 }
             } else {
                 firstSet.insert(firstWord);
@@ -354,7 +377,8 @@ std::set<GRuleWordPtr> Grammar::followSetForNonTerminal(const GRuleWordPtr &word
             GRuleWordPtr nextWord = childWords[infoRecord.wordIndex.position + 1];
             auto &nextWordFS = firstSet[nextWord];
             int firstSetOldSize = nextWordFS.size();
-            nextWordFS.erase(StandardTerminalStorage::getEmptyTerminal());
+//            nextWordFS.erase(StandardTerminalStorage::getEmptyTerminal());
+            nextWordFS.erase(GWordStorage::getEmptyTerminal());
             follow.insert(nextWordFS.begin(), nextWordFS.end());
             if (firstSetOldSize != nextWordFS.size() && childWords[infoRecord.wordIndex.position] != parentWord) {
                 auto parentWordFS = followSetForNonTerminal(parentWord);
