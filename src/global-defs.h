@@ -3,9 +3,9 @@
 
 #define START_SYMBOL "S"
 #define EXPLICIT_START_SYMBOL "S'"
-#define END_OF_INPUT "$"
-#define EMPTY "empty"
+//#define END_OF_INPUT "$"
+//#define EMPTY "empty"
 
-#define ENABLE_LOG 0
+#define ENABLE_LOG 1
 
 #endif //GLOBAL_DEFS_H_

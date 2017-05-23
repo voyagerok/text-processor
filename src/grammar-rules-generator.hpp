@@ -1,22 +1,24 @@
 #ifndef GRAMMAR_RULES_GENERATOR_HPP_
 #define GRAMMAR_RULES_GENERATOR_HPP_
 
+#include <unordered_map>
 #include "grammar-rule.h"
 
 namespace tproc {
 
-class FullPersonNameRuleGen {
-public:
-    static GRuleWordPtr generate();
+enum class ReservedRule {
+    WORDS,
+    PERSON_FULL_NAME
 };
 
-class WordsRuleGen {
+class GRulesGenerator {
 public:
-    static GRuleWordPtr generate();
+    static GRuleWordPtr generateRule(ReservedRule reservedRule);
+private:
+//    static std::unordered_map<ReservedRule, generatorFunc> ruleGenerators;
+    static GRuleWordPtr generateWordsRule();
+    static GRuleWordPtr generatePersonFullName();
 };
-
-template<class RuleGenType>
-GRuleWordPtr generateRule(const RuleGenType &ruleGen) { return ruleGen->generate(); }
 
 }
 

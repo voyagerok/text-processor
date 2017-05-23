@@ -25,7 +25,9 @@ cdef extern from "tokenizer.h" namespace "tproc":
         FIRST_NAME,
         SECOND_NAME,
         PATR,
-        INIT
+        INIT,
+        GEOX,
+        NUMB
 
 cdef extern from "<utility>" namespace "std":
     cdef pair[T1,T2] make_pair[T1,T2](T1 t1, T2 t2)
@@ -58,12 +60,16 @@ cdef analyzeToken(const UnicodeString tok, vector[pair[UnicodeString, vector[sha
             deref(analysis_res).partOfSpeech = UnicodeString(morph_result.tag.POS.encode('UTF-8'))
         if 'Name' in morph_result.tag:
             propMask |= FIRST_NAME
-        elif 'Patr' in morph_result.tag:
+        if 'Patr' in morph_result.tag:
             propMask |= PATR
-        elif 'Surn' in morph_result.tag:
+        if 'Surn' in morph_result.tag:
             propMask |= SECOND_NAME
-        elif 'Init' in morph_result.tag:
+        if 'Init' in morph_result.tag:
             propMask |= INIT
+        if 'Geox' in morph_result.tag:
+            propMask |= GEOX
+        if 'NUMB' in morph_result.tag:
+            propMask |= NUMB
         deref(analysis_res).nameCharMask = propMask
         res_for_tok.push_back(analysis_res)
     #analysis_results[tok] = res_for_tok

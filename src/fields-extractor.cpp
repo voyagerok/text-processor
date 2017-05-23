@@ -1,6 +1,9 @@
 #include <sstream>
 #include <algorithm>
 #include <fstream>
+#include <queue>
+#include <map>
+#include <unicode/ustream.h>
 
 #include "fields-extractor.hpp"
 #include "grammar.h"
@@ -60,7 +63,7 @@ FieldsExtractor::FieldsExtractor(const std::string &grammarFilename) {
 //    }
 //}
 
-std::vector<FieldInfo> FieldsExtractor::extractFromFile(const std::string &filename) {
+std::map<UnicodeString, FieldInfo> FieldsExtractor::extractFromFile(const std::string &filename) {
     UnicodeString plainText;
     if (readAllTextFromFile(filename, plainText)) {
         return extract(plainText);
@@ -70,8 +73,30 @@ std::vector<FieldInfo> FieldsExtractor::extractFromFile(const std::string &filen
     }
 }
 
-std::vector<FieldInfo> FieldsExtractor::extract(const UnicodeString &plainText) {
-    std::vector<FieldInfo> extractionResult;
+static double calcHeuristics(const std::vector<int> &hintWordPositions, int parserResultPosition) {
+    double result = 0.0;
+    for (auto pos : hintWordPositions) {
+        result += 1 / (double)std::abs(parserResultPosition - pos);
+    }
+    return result;
+}
+
+static std::vector<int> calcHintWordsPositions(const std::vector<UnicodeString> &hintWords, const Tokenizer::Sentence &sentence) {
+    std::vector<int> result;
+    for (auto &hintWord : hintWords) {
+        for (auto it = sentence.begin(); it != sentence.end(); ++it) {
+            if (it->pureToken == hintWord) {
+                result.push_back(it - sentence.begin());
+            }
+        }
+    }
+
+    return result;
+}
+
+std::map<UnicodeString,FieldInfo> FieldsExtractor::extract(const UnicodeString &plainText) {
+    using ExtractionResultsQueue = std::priority_queue<FieldInfo, std::vector<FieldInfo>, FieldInfoComparator>;
+    std::map<UnicodeString, ExtractionResultsQueue> extractionResultsQueue;
     Tokenizer tokenizer { plainText };
     auto sentences = tokenizer.getSentences();
     for (auto &sentence : sentences) {
@@ -79,24 +104,22 @@ std::vector<FieldInfo> FieldsExtractor::extract(const UnicodeString &plainText) 
             std::vector<std::pair<UnicodeString, int>> result;
             if (parserWrapper.parser.tryParse(sentence, result)) {
                 if (result.size() > 0) {
-                    UnicodeString &lastResult = result[result.size() - 1].first;
-                    bool passed = true;
-                    for (auto &hintWord : parserWrapper.hintWords) {
-                        auto hintWordFound = std::find_if(sentence.begin(),sentence.end(),[&hintWord](const Token &token){
-                            return token.word == hintWord || token.normalForm == hintWord;
-                        });
-                        if (hintWordFound == sentence.end()) {
-                            passed = false;
-                        }
-                    }
-                    if (passed) {
-                        extractionResult.push_back({parserWrapper.parser.getGrammar().getRoot()->getRawValue(), lastResult});
+                    auto hintWordsPositions = calcHintWordsPositions(parserWrapper.hintWords, sentence);
+                    for (auto &resultRecord : result) {
+                        double heuristics = calcHeuristics(hintWordsPositions, resultRecord.second);
+                        std::cout << "Inserting results in queue: " << parserWrapper.name << ", " << resultRecord.first <<
+                                     ", " << heuristics << std::endl;
+                        extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
                     }
                 }
             }
         }
     }
 
+    std::map<UnicodeString, FieldInfo> extractionResult;
+    for (auto &queue : extractionResultsQueue) {
+        extractionResult.insert(std::make_pair(queue.first, queue.second.top()));
+    }
     return extractionResult;
 }
 
@@ -116,7 +139,7 @@ void FieldsExtractor::processRulesWithoutDependencies(const std::set<DependencyR
         parserTable.printActionTable();
         parserTable.printGotoTable();
         Parser parser { *grammar, parserTable };
-        definedParsers.push_back({parser, depRule->hintWords});
+        definedParsers.push_back({parser, depRule->hintWords, depRule->root->getRawValue()});
     }
 }
 

@@ -87,16 +87,8 @@ public:
     }
 };
 
-enum class ReservedWord {
-    NAME,
-    SURNAME,
-    PATR,
-    INIT,
-    ANYWORD,
-    NONE
-};
-
 class Token;
+enum class ReservedWord;
 
 class ParserTable {
 public:

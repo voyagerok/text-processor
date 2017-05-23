@@ -10,6 +10,33 @@ namespace tproc {
 std::map<UnicodeString, GRuleWordPtr> GWordStorage::nterms;
 std::map<UnicodeString, std::vector<GRuleWordPtr>> GWordStorage::terms;
 
+std::unordered_map<ReservedWord, UnicodeString> GWordStorage::reservedWords = {
+    {ReservedWord::INIT, "init"},
+    {ReservedWord::ANYWORD, "word"},
+    {ReservedWord::NAME, "name"},
+    {ReservedWord::PATR, "patr"},
+    {ReservedWord::SURNAME, "surn"},
+    {ReservedWord::ADJF, "adjf"},
+    {ReservedWord::ADVB, "advb"},
+    {ReservedWord::COMP, "comp"},
+    {ReservedWord::CONJ, "conj"},
+    {ReservedWord::GRND, "grnd"},
+    {ReservedWord::INFN, "infn"},
+    {ReservedWord::INTJ, "intj"},
+    {ReservedWord::NOUN, "noun"},
+    {ReservedWord::NPRO, "npro"},
+    {ReservedWord::NUMR, "numr"},
+    {ReservedWord::PRCL, "prcl"},
+    {ReservedWord::PREP, "prep"},
+    {ReservedWord::PRTF, "prtf"},
+    {ReservedWord::PRTS, "prts"},
+    {ReservedWord::VERB, "verb"},
+    {ReservedWord::EMPTY, "empty"},
+    {ReservedWord::NUMB, "numb"},
+    {ReservedWord::GEOX, "geox"},
+    {ReservedWord::END_OF_INPUT, "$"}
+};
+
 GRuleWordPtr GWordStorage::getNonTerminal(const UnicodeString &name) {
     Logger::getLogger() << "getNonTerminal(): " << name << std::endl;
     std::map<UnicodeString, GRuleWordPtr>::iterator ntermFound = nterms.find(name);
@@ -73,6 +100,7 @@ GRuleWordPtr GWordStorage::getTerminal(const UnicodeString &name, const std::vec
 
 GRuleWordPtr GWordStorage::getEmptyTerminal() {
     static GRuleWordPtr result = nullptr;
+    static UnicodeString &emptyWord = getReservedWord(ReservedWord::EMPTY);
     if (!result) {
 //        auto termFound = std::find_if(terms.begin(), terms.end(), [](const GRuleWordPtr &term){
 //            return term->getRawValue() == EMPTY;
@@ -82,12 +110,12 @@ GRuleWordPtr GWordStorage::getEmptyTerminal() {
 //        } else {
 //            result = std::make_shared<Terminal>(EMPTY);
 //        }
-        auto termsFound = terms.find(EMPTY);
+        auto termsFound = terms.find(emptyWord);
         if (termsFound != terms.end()) {
             result = termsFound->second[0];
         } else {
-            result = std::make_shared<Terminal>(EMPTY);
-            terms[EMPTY] = { result };
+            result = std::make_shared<Terminal>(emptyWord);
+            terms[emptyWord] = { result };
         }
     }
     return result;
@@ -95,6 +123,7 @@ GRuleWordPtr GWordStorage::getEmptyTerminal() {
 
 GRuleWordPtr GWordStorage::getEOITerminal() {
     static GRuleWordPtr result = nullptr;
+    static UnicodeString &endOfInputWord = getReservedWord(ReservedWord::END_OF_INPUT);
     if (!result) {
 //        auto termFound = std::find_if(terms.begin(), terms.end(), [](const GRuleWordPtr &term){
 //            return term->getRawValue() == END_OF_INPUT;
@@ -105,12 +134,12 @@ GRuleWordPtr GWordStorage::getEOITerminal() {
 //            result = std::make_shared<Terminal>(END_OF_INPUT);
 //        }
 
-        auto termsFound = terms.find(END_OF_INPUT);
+        auto termsFound = terms.find(endOfInputWord);
         if (termsFound != terms.end()) {
             result = termsFound->second[0];
         } else {
-            result = std::make_shared<Terminal>(END_OF_INPUT);
-            terms[END_OF_INPUT] = { result };
+            result = std::make_shared<Terminal>(endOfInputWord);
+            terms[endOfInputWord] = { result };
         }
     }
     return result;

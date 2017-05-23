@@ -51,6 +51,7 @@ near_before "near_before"
 near_after "near_after"
 before "before"
 after "after"
+double_quote "\""
 
 %%
 %{          /** Code executed at the beginning of yylex **/
@@ -67,8 +68,8 @@ after "after"
                     return token::DELIM;
                 }
 
-"predicates"    {
-                    return token::PRED_SECT;
+"props"         {
+                    return token::PROPS_SECT;
                 }
 
 "actions"       {
@@ -112,9 +113,8 @@ after "after"
                     return token::PROP_START_UPPER_TOK; 
                 }
 
-"S"             {
-                    yylval->build<UnicodeString>(yytext);
-                    return token::START_RULE_SYMBOL;
+"len"           {
+                    return token::LENGTH_SECT;
                 }
 
 "empty"         {
@@ -202,7 +202,7 @@ after "after"
 
 {rbracket}      { return token::RBRACKET; }
 
-\"              { }
+{double_quote}  { Logger::getLogger() << "Found quote" << std::endl; return token::DOUBLE_QUOTE; }
 
 
 .               { std::cout << "Found unknown character at " << loc << std::endl; }

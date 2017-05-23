@@ -16,6 +16,7 @@
 
 #include "global-defs.h"
 #include "predicate.hpp"
+#include "grammar-words-storage.hpp"
 
 namespace tproc {
 
@@ -139,8 +140,8 @@ public:
 
     virtual std::vector<ChildWords> &getChildWords() = 0;
     std::vector<ParentInfo> &getParentNterms() { return  this->parentNterms; }
-    bool isEndOfInput() { return rawValue == END_OF_INPUT; }
-    bool isEmptyWord() { return rawValue == EMPTY; }
+    bool isEndOfInput() { return rawValue == GWordStorage::getReservedWord(ReservedWord::END_OF_INPUT); }
+    bool isEmptyWord() { return rawValue == GWordStorage::getReservedWord(ReservedWord::EMPTY); }
     bool isRhsEmpty(int index) {
         auto childWords = getChildWords();
         if (childWords[index].size() == 1) {

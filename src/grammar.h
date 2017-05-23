@@ -44,6 +44,7 @@ public:
 //    RuleIndex getRuleIndex(const SimpleGrammarRule &rule) const;
     bool followWordsForNterminal(const GRuleWordPtr &nterm, std::set<GRuleWordPtr> &followWords) const;
     GRuleWordPtr getRoot() const { return this->root; }
+//    UnicodeString getRootName() { return root->getChildWords().at(0).at(0)->getRawValue(); }
 //    bool isEndOfInput(const UnicodeString &word) const;
 //    bool isStartRule(const SimpleGrammarRule &rule) const;
     void printFirstSet();

@@ -7,6 +7,7 @@
 #include "lr0-items.h"
 #include "utils/logger.h"
 #include "tokenizer.h"
+#include "grammar-words-storage.hpp"
 
 namespace tproc {
 
@@ -202,18 +203,19 @@ void ParserTable::addNewAction(int currentState, const GRuleWordPtr &currentWord
         return;
     }
     auto &actionsForState = actionTable->at(currentState);
-    auto wordFound = actionsForState.find(currentWord->getRawValue());
-    if (wordFound != actionsForState.end()) {
-        auto &actionsForRuleWord = wordFound->second;
-        auto ruleWordFound = actionsForRuleWord.find(currentWord);
-        if (ruleWordFound != actionsForRuleWord.end()) {
-            ruleWordFound->second.insert(action);
-        } else {
-            actionsForRuleWord[currentWord] = { action };
-        }
-    } else {
-        actionsForState[currentWord->getRawValue()][currentWord] = { action };
-    }
+    actionsForState[currentWord->getRawValue()][currentWord].insert(action);
+//    auto wordFound = actionsForState.find(currentWord->getRawValue());
+//    if (wordFound != actionsForState.end()) {
+//        auto &actionsForRuleWord = wordFound->second;
+//        auto ruleWordFound = actionsForRuleWord.find(currentWord);
+//        if (ruleWordFound != actionsForRuleWord.end()) {
+//            ruleWordFound->second.insert(action);
+//        } else {
+//            actionsForRuleWord[currentWord] = { action };
+//        }
+//    } else {
+//        actionsForState[currentWord->getRawValue()][currentWord] = { action };
+//    }
 //    auto it = actionForState.find(currentWord);
 //    if (it != actionForState.end()) {
 //        it->second.insert(action);
@@ -302,16 +304,9 @@ bool ParserTable::getGotoStateForStateAndNterm(int state, const UnicodeString &n
     return true;
 }
 
-std::map<ReservedWord, UnicodeString> reservedWordsTable = {
-    {ReservedWord::INIT, "init"},
-    {ReservedWord::ANYWORD, "word"},
-    {ReservedWord::NAME, "name"},
-    {ReservedWord::PATR, "patr"},
-    {ReservedWord::SURNAME, "surn"}
-};
-
 bool ParserTable::getActionsForStateAndReservedWord(int state, ReservedWord reservedWordType, const Token &token, ParserActionSet &actionSet) const {
-    UnicodeString &reservedWord = reservedWordsTable[reservedWordType];
+//    UnicodeString &reservedWord = reservedWordsTable[reservedWordType];
+    UnicodeString &reservedWord = GWordStorage::getReservedWord(reservedWordType);
     return this->getActionsForStateAndWord(state, reservedWord, token, actionSet);
 }
 

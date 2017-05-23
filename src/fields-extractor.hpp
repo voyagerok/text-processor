@@ -21,13 +21,21 @@ struct DependencyRule;
 using DependencyRulePtr = std::shared_ptr<DependencyRule>;
 
 struct FieldInfo {
-    UnicodeString fieldName;
+    FieldInfo() = default;
+    FieldInfo(const UnicodeString &value, const double heuristics) :
+        fieldValue { value }, heuristics { heuristics } {}
     UnicodeString fieldValue;
+    double heuristics;
+};
+
+struct FieldInfoComparator {
+    bool operator()(const FieldInfo &lhs, const FieldInfo &rhs) const { return lhs.heuristics < rhs.heuristics; }
 };
 
 struct ParserWrapper {
     Parser parser;
     std::vector<UnicodeString> hintWords;
+    UnicodeString name;
 };
 
 //struct DependencyParserObject {
@@ -41,11 +49,11 @@ public:
 //    FieldsExtractor(const char *grammarFilename);
     FieldsExtractor(const std::string &grammarFilename);
 //    std::vector<FieldInfo> extractFromFile(const char *fileName);
-    std::vector<FieldInfo> extractFromFile(const std::string &fileName);
+    std::map<UnicodeString, FieldInfo> extractFromFile(const std::string &fileName);
 private:
     void processDependencyRules(const std::set<DependencyRulePtr> &depRules);
     void processRulesWithoutDependencies(const std::set<DependencyRulePtr> &depRules);
-    std::vector<FieldInfo> extract(const UnicodeString &plainText);
+    std::map<UnicodeString, FieldInfo> extract(const UnicodeString &plainText);
     std::vector<ParserWrapper> definedParsers;
 //    std::set<DependencyGrammarObjectPtr> definedDepGrammars;
 //    std::set<DependencyGrammarObjectPtr> pendingDepGrammars;

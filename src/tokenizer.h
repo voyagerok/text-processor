@@ -11,7 +11,9 @@ enum MorphProperty {
     FIRST_NAME = 01,
     SECOND_NAME = 02,
     PATR = 04,
-    INIT = 010
+    INIT = 010,
+    GEOX = 020,
+    NUMB = 040
 };
 
 //std::ostream &operator<<(std::ostream &os, MorphProperty nameChar);
@@ -22,6 +24,8 @@ struct Token {
 //    std::vector<UnicodeString> tags;
 //    unsigned morphPropsMask;
     UnicodeString partOfSpeech;
+    // normal form without quotes and other unwanted symbols (for hint words matching)
+    UnicodeString pureToken;
     unsigned propMask = 0;
 
     Token(UnicodeString &&word, UnicodeString &&norm) :

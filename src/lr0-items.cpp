@@ -211,13 +211,14 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
 
 void LR0ItemSetCollection::addItemSetToHistory(const LR0ItemSet &itemSet) {
     auto incomingWord = itemSet.incomingWord;
-    auto it = history.find(incomingWord);
-    if (it == history.end()) {
-        history[incomingWord] = {itemSet};
-    } else {
-        auto &itemsForWord = history[incomingWord];
-        itemsForWord.push_back(itemSet);
-    }
+    history[incomingWord].push_back(itemSet);
+//    auto it = history.find(incomingWord);
+//    if (it == history.end()) {
+//        history[incomingWord] = {itemSet};
+//    } else {
+//        auto &itemsForWord = history[incomingWord];
+//        itemsForWord.push_back(itemSet);
+//    }
 }
 
 void LR0ItemSetCollection::closure(LR0ItemSet &itemSet, const LR0Item &currentItem) {

@@ -7,6 +7,7 @@
 #include <unicode/unistr.h>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 #include "predicate.hpp"
 //#include "grammar-rule.h"
 
@@ -14,22 +15,73 @@
 //#define GET_STR_AUX(_, i, str) (sizeof(str) > (i) ? str[(i)] : 0),
 //#define GET_STR(str) BOOST_PP_REPEAT(64,GET_STR_AUX,str) 0
 
+/*
+ * Грамемы:
+ * NOUN
+ * ADJF - прилагательное полное
+ * ADJS - прилагательное краткое
+ * COMP - сравнительная форма
+ * VERB - глагол (лич форма)
+ * INFN - глагол (инфинитив)
+ * NUMR - числительное
+ * GRND - деепричастие
+ * PRTS - причастие краткое
+ * PRTF - причастие полное
+ * ADVB - наречие
+ * NPRO - местоимение (сущ)
+ * PREP - предлог
+ * CONJ - союз
+ * PRCL - частица
+ * INTJ - междометие
+ * */
 
 namespace tproc {
 
 class GRuleWord;
 using GRuleWordPtr = std::shared_ptr<GRuleWord>;
 
+enum class ReservedWord {
+    NAME,
+    SURNAME,
+    PATR,
+    INIT,
+    ANYWORD,
+    NOUN,
+    ADJF,
+    COMP,
+    VERB,
+    INFN,
+    NUMR,
+    GRND,
+    PRTS,
+    PRTF,
+    ADVB,
+    NPRO,
+    PREP,
+    CONJ,
+    PRCL,
+    INTJ,
+    NUMB,
+    GEOX,
+    EMPTY,
+    END_OF_INPUT,
+    NONE
+};
+
 class GWordStorage {
 public:
+
     static GRuleWordPtr getNonTerminal(const UnicodeString &name);
     static GRuleWordPtr getTerminal(const UnicodeString &name);
     static GRuleWordPtr getTerminal(const UnicodeString &name, const std::vector<PredicatePtr> &predicates);
     static GRuleWordPtr getEmptyTerminal();
     static GRuleWordPtr getEOITerminal();
+
+    static UnicodeString &getReservedWord(ReservedWord reservedWord) { return reservedWords[reservedWord]; }
 private:
     static std::map<UnicodeString, GRuleWordPtr> nterms;
     static std::map<UnicodeString, std::vector<GRuleWordPtr>> terms;
+    static std::unordered_map<ReservedWord, UnicodeString> reservedWords;
 };
 
 //namespace GWordFactory {

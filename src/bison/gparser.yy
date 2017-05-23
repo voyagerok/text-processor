@@ -41,25 +41,26 @@
 
 %define api.value.type variant
 %define parse.assert
+%define parse.error verbose
 
 %token END 0 "end of file"
-%token <UnicodeString> WORD
+%token <UnicodeString> WORD CAPITAL_WORD QUOTED_WORD
 %token <int> NUM
 %token ACTION_QUOTED_TOK PROP_START_UPPER_TOK
 %token ASSIGN
 %token DELIM
 %token NEWLINE
-%token <UnicodeString> CAPITAL_WORD
 %token RBRACKET
 %token LBRACKET
 %token SEMICOLON
 %token ACTION_RANGE ACTION_MIN_REP_TOK ACTION_MAX_REP_TOK
 %token ELLIPSIS
-%token ACT_SECT PRED_SECT HINT_WORDS_SECT
-%token COLON
+%token ACT_SECT PROPS_SECT HINT_WORDS_SECT
+%token COLON DOUBLE_QUOTE
 %token <UnicodeString> START_RULE_SYMBOL EMPTY_WORD
 %token RULE_SECTION_HEADER COMMAND_SECTION_HEADER DEP_SECTION_HEADER
 %token NEAR_BEFORE_KEYWORD NEAR_AFTER_KEYWORD BEFORE_KEYWORD AFTER_KEYWORD FIND
+%token LENGTH_SECT
 
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
@@ -68,7 +69,7 @@
 %type <GRuleWordPtr> labeled_rhs_term labeled_rhs_nterm
 %type <UnicodeString> rhs_term rhs_nterm rhs_term_empty
 %type <std::vector<PredicatePtr>> prop_list
-%type <PredicatePtr> prop simple_prop
+%type <PredicatePtr> prop simple_prop length_info
 %type <ActionPtr> action
 %type <std::vector<ActionPtr>> action_list
 %type <DependencyStruct> dependency dep_rhs_chain long_dep_rhs_chain
@@ -121,7 +122,7 @@ labeled_rhs_nterm
 
 rhs_term
     : WORD {$$.swap($1); }
-    | "\"" WORD "\"" {$$.swap($2); }
+    | DOUBLE_QUOTE WORD DOUBLE_QUOTE {$$.swap($2); }
     ;
 
 rhs_term_empty
@@ -130,13 +131,20 @@ rhs_term_empty
 
 labeled_rhs_term
     : rhs_term { $$ = driver.handleTermReduction(std::move($1)); }
-    | rhs_term LBRACKET prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($3));  }
-    | rhs_term LBRACKET action_list RBRACKET { $$ = driver.handleTermReduction(std::move($1)); driver.fixAndSaveActionList($$, std::move($3)); }
-    | rhs_term LBRACKET action_list prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($4)); driver.fixAndSaveActionList($$, std::move($3)); }
+    /*| rhs_term LBRACKET prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($3));  }*/
+    /*| rhs_term LBRACKET action_list RBRACKET { $$ = driver.handleTermReduction(std::move($1)); driver.fixAndSaveActionList($$, std::move($3)); }*/
+    | rhs_term LBRACKET action_list prop_list length_info RBRACKET 
+    { 
+        if ($5) 
+            $4.push_back($5); 
+        $$ = driver.handleTermReduction(std::move($1), std::move($4)); 
+        driver.fixAndSaveActionList($$, std::move($3)); 
+    }
     ;
 
 action_list
-    : ACT_SECT COLON action { $$ = { $3 }; }
+    : %empty { $$ = {}; }
+    | ACT_SECT COLON action { $$ = { $3 }; }
     | action_list action { $1.push_back($2); $$.swap($1); }
     ;
 
@@ -146,7 +154,8 @@ action
     ;
 
 prop_list
-    : PRED_SECT COLON prop { $$ = { $3 }; }
+    : %empty { $$ = {}; }
+    | PROPS_SECT COLON prop { $$ = { $3 }; }
     | prop_list prop { $1.push_back($2); $$.swap($1); }
     ;
 
@@ -156,6 +165,12 @@ prop
 
 simple_prop
     : PROP_START_UPPER_TOK { $$ = std::make_shared<UpperCaseFirstPredicate> (); }
+    ;
+
+length_info
+    : %empty { $$ = nullptr; }
+    | LENGTH_SECT COLON NUM { $$ = std::make_shared<LengthPredicate>($3); }
+    | LENGTH_SECT COLON NUM ELLIPSIS NUM { $$ = std::make_shared<LengthPredicate>($3,$5); }
     ;
 
 dep_section
@@ -178,7 +193,7 @@ command_list
 
 command
     : command_find SEMICOLON { $$.swap($1); }
-    | command_find LBRACKET hint_word_list RBRACKET { auto res = driver.handleHintWords($$, std::move($3)); $$.swap(res); }
+    | command_find LBRACKET hint_word_list RBRACKET SEMICOLON { auto res = driver.handleHintWords($1, std::move($3)); $$.swap(res); }
     ;
 
 command_find
@@ -186,8 +201,8 @@ command_find
     ;
 
 hint_word_list
-    : HINT_WORDS_SECT COLON "\"" WORD "\"" { $$ = { $4 }; }
-    | hint_word_list "\"" WORD "\"" { $1.push_back($3); $$.swap($1); }
+    : HINT_WORDS_SECT COLON DOUBLE_QUOTE WORD DOUBLE_QUOTE { $$ = { $4 }; }
+    | hint_word_list DOUBLE_QUOTE WORD DOUBLE_QUOTE { $1.push_back( $3 ); $$.swap($1); }
     ;
 
 dep_list

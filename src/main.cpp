@@ -35,26 +35,6 @@
 #include "g-parser-driver.hpp"
 #include "fields-extractor.hpp"
 
-/*
- * Грамемы:
- * NOUN
- * ADJF - прилагательное полное
- * ADJS - прилагательное краткое
- * COMP - сравнительная форма
- * VERB - глагол (лич форма)
- * INFN - глагол (инфинитив)
- * NUMR - числительное
- * GRND - деепричастие
- * PRTS - причастие краткое
- * PRTF - причастие полное
- * ADVB - наречие
- * NPRO - местоимение (сущ)
- * PREP - предлог
- * CONJ - союз
- * PRCL - частица
- * INTJ - междометие
- * */
-
 namespace po = boost::program_options;
 
 struct Arguements {
@@ -128,7 +108,7 @@ int main(int argc, char *argv[]) {
         std::cout << "No fields extracted." << std::endl;
     } else {
         for (auto &resultRecord : result) {
-            std::cout << "Field name: " << resultRecord.fieldName << ", field value: " << resultRecord.fieldValue << std::endl;
+            std::cout << "Field name: " << resultRecord.first << ", field value: " << resultRecord.second.fieldValue << std::endl;
         }
     }
 

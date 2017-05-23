@@ -61,7 +61,7 @@ void GParserDriver::appendRule(const GRuleWordPtr &ntermPtr) {
 //    currentRuleWordNum =0;
 //    incSimpleRuleIndex();
 
-    Logger::getLogger() << "appendRule: " << ntermPtr << std::endl;
+//    Logger::getLogger() << "appendRule: " << ntermPtr << std::endl;
 //    Logger::getLogger() << "Nterm parents:" << std::endl;
 
 //    auto defFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&ntermPtr](auto &wordPtr){
@@ -103,7 +103,7 @@ void GParserDriver::fixAndSaveActionList(const GRuleWordPtr &actionWord, std::ve
 }
 
 void GParserDriver::fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ const GRuleWordPtr &parent/*, int baseRuleIndex*/) {
-    Logger::getLogger() << "Fix parent info: " << parent->getRawValue() << std::endl;
+//    Logger::getLogger() << "Fix parent info: " << parent->getRawValue() << std::endl;
 
     std::vector<GRuleWordPtr> &words = parent->getChildWords().back();
     int baseRuleIndex = parent->getChildWords().size() - 1;
@@ -116,15 +116,15 @@ void GParserDriver::fixParentInfo(/*const std::vector<GRuleWordPtr> &words,*/ co
     for (int i = 0; i < words.size(); ++i) {
 //        word->getParentNterms().push_back(parent);
 //        rootCandidates.erase(word);
-        Logger::getLogger() << "Fixing for " << words[i]->getRawValue() << std::endl;
-        Logger::getLogger() << "Before fixing" << std::endl;
+//        Logger::getLogger() << "Fixing for " << words[i]->getRawValue() << std::endl;
+//        Logger::getLogger() << "Before fixing" << std::endl;
         printParents(words[i]);
         ParentInfo wordIndex { parent, baseRuleIndex, i };
         words[i]->getParentNterms().push_back(wordIndex);
         rootCandidates.erase(words[i]);
-        Logger::getLogger() << "After fixing" << std::endl;
-        printParents(words[i]);
-        Logger::getLogger() << "Done" << std::endl;
+//        Logger::getLogger() << "After fixing" << std::endl;
+//        printParents(words[i]);
+//        Logger::getLogger() << "Done" << std::endl;
     }
 }
 
@@ -177,7 +177,7 @@ GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue) {
 }
 
 GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue, std::vector<PredicatePtr> &&predicates) {
-    Logger::getLogger() << "handleTermReduction: " << rawValue << std::endl;
+    Logger::getLogger() << "handleTermReduction: " << rawValue << ", " << predicates.size() << std::endl;
     auto term = GWordStorage::getTerminal(rawValue, predicates);
     auto termFound = terminals.find(term);
 

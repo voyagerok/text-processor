@@ -79,7 +79,7 @@ bool Token::operator!=(const Token &other) {
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
     os << "Original word: " << token.word << ", normal form: " << token.normalForm
-       << "Part of speech: " << token.partOfSpeech << ", name char: "; //<< token.nameCharacteristic;
+       << "Part of speech: " << token.partOfSpeech << ", morph char: "; //<< token.nameCharacteristic;
 
     if ((token.propMask & MorphProperty::FIRST_NAME)) {
         os << "FirstName ";
@@ -93,6 +93,12 @@ std::ostream &operator<<(std::ostream &os, const Token &token) {
     if ((token.propMask & MorphProperty::SECOND_NAME)) {
         os << "SecondName ";
     }
+    if ((token.propMask & MorphProperty::GEOX)) {
+        os << "GEOX";
+    }
+    if ((token.propMask & MorphProperty::NUMB)) {
+        os << "Number";
+    }
 
     return os;
 }
@@ -105,7 +111,24 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
     for (auto &plainSentence : plainSentences) {
         Logger::getLogger() << plainSentence << std::endl;
         std::vector<UnicodeString> plainTokens;
-        split_unistring(plainSentence, {"\\s","\\;","\\:","\\,"}, plainTokens);
+        split_unistring(plainSentence, {"\\s",
+                                        "\\;",
+                                        "\\:",
+                                        "\\,",
+                                        "\\(",
+                                        "\\)",
+                                        "\\<",
+                                        "\\>",
+                                        "\\{",
+                                        "\\}"},
+                        plainTokens);
+        auto leftAngleBracket = UnicodeString::fromUTF8("\xc2\xab");
+        auto rightAngleBracket = UnicodeString::fromUTF8("\xc2\xbb");
+        for (auto &token : plainTokens) {
+            token.findAndReplace(leftAngleBracket, "\"");
+            token.findAndReplace(rightAngleBracket, "\"");
+        }
+
         Logger::getLogger() << "PlainTokens Count: " << plainTokens.size() << std::endl;
 //        split_unistring(plainSentence, {"\\s"}, plainTokens);
         Sentence currentSentence;
@@ -141,6 +164,9 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
             currentToken.word = std::move(resultsForWord.first);
             currentToken.normalForm = std::move(resultsForWord.second[0]->normalForm.toLower());
             currentToken.partOfSpeech = std::move(resultsForWord.second[0]->partOfSpeech.toLower());
+            // for hint words matching
+            currentToken.pureToken = currentToken.normalForm;
+            currentToken.pureToken.findAndReplace("\"", "");
 
             Logger::getLogger() << "Current token: " << currentToken << std::endl;
 
