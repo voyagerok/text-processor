@@ -68,8 +68,6 @@ cdef analyzeToken(const UnicodeString tok, vector[pair[UnicodeString, vector[sha
             propMask |= INIT
         if 'Geox' in morph_result.tag:
             propMask |= GEOX
-        if 'NUMB' in morph_result.tag:
-            propMask |= NUMB
         deref(analysis_res).nameCharMask = propMask
         res_for_tok.push_back(analysis_res)
     #analysis_results[tok] = res_for_tok

@@ -32,8 +32,9 @@ std::unordered_map<ReservedWord, UnicodeString> GWordStorage::reservedWords = {
     {ReservedWord::PRTS, "prts"},
     {ReservedWord::VERB, "verb"},
     {ReservedWord::EMPTY, "empty"},
-    {ReservedWord::NUMB, "numb"},
+    {ReservedWord::NUM, "num"},
     {ReservedWord::GEOX, "geox"},
+    {ReservedWord::MONTH, "month"},
     {ReservedWord::END_OF_INPUT, "$"}
 };
 
@@ -92,7 +93,7 @@ GRuleWordPtr GWordStorage::getTerminal(const UnicodeString &name, const std::vec
         }
     }
     if (result == nullptr) {
-        result = std::make_shared<Terminal>(name);
+        result = std::make_shared<Terminal>(name, predicates);
         terms[name] = { result };
     }
     return result;

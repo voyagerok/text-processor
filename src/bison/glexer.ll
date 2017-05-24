@@ -123,6 +123,10 @@ double_quote "\""
                     return token::EMPTY_WORD;
                 }
 
+"num"           {
+                    return token::NUM_TERM;
+                }
+
 "%rules"        {
                     return token::RULE_SECTION_HEADER;
                 }

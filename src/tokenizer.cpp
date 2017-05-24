@@ -3,12 +3,14 @@
 #include <unicode/ustream.h>
 #include <map>
 #include <memory>
+#include <unordered_set>
 
 #include "tokenizer.h"
 #include "utils/string-helper.h"
 #include "morph-analyzer.h"
 #include "utils/converter.h"
 #include "utils/logger.h"
+#include "unicode/regex.h"
 
 namespace tproc {
 
@@ -103,7 +105,64 @@ std::ostream &operator<<(std::ostream &os, const Token &token) {
     return os;
 }
 
+struct DictChecker {
+    DictChecker() {
+        UErrorCode status = U_ZERO_ERROR;
+        monthRegexMatcher = new RegexMatcher(monthRegexPattern, UREGEX_CASE_INSENSITIVE, status);
+        if (U_FAILURE(status)) {
+            throw std::runtime_error("Failed to initialize month matching regex");
+        }
+
+        numbeRegexMatcher = new RegexMatcher(numberRegexPattern, 0, status);
+        if (U_FAILURE(status)) {
+            throw std::runtime_error("Failed to initialize number matching regex");
+        }
+    }
+
+    ~DictChecker() {
+        delete monthRegexMatcher;
+    }
+
+    enum MatchFlags {
+        MONTH = 01,
+        NUMBER = 02
+    };
+
+    unsigned int check(const UnicodeString &token) {
+        unsigned result = 0;
+        UErrorCode status = U_ZERO_ERROR;
+
+        monthRegexMatcher->reset(token);
+        if (monthRegexMatcher->matches(status)) {
+            result |= MatchFlags::MONTH;
+        }
+
+        numbeRegexMatcher->reset(token);
+        if (numbeRegexMatcher->matches(status)) {
+            result |= MatchFlags::NUMBER;
+        }
+
+        return result;
+    }
+
+    DictChecker(const DictChecker&) = delete;
+    DictChecker &operator=(const DictChecker&) = delete;
+
+    static DictChecker &sharedInstance() {
+        static DictChecker checker;
+        return checker;
+    }
+
+private:
+    const char *monthRegexPattern = "январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь";
+    RegexMatcher *monthRegexMatcher;
+
+    const char *numberRegexPattern = "[0-9]+";
+    RegexMatcher *numbeRegexMatcher = nullptr;
+};
+
 Tokenizer::Tokenizer(const UnicodeString &plainText) {
+
     std::vector<UnicodeString> plainSentences;
 //    split_unistring(plainText, {"\\?","\\.","\\!"}, plainSentences);
     split_unistring(plainText, {"\n"}, plainSentences);
@@ -159,14 +218,25 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
 //                }
                 currentToken.propMask |= result->nameCharMask;
             }
-//            currentToken.propMask = resultsForWord
+
+//            unsigned checkResult = DictChecker::sharedInstance().check(resultsForWord)
 
             currentToken.word = std::move(resultsForWord.first);
             currentToken.normalForm = std::move(resultsForWord.second[0]->normalForm.toLower());
             currentToken.partOfSpeech = std::move(resultsForWord.second[0]->partOfSpeech.toLower());
             // for hint words matching
-            currentToken.pureToken = currentToken.normalForm;
+            currentToken.pureTokenNormal = currentToken.normalForm;
+            currentToken.pureTokenNormal.findAndReplace("\"", "");
+            currentToken.pureToken = currentToken.word;
             currentToken.pureToken.findAndReplace("\"", "");
+
+            unsigned checkResult = DictChecker::sharedInstance().check(currentToken.pureTokenNormal);
+            if ((checkResult & DictChecker::MatchFlags::MONTH)) {
+                currentToken.propMask |= MorphProperty::MONTH;
+            }
+            if ((checkResult & DictChecker::MatchFlags::NUMBER)) {
+                currentToken.propMask |= MorphProperty::NUMB;
+            }
 
             Logger::getLogger() << "Current token: " << currentToken << std::endl;
 

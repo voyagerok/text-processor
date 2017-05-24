@@ -41,7 +41,8 @@ bool RegexPredicate::operator()(const Token &token) {
     if (token.word.isEmpty()) {
         return false;
     }
-    regex->reset(token.word);
+//    regex->reset(token.word);
+    regex->reset(token.pureToken);
 
     UErrorCode status = U_ZERO_ERROR;
     UBool result = regex->matches(status);
@@ -55,7 +56,17 @@ bool RegexPredicate::operator()(const Token &token) {
 }
 
 bool LengthPredicate::operator()(const Token &token) {
-    return token.word.length() >= minLength && token.word.length() <= maxLength;
+    Logger::getLogger() << "LengthPredicate: token " << token.word << ", minLen "
+                        << minLength << ", maxLen " << maxLength << std::endl;
+//    UnicodeString pureWord = token.word;
+//    pureWord.findAndReplace("\"","");
+//    auto result = pureWord.length() >= minLength && pureWord.length() <= maxLength;
+//    if (result) {
+//        Logger::getLogger() << "Passed" << std::endl;
+//    }
+    return token.pureToken.length() >= minLength && token.pureToken.length() <= maxLength;
+
+//    return result;
 }
 
 bool LengthPredicate::equals(const PredicatePtr &other) const {

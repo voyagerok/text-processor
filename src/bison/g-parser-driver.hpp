@@ -120,6 +120,8 @@ public:
     GRuleWordPtr handleNtermReduction(UnicodeString &&rawValue);
     GRuleWordPtr handleTermReduction(UnicodeString &&rawValue);
     GRuleWordPtr handleTermReduction(UnicodeString &&rawValue, std::vector<PredicatePtr> &&predicates);
+    GRuleWordPtr handleNumTermReduction();
+    GRuleWordPtr handleNumTermReduction(std::vector<PredicatePtr> &&predicates);
 
     void handleDependencies(std::vector<DependencyStruct> &storage);
 //    DependencyStruct createDependencyStruct(UnicodeString &&target, UnicodeString &&fSym, UnicodeString &&secSym);

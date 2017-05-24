@@ -187,27 +187,31 @@ GRuleWordPtr GParserDriver::handleTermReduction(UnicodeString &&rawValue, std::v
         terminals.insert(term);
         return term;
     }
-//    auto termFoud = std::find_if(terminals.begin(), terminals.end(), [&rawValue, &predicates](const GRuleWordPtr &wordPtr){
-//        if (wordPtr->getRawValue() != rawValue)
-//            return false;
-//        auto termPtr = std::dynamic_pointer_cast<Terminal>(wordPtr);
-////        return (termPtr != nullptr && termPtr->getPredicates().size() == 0);
-//        if (termPtr->getPredicates().size() != predicates.size())
-//            return false;
-//        for (int i = 0; i < predicates.size(); ++i) {
-//            if (termPtr->getPredicates().at(i) != predicates[i]) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    });
-//    if (termFoud != terminals.end()) {
-//        return (*termFoud);
-//    } else {
-//        auto newTerm = std::make_shared<Terminal>(std::move(rawValue), std::move(predicates));
-//        terminals.insert(newTerm);
-//        return newTerm;
-//    }
+}
+
+GRuleWordPtr GParserDriver::handleNumTermReduction() {
+    std::vector<PredicatePtr> predicates = { std::make_shared<RegexPredicate>("[0-9]+") };
+    GRuleWordPtr term = GWordStorage::getTerminal(GWordStorage::getReservedWord(ReservedWord::NUM), predicates);
+
+    auto termFound = terminals.find(term);
+    if (termFound != terminals.end()) {
+        return *termFound;
+    } else {
+        terminals.insert(term);
+        return term;
+    }
+}
+
+GRuleWordPtr GParserDriver::handleNumTermReduction(std::vector<PredicatePtr> &&predicates) {
+    predicates.push_back(std::make_shared<RegexPredicate>("[0-9]+"));
+    GRuleWordPtr term = GWordStorage::getTerminal(GWordStorage::getReservedWord(ReservedWord::NUM), predicates);
+    auto termFound = terminals.find(term);
+    if (termFound != terminals.end()) {
+        return *termFound;
+    } else {
+        terminals.insert(term);
+        return term;
+    }
 }
 
 GRuleWordPtr GParserDriver::createRule(UnicodeString &&word, std::vector<GRuleWordPtr> &&wordChain) {

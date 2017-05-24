@@ -61,8 +61,9 @@ enum class ReservedWord {
     CONJ,
     PRCL,
     INTJ,
-    NUMB,
+    NUM,
     GEOX,
+    MONTH,
     EMPTY,
     END_OF_INPUT,
     NONE
@@ -76,6 +77,7 @@ public:
     static GRuleWordPtr getTerminal(const UnicodeString &name, const std::vector<PredicatePtr> &predicates);
     static GRuleWordPtr getEmptyTerminal();
     static GRuleWordPtr getEOITerminal();
+    static GRuleWordPtr getNumTerminal();
 
     static UnicodeString &getReservedWord(ReservedWord reservedWord) { return reservedWords[reservedWord]; }
 private:

@@ -61,6 +61,7 @@
 %token RULE_SECTION_HEADER COMMAND_SECTION_HEADER DEP_SECTION_HEADER
 %token NEAR_BEFORE_KEYWORD NEAR_AFTER_KEYWORD BEFORE_KEYWORD AFTER_KEYWORD FIND
 %token LENGTH_SECT
+%token NUM_TERM
 
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
@@ -140,6 +141,14 @@ labeled_rhs_term
         $$ = driver.handleTermReduction(std::move($1), std::move($4)); 
         driver.fixAndSaveActionList($$, std::move($3)); 
     }
+    | NUM_TERM { $$ = driver.handleNumTermReduction(); }
+    | NUM_TERM LBRACKET action_list prop_list length_info RBRACKET
+    {
+        if ($5)
+            $4.push_back($5);
+        $$ = driver.handleNumTermReduction(std::move($4));
+        driver.fixAndSaveActionList($$, std::move($3));
+    }
     ;
 
 action_list
@@ -168,7 +177,7 @@ simple_prop
     ;
 
 length_info
-    : %empty { $$ = nullptr; }
+    : %empty { std::cout << "Found empty length info" << std::endl; $$ = nullptr; }
     | LENGTH_SECT COLON NUM { $$ = std::make_shared<LengthPredicate>($3); }
     | LENGTH_SECT COLON NUM ELLIPSIS NUM { $$ = std::make_shared<LengthPredicate>($3,$5); }
     ;
