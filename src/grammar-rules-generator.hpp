@@ -8,16 +8,17 @@ namespace tproc {
 
 enum class ReservedRule {
     WORDS,
-    PERSON_FULL_NAME
+    PERSON_FULL_NAME,
+    FULL_DATE,
+    AGREEMENT_DATE,
+    APARTMENT_NUM,
+    STREET_RULE,
+    TOWN_RULE
 };
 
 class GRulesGenerator {
 public:
     static GRuleWordPtr generateRule(ReservedRule reservedRule);
-private:
-//    static std::unordered_map<ReservedRule, generatorFunc> ruleGenerators;
-    static GRuleWordPtr generateWordsRule();
-    static GRuleWordPtr generatePersonFullName();
 };
 
 }

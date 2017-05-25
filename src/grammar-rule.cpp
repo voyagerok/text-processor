@@ -87,13 +87,13 @@ std::ostream &NonTerminal::print(std::ostream &os) const {
     return os;
 }
 
-bool NonTerminal::equals(const GRuleWordPtr &wordPtr) const {
-    auto ntermPtr = std::dynamic_pointer_cast<NonTerminal>(wordPtr);
-    if (ntermPtr == nullptr) {
-        return false;
-    }
-    return this->rawValue == ntermPtr->rawValue;
-}
+//bool NonTerminal::equals(const GRuleWordPtr &wordPtr) const {
+//    auto ntermPtr = std::dynamic_pointer_cast<NonTerminal>(wordPtr);
+//    if (ntermPtr == nullptr) {
+//        return false;
+//    }
+//    return this->rawValue == ntermPtr->rawValue;
+//}
 
 void NonTerminal::swap(NonTerminal &other) {
     this->rawValue.swap(other.rawValue);
@@ -104,27 +104,39 @@ std::ostream& Terminal::print(std::ostream &os) const {
     return os;
 }
 
-bool Terminal::equals(const GRuleWordPtr &wordPtr) const {
-    auto termPtr = std::dynamic_pointer_cast<Terminal>(wordPtr);
-    if (termPtr == nullptr) {
-        return false;
-    }
-//    return this->rawValue == termPtr->rawValue &&
-//            this->propsMask == termPtr->propsMask;
-    if (this->rawValue != termPtr->rawValue) {
-        return false;
-    }
-    if (this->predicates.size() != termPtr->predicates.size()) {
-        return false;
-    }
+//bool Terminal::equals(const GRuleWordPtr &wordPtr) const {
+//    auto termPtr = std::dynamic_pointer_cast<Terminal>(wordPtr);
+//    if (termPtr == nullptr) {
+//        return false;
+//    }
+////    return this->rawValue == termPtr->rawValue &&
+////            this->propsMask == termPtr->propsMask;
+//    if (this->rawValue != termPtr->rawValue) {
+//        return false;
+//    }
+//    if (this->predicates.size() != termPtr->predicates.size()) {
+//        return false;
+//    }
 
-    for (int i = 0; i < predicates.size(); ++i) {
-        if (predicates[i] != termPtr->predicates[i]) {
-            return false;
-        }
-    }
+//    for (int i = 0; i < predicates.size(); ++i) {
+//        if (predicates[i] != termPtr->predicates[i]) {
+//            return false;
+//        }
+//    }
 
-    return true;
+//    return true;
+//}
+
+unsigned long Terminal::hash() const {
+    unsigned long hashSum = 0;
+    for (auto &predicate : predicates) {
+        hashSum += predicate->hash();
+    }
+    return this->rawValue.hashCode() ^ hashSum;
+}
+
+unsigned long NonTerminal::hash() const {
+    return this->rawValue.hashCode();
 }
 
 bool Terminal::checkToken(const Token &token, const UnicodeString &word) const {

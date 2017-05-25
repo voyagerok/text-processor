@@ -67,22 +67,22 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<std::pair
 }
 
 Parser::ActiveSet Parser::parseToken(const Token &token, ActiveSet &currentLevelSet, bool &accepted) {
-    Logger::getLogger() << "parseToken: " << token.word << std::endl;
+//    Logger::getLogger() << "parseToken: " << token.word << std::endl;
     ActiveSet activeNodes = currentLevelSet;
     ActiveSet nextLevelNodes;
     ReduceSet reduceSet;
     ShiftSet shiftSet;
-    Logger::getLogger() << "parseToken: current active nodes:" << std::endl;
-    for (auto &activeNode : activeNodes) {
-        Logger::getLogger() << *activeNode << std::endl;
-    }
+//    Logger::getLogger() << "parseToken: current active nodes:" << std::endl;
+//    for (auto &activeNode : activeNodes) {
+//        Logger::getLogger() << *activeNode << std::endl;
+//    }
     while (reduceSet.size() > 0 || activeNodes.size() > 0) {
         if (activeNodes.size() > 0) {
-            Logger::getLogger() << "parseToken: active nodes not empty - perform actor" << std::endl;
+//            Logger::getLogger() << "parseToken: active nodes not empty - perform actor" << std::endl;
             actor(token, activeNodes, reduceSet, shiftSet, accepted);
         }
         if (reduceSet.size() > 0) {
-            Logger::getLogger() << "parseToken: reduce set not epmpty - perform reducer" << std::endl;
+//            Logger::getLogger() << "parseToken: reduce set not epmpty - perform reducer" << std::endl;
             reducer(token, activeNodes, currentLevelSet, reduceSet);
         }
     }
@@ -98,7 +98,7 @@ void Parser::actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduce
     ActiveSet::iterator next_element = std::max_element(activeNodes.begin(), activeNodes.end());
     GSSNodePtr activeNode = *next_element;
     activeNodes.erase(next_element);
-    Logger::getLogger() << "actor: next element is " << *activeNode << std::endl;
+//    Logger::getLogger() << "actor: next element is " << *activeNode << std::endl;
 //    GSSNodePtr activeNode = *activeNodes.rbegin(); //activeNodes.front();
 //    activeNodes.erase(activeNodes.rbegin());
     auto activeStateNode = std::dynamic_pointer_cast<GSSStateNode>(activeNode);
@@ -211,7 +211,7 @@ void Parser::reducer(const Token &token, ActiveSet &activeSet, ActiveSet &curren
 //    }
 //    GRuleWordPtr reductionRule = reduceInfo.rule;
     GRuleWordPtr reductionRule = reduceInfo.ruleIndex.nterm;
-    Logger::getLogger() << "Reducer: found grammar rule: " << reductionRule << std::endl;
+//    Logger::getLogger() << "Reducer: found grammar rule: " << reductionRule << std::endl;
 
     auto nterm = reductionRule->getRawValue();
     auto startNode = reduceInfo.endNode;
@@ -292,8 +292,8 @@ void Parser::reducer(const Token &token, ActiveSet &activeSet, ActiveSet &curren
 void Parser::shifter(ActiveSet &nextStateSet, ShiftSet &shiftSet) {
     std::set<std::shared_ptr<GSSStateNode>> stateNodes;
     for (auto &shiftAction : shiftSet) {
-        Logger::getLogger() << "Shifter: current shift:" << std::endl;
-        Logger::getLogger() << shiftAction << std::endl;
+//        Logger::getLogger() << "Shifter: current shift:" << std::endl;
+//        Logger::getLogger() << shiftAction << std::endl;
         int targetState = shiftAction.targetState;
         auto result = std::find_if(stateNodes.begin(), stateNodes.end(), [targetState](const std::shared_ptr<GSSStateNode> &node){
             return node->state == targetState;

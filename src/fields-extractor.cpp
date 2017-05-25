@@ -85,7 +85,7 @@ static std::vector<int> calcHintWordsPositions(const std::vector<UnicodeString> 
     std::vector<int> result;
     for (auto &hintWord : hintWords) {
         for (auto it = sentence.begin(); it != sentence.end(); ++it) {
-            if (it->pureToken == hintWord) {
+            if (it->pureTokenNormal == hintWord) {
                 result.push_back(it - sentence.begin());
             }
         }

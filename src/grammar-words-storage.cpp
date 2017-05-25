@@ -50,6 +50,8 @@ GRuleWordPtr GWordStorage::getNonTerminal(const UnicodeString &name) {
         nterms[name] = nterm;
         return nterm;
     }
+
+//    return std::make_shared<NonTerminal>(name);
 }
 
 GRuleWordPtr GWordStorage::getTerminal(const UnicodeString &name) {
@@ -68,6 +70,8 @@ GRuleWordPtr GWordStorage::getTerminal(const UnicodeString &name) {
         terms[name] = {result};
     }
     return result;
+
+//    return std::make_shared<Terminal>(name);
 }
 
 GRuleWordPtr GWordStorage::getTerminal(const UnicodeString &name, const std::vector<PredicatePtr> &predicates) {
@@ -97,6 +101,8 @@ GRuleWordPtr GWordStorage::getTerminal(const UnicodeString &name, const std::vec
         terms[name] = { result };
     }
     return result;
+
+//    return std::make_shared<Terminal>(name, predicates);
 }
 
 GRuleWordPtr GWordStorage::getEmptyTerminal() {
@@ -120,6 +126,8 @@ GRuleWordPtr GWordStorage::getEmptyTerminal() {
         }
     }
     return result;
+
+//    return std::make_shared<Terminal>(getReservedWord(ReservedWord::EMPTY));
 }
 
 GRuleWordPtr GWordStorage::getEOITerminal() {
@@ -144,6 +152,7 @@ GRuleWordPtr GWordStorage::getEOITerminal() {
         }
     }
     return result;
+//    return std::make_shared<Terminal>(getReservedWord(ReservedWord::END_OF_INPUT));
 }
 
 }

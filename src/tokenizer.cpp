@@ -161,6 +161,18 @@ private:
     RegexMatcher *numbeRegexMatcher = nullptr;
 };
 
+static void removeAngleQuotes(UnicodeString &str) {
+    static UnicodeString leftAngleQuote = UnicodeString::fromUTF8("\xc2\xab");
+    static UnicodeString rightAngleQuote = UnicodeString::fromUTF8("\xc2\xbb");
+    str.findAndReplace(leftAngleQuote, "");
+    str.findAndReplace(rightAngleQuote, "");
+}
+
+static bool checkForNumeroSign(const UnicodeString &str) {
+    static UnicodeString numeroSign = UnicodeString::fromUTF8("\xe2\x84\x96");
+    return str == numeroSign;
+}
+
 Tokenizer::Tokenizer(const UnicodeString &plainText) {
 
     std::vector<UnicodeString> plainSentences;
@@ -179,13 +191,17 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
                                         "\\<",
                                         "\\>",
                                         "\\{",
-                                        "\\}"},
+                                        "\\}",
+                                        "\\\"",
+                                        "\\."},
                         plainTokens);
-        auto leftAngleBracket = UnicodeString::fromUTF8("\xc2\xab");
-        auto rightAngleBracket = UnicodeString::fromUTF8("\xc2\xbb");
+        auto leftAngleQuote = UnicodeString::fromUTF8("\xc2\xab");
+        auto rightAngleQuote = UnicodeString::fromUTF8("\xc2\xbb");
         for (auto &token : plainTokens) {
-            token.findAndReplace(leftAngleBracket, "\"");
-            token.findAndReplace(rightAngleBracket, "\"");
+//            token.findAndReplace(leftAngleBracket, "\"");
+//            token.findAndReplace(rightAngleBracket, "\"");
+            token.findAndReplace(rightAngleQuote, "");
+            token.findAndReplace(leftAngleQuote, "");
         }
 
         Logger::getLogger() << "PlainTokens Count: " << plainTokens.size() << std::endl;
@@ -236,6 +252,10 @@ Tokenizer::Tokenizer(const UnicodeString &plainText) {
             }
             if ((checkResult & DictChecker::MatchFlags::NUMBER)) {
                 currentToken.propMask |= MorphProperty::NUMB;
+            }
+
+            if (checkForNumeroSign(currentToken.word)) {
+                currentToken.propMask |= MorphProperty::NUMERO_SIGN;
             }
 
             Logger::getLogger() << "Current token: " << currentToken << std::endl;

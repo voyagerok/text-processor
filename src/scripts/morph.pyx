@@ -51,24 +51,25 @@ cdef analyzeToken(const UnicodeString tok, vector[pair[UnicodeString, vector[sha
 
     cdef unsigned propMask
     for morph_result in morph_results:
-        if morph_result.score < 0.1:
-            continue
         analysis_res = make_shared[AnalysisResult]()
-        deref(analysis_res).normalForm = UnicodeString(morph_result.normal_form.encode('UTF-8'))
-        propMask = 0 
-        if morph_result.tag.POS is not None:
-            deref(analysis_res).partOfSpeech = UnicodeString(morph_result.tag.POS.encode('UTF-8'))
-        if 'Name' in morph_result.tag:
-            propMask |= FIRST_NAME
-        if 'Patr' in morph_result.tag:
-            propMask |= PATR
-        if 'Surn' in morph_result.tag:
-            propMask |= SECOND_NAME
-        if 'Init' in morph_result.tag:
-            propMask |= INIT
-        if 'Geox' in morph_result.tag:
-            propMask |= GEOX
-        deref(analysis_res).nameCharMask = propMask
+        if morph_result.score > 0.1:
+            deref(analysis_res).normalForm = UnicodeString(morph_result.normal_form.encode('UTF-8'))
+            propMask = 0 
+            if morph_result.tag.POS is not None:
+                deref(analysis_res).partOfSpeech = UnicodeString(morph_result.tag.POS.encode('UTF-8'))
+            if 'Name' in morph_result.tag:
+                propMask |= FIRST_NAME
+            if 'Patr' in morph_result.tag:
+                propMask |= PATR
+            if 'Surn' in morph_result.tag:
+                propMask |= SECOND_NAME
+            if 'Init' in morph_result.tag:
+                propMask |= INIT
+            if 'Geox' in morph_result.tag:
+                propMask |= GEOX
+            deref(analysis_res).nameCharMask = propMask
+        else:
+            deref(analysis_res).normalForm = tok
         res_for_tok.push_back(analysis_res)
     #analysis_results[tok] = res_for_tok
     analysis_results.push_back(pair[UnicodeString, vector[shared_ptr[AnalysisResult]]](tok, res_for_tok))

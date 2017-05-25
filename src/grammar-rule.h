@@ -121,21 +121,27 @@ private:
     std::vector<ParentInfo> parentNterms;
 protected:
     UnicodeString rawValue;
-    virtual bool equals(const GRuleWordPtr &other) const = 0;
+    virtual bool equals(const GRuleWordPtr &other) const { return this->hash() == other->hash(); }
     virtual std::ostream &print(std::ostream &os) const = 0;
 public:
     GRuleWord() = default;
     GRuleWord(const UnicodeString &word) : rawValue { word } {}
     GRuleWord(UnicodeString &&word): rawValue { std::move(word) } {}
     virtual ~GRuleWord() = default;
+    virtual unsigned long hash() const = 0;
     UnicodeString &getRawValue() { return this->rawValue; }
 //    virtual bool checkProperty(GRuleWordPropType prop) const = 0;
     virtual bool checkToken(const Token&, const UnicodeString &word) const = 0;
     virtual bool isNonTerminal() const = 0;
     virtual unsigned getPredciatesSize() const = 0;
     virtual std::vector<PredicatePtr> &getPredicates() = 0;
-//    friend bool operator==(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) { return lhs->equals(rhs); }
+//    friend bool operator==(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) {
+//        return lhs->equals(rhs);
+//    }
 //    friend bool operator!=(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) { return !(lhs->equals(rhs)); }
+//    friend bool operator<(const GRuleWordPtr &lhs, const GRuleWordPtr &rhs) {
+//        return lhs->hash() < rhs->hash();
+//    }
     friend std::ostream &operator<<(std::ostream &os, const GRuleWordPtr &word) { return word->print(os); }
 
     virtual std::vector<ChildWords> &getChildWords() = 0;
@@ -162,7 +168,7 @@ public:
 
 class NonTerminal final: public GRuleWord {
 protected:
-    bool equals(const GRuleWordPtr &other) const override;
+//    bool equals(const GRuleWordPtr &other) const override;
     std::ostream &print(std::ostream &os) const override;
     std::vector<ChildWords> childWords;
 public:
@@ -172,6 +178,7 @@ public:
     NonTerminal(const UnicodeString &word, const ChildWords &words) : GRuleWord { word }, childWords { { words } } {}
     NonTerminal(const UnicodeString &word, ChildWords &&words) : GRuleWord { word }, childWords { { std::move(words) } } {}
     NonTerminal(UnicodeString &&word, ChildWords &&words) : GRuleWord { std::move(word) }, childWords { { std::move(words) } } {}
+    unsigned long hash() const override;
     bool isNonTerminal() const override { return true; }
 //    bool checkProperty(GRuleWordPropType) const override { throw std::runtime_error("bad call"); }
     bool checkToken(const Token&, const UnicodeString &word) const override {
@@ -192,7 +199,8 @@ class Terminal final: public GRuleWord {
 private:
     std::vector<PredicatePtr> predicates;
 protected:
-    bool equals(const GRuleWordPtr &other) const override;
+//    bool equals(const GRuleWordPtr &other) const override;
+//    unsigned long hash() const override;
     std::ostream &print(std::ostream &os) const override;
 public:
     Terminal() = default;
@@ -202,6 +210,7 @@ public:
         GRuleWord { std::move(word) }, predicates { std::move (predicates) } {}
     Terminal(UnicodeString &&word): GRuleWord(std::move(word)) {}
     Terminal(const UnicodeString &word): GRuleWord(word) {}
+    unsigned long hash() const override;
     bool isNonTerminal() const override { return false; }
 //    unsigned &getPropertyMask() { return propsMask; }
 

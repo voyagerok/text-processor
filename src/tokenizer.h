@@ -14,7 +14,8 @@ enum MorphProperty {
     INIT = 010,
     GEOX = 020,
     NUMB = 040,
-    MONTH = 0100
+    MONTH = 0100,
+    NUMERO_SIGN = 0200
 };
 
 //std::ostream &operator<<(std::ostream &os, MorphProperty nameChar);
