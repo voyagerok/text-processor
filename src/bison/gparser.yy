@@ -18,6 +18,7 @@
         class GRuleWord;
    }
 #include "grammar-words-storage.hpp"
+#include "grammar-rules-generator.hpp"
 
 // The following definitions is missing when %locations isn't used
 # ifndef YY_NULLPTR
@@ -62,13 +63,14 @@
 %token NEAR_BEFORE_KEYWORD NEAR_AFTER_KEYWORD BEFORE_KEYWORD AFTER_KEYWORD FIND
 %token LENGTH_SECT
 %token NUM_TERM
+%token PERSON_NAME AGREEMENT_DATE FULL_DATE APARTMENT_NUM WORD_SEQUENCE TOWN STREET
 
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
 %type <GRuleWordPtr> simple_rule
 %type <std::vector<GRuleWordPtr>> rhs_chain
-%type <GRuleWordPtr> labeled_rhs_term labeled_rhs_nterm
-%type <UnicodeString> rhs_term rhs_nterm rhs_term_empty
+%type <GRuleWordPtr> labeled_rhs_term labeled_rhs_nterm rhs_nterm
+%type <UnicodeString> rhs_term rhs_term_empty
 %type <std::vector<PredicatePtr>> prop_list
 %type <PredicatePtr> prop simple_prop length_info
 %type <ActionPtr> action
@@ -113,12 +115,19 @@ rhs_chain
     ;
 
 rhs_nterm
-    : CAPITAL_WORD { $$.swap($1); }
+    : CAPITAL_WORD { $$ = driver.handleNtermReduction(std::move($1)); }
+    | PERSON_NAME { $$ = GRulesGenerator::generateRule(ReservedRule::PERSON_FULL_NAME); }
+    | AGREEMENT_DATE { $$ = GRulesGenerator::generateRule(ReservedRule::AGREEMENT_DATE); }
+    | FULL_DATE { $$ = GRulesGenerator::generateRule(ReservedRule::FULL_DATE); }
+    | APARTMENT_NUM { $$ = GRulesGenerator::generateRule(ReservedRule::APARTMENT_NUM); }
+    | WORD_SEQUENCE { $$ = GRulesGenerator::generateRule(ReservedRule::WORDS); }
+    | TOWN { $$ = GRulesGenerator::generateRule(ReservedRule::TOWN_RULE); }
+    | STREET { $$ = GRulesGenerator::generateRule(ReservedRule::STREET_RULE); }
     ;
 
 labeled_rhs_nterm
-    : rhs_nterm { $$ = driver.handleNtermReduction ( std::move($1) ); }
-    | rhs_nterm LBRACKET action_list RBRACKET { $$ = driver.handleNtermReduction ( std::move($1) ); driver.fixAndSaveActionList($$, std::move($3)); }
+    : rhs_nterm { $$.swap($1); }
+    /*| rhs_nterm LBRACKET action_list RBRACKET { $$ = driver.handleNtermReduction ( std::move($1) ); driver.fixAndSaveActionList($$, std::move($3)); }*/
     ;
 
 rhs_term

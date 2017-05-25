@@ -53,6 +53,7 @@ before "before"
 after "after"
 double_quote "\""
 
+
 %%
 %{          /** Code executed at the beginning of yylex **/
     yylval = lval;
@@ -125,6 +126,34 @@ double_quote "\""
 
 "num"           {
                     return token::NUM_TERM;
+                }
+
+"PersonName"    {
+                    return token::PERSON_NAME;
+                }
+
+"AgreementDate" {
+                    return token::AGREEMENT_DATE;
+                }
+
+"FullDate"      {
+                    return token::FULL_DATE;
+                }
+
+"ApartmentNum"  {
+                    return token::APARTMENT_NUM;
+                }
+
+"WordSequence"  {
+                    return token::WORD_SEQUENCE;    
+                }
+
+"Town"          {
+                    return token::TOWN;
+                }
+
+"Street"        {
+                    return token::STREET;
                 }
 
 "%rules"        {
