@@ -406,10 +406,11 @@ bool GParserDriver::appendDependencyStruct(const UnicodeString &symbol,
     return true;
 }
 
-bool GParserDriver::handleCommandFindReduction(UnicodeString &rawWord, DependencyRulePtr &result, std::string &errMsg) {
+bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rawWord, DependencyRulePtr &result, std::string &errMsg) {
     std::stringstream os;
 
-    auto rule = GWordStorage::getNonTerminal(rawWord);
+//    auto rule = GWordStorage::getNonTerminal(rawWord);
+    auto rule = rawWord;
     auto ruleFound = definedNterms.find(rule);
     if (ruleFound == definedNterms.end()) {
         os << "Failed to find rule for " << rawWord;
@@ -443,6 +444,16 @@ void GParserDriver::applyPendingActions() {
     }
 }
 
+static void loadBuiltinNterms(std::set<GRuleWordPtr> &nterms) {
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::PERSON_FULL_NAME));
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::WORDS));
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::FULL_DATE));
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::AGREEMENT_DATE));
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::APARTMENT_NUM));
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::STREET_RULE));
+    nterms.insert(GRulesGenerator::generateRule(ReservedRule::TOWN_RULE));
+}
+
 bool GParserDriver::parse(const std::string &fname) {
     std::ifstream ifs { fname };
     return parseHelper(ifs);
@@ -463,8 +474,9 @@ bool GParserDriver::parseHelper(std::istream &iss) {
 
     this->parser = std::make_shared<GParser>(*scanner, *this);
 
-    const int accept( 0 );
-    if( parser->parse() != accept )
+
+    loadBuiltinNterms(definedNterms);
+    if( parser->parse() != 0 )
     {
        std::cerr << "Parse failed!!\n";
        return false;

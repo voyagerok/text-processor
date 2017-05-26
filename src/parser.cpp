@@ -36,7 +36,7 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<std::pair
                 sentenceBegin++;
                 break;
             } else if (currentSet.size() > 0) {
-//                Logger::getLogger() << "Appending current chain: " << it->word << std::endl;
+                Logger::getLogger() << "Appending current chain: " << it->word << std::endl;
                 if (currentChain.isEmpty()) {
                     position = it - sentence.begin();
                 }
@@ -67,7 +67,7 @@ bool Parser::tryParse(const Tokenizer::Sentence &sentence, std::vector<std::pair
 }
 
 Parser::ActiveSet Parser::parseToken(const Token &token, ActiveSet &currentLevelSet, bool &accepted) {
-//    Logger::getLogger() << "parseToken: " << token.word << std::endl;
+    Logger::getLogger() << "parseToken: " << token.word << std::endl;
     ActiveSet activeNodes = currentLevelSet;
     ActiveSet nextLevelNodes;
     ReduceSet reduceSet;

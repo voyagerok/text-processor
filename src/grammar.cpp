@@ -55,6 +55,8 @@ void Grammar::initFromDependencyRule(const DependencyRulePtr &depRulePtr) {
     }
     buildFirstSet();
     buildFollowSet();
+
+    printFollowSet();
 //    return true;
 }
 
@@ -380,7 +382,9 @@ std::set<GRuleWordPtr> Grammar::followSetForNonTerminal(const GRuleWordPtr &word
 //            nextWordFS.erase(StandardTerminalStorage::getEmptyTerminal());
             nextWordFS.erase(GWordStorage::getEmptyTerminal());
             follow.insert(nextWordFS.begin(), nextWordFS.end());
-            if (firstSetOldSize != nextWordFS.size() && childWords[infoRecord.wordIndex.position] != parentWord) {
+            if (firstSetOldSize != nextWordFS.size() && infoRecord.wordIndex.position == childWords.size() - 2 &&
+                    childWords[infoRecord.wordIndex.position] != parentWord)
+            {
                 auto parentWordFS = followSetForNonTerminal(parentWord);
                 follow.insert(parentWordFS.begin(), parentWordFS.end());
             }

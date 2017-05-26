@@ -56,8 +56,8 @@ bool RegexPredicate::operator()(const Token &token) {
 }
 
 bool LengthPredicate::operator()(const Token &token) {
-    Logger::getLogger() << "LengthPredicate: token " << token.word << ", minLen "
-                        << minLength << ", maxLen " << maxLength << std::endl;
+//    Logger::getLogger() << "LengthPredicate: token " << token.word << ", minLen "
+//                        << minLength << ", maxLen " << maxLength << std::endl;
 //    UnicodeString pureWord = token.word;
 //    pureWord.findAndReplace("\"","");
 //    auto result = pureWord.length() >= minLength && pureWord.length() <= maxLength;

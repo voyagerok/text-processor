@@ -79,13 +79,18 @@ GRuleWordPtr generateAgreementDateRule() {
 
     agreementDateRule = GWordStorage::getNonTerminal("AgreementDate");
     GRuleWordPtr fullDateRule = GRulesGenerator::generateRule(ReservedRule::FULL_DATE);
-    GRuleWordPtr anyWordRule = GRulesGenerator::generateRule(ReservedRule::WORDS);
-    GRuleWordPtr geoxTerm = GWordStorage::getTerminal(geoxTermName);
-    agreementDateRule->getChildWords().push_back({geoxTerm, anyWordRule, fullDateRule});
+//    GRuleWordPtr anyWordRule = GRulesGenerator::generateRule(ReservedRule::WORDS);
+//    GRuleWordPtr geoxTerm = GWordStorage::getTerminal(geoxTermName);
+    GRuleWordPtr townRule = GRulesGenerator::generateRule(ReservedRule::TOWN_RULE);
+//    agreementDateRule->getChildWords().push_back({townRule, anyWordRule, fullDateRule});
+    agreementDateRule->getChildWords().push_back({townRule, fullDateRule});
 
-    geoxTerm->getParentNterms().push_back({agreementDateRule, 0, 0});
-    anyWordRule->getParentNterms().push_back({agreementDateRule, 0, 1});
-    fullDateRule->getParentNterms().push_back({agreementDateRule, 0, 2});
+//    geoxTerm->getParentNterms().push_back({agreementDateRule, 0, 0});
+//    townRule->getParentNterms().push_back({agreementDateRule, 0, 0});
+//    anyWordRule->getParentNterms().push_back({agreementDateRule, 0, 1});
+//    fullDateRule->getParentNterms().push_back({agreementDateRule, 0, 2});
+    townRule->getParentNterms().push_back({agreementDateRule, 0, 0});
+    fullDateRule->getParentNterms().push_back({agreementDateRule, 0, 1});
 
     return agreementDateRule;
 }
@@ -107,21 +112,26 @@ GRuleWordPtr generateFullDateRule() {
 
     GRuleWordPtr yearSuffixTern = GWordStorage::getTerminal("г");
     GRuleWordPtr yearSuffixFullTerm = GWordStorage::getTerminal("год");
-    GRuleWordPtr emptyTerm = GWordStorage::getEmptyTerminal();
+//    GRuleWordPtr emptyTerm = GWordStorage::getEmptyTerminal();
     GRuleWordPtr yearSuffixNterm = GWordStorage::getNonTerminal("YearSuffix");
     yearSuffixNterm->getChildWords().push_back({yearSuffixTern});
     yearSuffixNterm->getChildWords().push_back({yearSuffixFullTerm});
-    yearSuffixNterm->getChildWords().push_back({emptyTerm});
+//    yearSuffixNterm->getChildWords().push_back({emptyTerm});
     yearSuffixTern->getParentNterms().push_back({yearSuffixNterm, 0, 0});
     yearSuffixFullTerm->getParentNterms().push_back({yearSuffixNterm, 1, 0});
-    emptyTerm->getParentNterms().push_back({yearSuffixNterm, 2, 0});
+//    emptyTerm->getParentNterms().push_back({yearSuffixNterm, 2, 0});
 
-    fullDateRule = GWordStorage::getNonTerminal("AgreementDate");
+    fullDateRule = GWordStorage::getNonTerminal("FullDate");
     fullDateRule->getChildWords().push_back({dayTerm, monthTerm, yearTerm, yearSuffixNterm});
     dayTerm->getParentNterms().push_back({fullDateRule, 0, 0});
     monthTerm->getParentNterms().push_back({fullDateRule, 0, 1});
     yearTerm->getParentNterms().push_back({fullDateRule, 0, 2});
     yearSuffixNterm->getParentNterms().push_back({fullDateRule, 0, 3});
+
+    fullDateRule->getChildWords().push_back({dayTerm, monthTerm, yearTerm});
+    dayTerm->getParentNterms().push_back({fullDateRule, 1, 0});
+    monthTerm->getParentNterms().push_back({fullDateRule, 1, 1});
+    yearTerm->getParentNterms().push_back({fullDateRule, 1, 2});
 
     return fullDateRule;
 }
@@ -154,7 +164,7 @@ GRuleWordPtr generateApartmentNumberRule() {
 }
 
 GRuleWordPtr generateTownRule() {
-    GRuleWordPtr townRule = nullptr;
+    static GRuleWordPtr townRule = nullptr;
     if (townRule) {
         return townRule;
     }
@@ -216,16 +226,16 @@ GRuleWordPtr generateStreetRule() {
     streetPrefix4->getParentNterms().push_back({streetPrefixNterm, 6, 0});
     streetPrefix4Full->getParentNterms().push_back({streetPrefixNterm, 7, 0});
 
-    GRuleWordPtr housePrefNterm = GWordStorage::getTerminal("HouseNumPrefix");
+    GRuleWordPtr housePrefNterm = GWordStorage::getNonTerminal("HouseNumPrefix");
     GRuleWordPtr houseTerm = GWordStorage::getTerminal("дом");
     GRuleWordPtr houseShortTerm = GWordStorage::getTerminal("д");
-    GRuleWordPtr emptyWord = GWordStorage::getEmptyTerminal();
+//    GRuleWordPtr emptyWord = GWordStorage::getEmptyTerminal();
     housePrefNterm->getChildWords().push_back({houseTerm});
     housePrefNterm->getChildWords().push_back({houseShortTerm});
-    housePrefNterm->getChildWords().push_back({emptyWord});
+//    housePrefNterm->getChildWords().push_back({emptyWord});
     houseTerm->getParentNterms().push_back({housePrefNterm, 0, 0});
     houseShortTerm->getParentNterms().push_back({housePrefNterm, 1, 0});
-    emptyWord->getParentNterms().push_back({housePrefNterm, 2, 0});
+//    emptyWord->getParentNterms().push_back({housePrefNterm, 2, 0});
 
     PredicatePtr anyWordPred = std::make_shared<UpperCaseFirstPredicate>();
     GRuleWordPtr anyWordTerm = GWordStorage::getTerminal(anyWordTermName, {anyWordPred});
@@ -238,6 +248,11 @@ GRuleWordPtr generateStreetRule() {
     anyWordTerm->getParentNterms().push_back({streetRule, 0, 1});
     housePrefNterm->getParentNterms().push_back({streetRule, 0, 2});
     numTerm->getParentNterms().push_back({streetRule, 0, 3});
+
+    streetRule->getChildWords().push_back({streetPrefixNterm, anyWordTerm, numTerm});
+    streetPrefixNterm->getParentNterms().push_back({streetRule, 1, 0});
+    anyWordTerm->getParentNterms().push_back({streetRule, 1, 1});
+    numTerm->getParentNterms().push_back({streetRule, 1, 2});
 
     return streetRule;
 }
@@ -258,17 +273,18 @@ GRuleWordPtr generateWordsRule() {
     UnicodeString &emptyWordName = GWordStorage::getReservedWord(ReservedWord::EMPTY);
     UnicodeString &anyWordName = GWordStorage::getReservedWord(ReservedWord::ANYWORD);
 
-    GRuleWordPtr emptyTerm = GWordStorage::getTerminal(emptyWordName);
+//    GRuleWordPtr emptyTerm = GWordStorage::getTerminal(emptyWordName);
     GRuleWordPtr anyWordTerm = GWordStorage::getTerminal(anyWordName);
 
     finalRule = GWordStorage::getNonTerminal("Words");
-    finalRule->getChildWords().push_back({emptyTerm});
+//    finalRule->getChildWords().push_back({emptyTerm});
     finalRule->getChildWords().push_back({anyWordTerm});
     finalRule->getChildWords().push_back({finalRule, anyWordTerm});
 
-    finalRule->getParentNterms().push_back({finalRule, 2, 0});
-    emptyTerm->getParentNterms().push_back({finalRule, 0, 0});
-    anyWordTerm->getParentNterms().push_back({finalRule, 1, 0});
+//    emptyTerm->getParentNterms().push_back({finalRule, 0, 0});
+    anyWordTerm->getParentNterms().push_back({finalRule, 0, 0});
+    finalRule->getParentNterms().push_back({finalRule, 1, 0});
+    anyWordTerm->getParentNterms().push_back({finalRule, 1, 1});
 
     return finalRule;
 }

@@ -135,7 +135,7 @@ public:
                                 DependencyStruct &outStruct,
                                 std::string &errMessage);
 
-    bool handleCommandFindReduction(UnicodeString &rawWord, DependencyRulePtr &result, std::string &errMsg);
+    bool handleCommandFindReduction(GRuleWordPtr &rawWord, DependencyRulePtr &result, std::string &errMsg);
     void processCommandList(std::vector<DependencyRulePtr> &&commandList);
 
     DependencyRulePtr handleHintWords(DependencyRulePtr &depRule, std::vector<UnicodeString> &&hintWords) {

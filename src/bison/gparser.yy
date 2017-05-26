@@ -215,7 +215,7 @@ command
     ;
 
 command_find
-    : FIND CAPITAL_WORD { std::string err; if(!driver.handleCommandFindReduction($2,$$,err)) { error(@1,err); return -1; } }
+    : FIND rhs_nterm { std::string err; if(!driver.handleCommandFindReduction($2,$$,err)) { error(@1,err); return -1; } }
     ;
 
 hint_word_list

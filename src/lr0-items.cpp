@@ -66,7 +66,7 @@ bool LR0ItemSetCollection::build(const Grammar &grammar) {
 //    Logger::getLogger() << "get start rule" << std::endl;
 //    SimpleGrammarRule startRule = grammar.getStartRule();
     GRuleWordPtr root = grammar.getRoot();
-    Logger::getLogger() << "build: root " << root->getRawValue() << std::endl;
+//    Logger::getLogger() << "build: root " << root->getRawValue() << std::endl;
 //    Logger::getLogger() << "got start rule:" << startRule << std::endl;
 //    if (!startRule.isValid) {
 //        return false;
@@ -144,7 +144,7 @@ void LR0ItemSetCollection::build(const Grammar &grammar, LR0ItemSet &itemSet, in
     }
 
     itemSetCollection.push_back(itemSet);
-    Logger::getLogger() << "build: to itemset collection:\n" << itemSet << std::endl;
+//    Logger::getLogger() << "build: to itemset collection:\n" << itemSet << std::endl;
 
     for (auto &nextItemSetWordPair : nextItemSets) {
         auto nextItemSet = nextItemSetWordPair.second;
