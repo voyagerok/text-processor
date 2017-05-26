@@ -64,6 +64,7 @@
 %token LENGTH_SECT
 %token NUM_TERM
 %token PERSON_NAME AGREEMENT_DATE FULL_DATE APARTMENT_NUM WORD_SEQUENCE TOWN STREET
+%token ALIAS_OP
 
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
@@ -80,6 +81,7 @@
 %type <DependencyRulePtr> command, command_find
 %type <std::vector<DependencyRulePtr>> command_list
 %type <std::vector<UnicodeString>> hint_word_list
+%type <UnicodeString> alias
 
 %locations
 
@@ -210,8 +212,14 @@ command_list
     ;
 
 command
-    : command_find SEMICOLON { $$.swap($1); }
-    | command_find LBRACKET hint_word_list RBRACKET SEMICOLON { auto res = driver.handleHintWords($1, std::move($3)); $$.swap(res); }
+    : command_find alias SEMICOLON { auto res = driver.processAlias($1, $2); $$.swap($1); }
+    | command_find LBRACKET hint_word_list RBRACKET alias SEMICOLON { auto res = driver.handleHintWordsAndAlias($1, std::move($3), $5); $$.swap(res); }
+    ;
+
+alias
+    : ALIAS_OP WORD { $$ = $2; }
+    | ALIAS_OP CAPITAL_WORD { $$ = $2; }
+    | %empty { $$ = UnicodeString(); }
     ;
 
 command_find

@@ -139,7 +139,7 @@ void FieldsExtractor::processRulesWithoutDependencies(const std::set<DependencyR
         parserTable.printActionTable();
         parserTable.printGotoTable();
         Parser parser { *grammar, parserTable };
-        definedParsers.push_back({parser, depRule->hintWords, depRule->root->getRawValue()});
+        definedParsers.push_back({parser, depRule->hintWords, depRule->alias});
     }
 }
 

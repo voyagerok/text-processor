@@ -418,18 +418,39 @@ bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rawWord, Dependency
         return  false;
     }
 
-    auto depRuleFound = std::find_if(definedDepRules.begin(), definedDepRules.end(), [&rule](const DependencyRulePtr &rulePtr) {
-        return rulePtr->root == rule;
-    });
-    if (depRuleFound != definedDepRules.end()) {
-        result = *depRuleFound;
-    } else {
+//    auto depRuleFound = std::find_if(definedDepRules.begin(), definedDepRules.end(), [&rule](const DependencyRulePtr &rulePtr) {
+//        return rulePtr->root == rule;
+//    });
+//    if (depRuleFound != definedDepRules.end()) {
+//        result = *depRuleFound;
+//    } else {
         result = std::make_shared<DependencyRule>(rule);
+        result->alias = rule->getRawValue();
         std::set<GRuleWordPtr> terms, nterms;
         extractTermsAndNterms(rule, terms, nterms);
         result->terms = std::move(terms);
         result->nterms = std::move(nterms);
+//    }
+
+    return true;
+}
+
+bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rule, UnicodeString &alias, DependencyRulePtr &result, std::string &errMsg) {
+    std::stringstream os;
+
+    auto ruleFound = definedNterms.find(rule);
+    if (ruleFound == definedNterms.end()) {
+        os << "Failed to find rule for " << rule->getRawValue();
+        errMsg = os.str();
+        return  false;
     }
+
+    result = std::make_shared<DependencyRule>(rule);
+    result->alias = alias;
+    std::set<GRuleWordPtr> terms, nterms;
+    extractTermsAndNterms(rule, terms, nterms);
+    result->terms = std::move(terms);
+    result->nterms = std::move(nterms);
 
     return true;
 }

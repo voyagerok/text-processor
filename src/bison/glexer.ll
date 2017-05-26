@@ -156,6 +156,10 @@ double_quote "\""
                     return token::STREET;
                 }
 
+"as"            {
+                    return token::ALIAS_OP;
+                }
+
 "%rules"        {
                     return token::RULE_SECTION_HEADER;
                 }

@@ -46,6 +46,7 @@ struct DependencyRule {
     DependencyRule() = default;
     DependencyRule(const GRuleWordPtr &root): root { root } {}
     GRuleWordPtr root;
+    UnicodeString alias;
     std::set<GRuleWordPtr> nterms;
     std::set<GRuleWordPtr> terms;
     std::vector<UnicodeString> hintWords;
@@ -136,10 +137,17 @@ public:
                                 std::string &errMessage);
 
     bool handleCommandFindReduction(GRuleWordPtr &rawWord, DependencyRulePtr &result, std::string &errMsg);
+    bool handleCommandFindReduction(GRuleWordPtr &rawWord, UnicodeString &alias, DependencyRulePtr &result, std::string &errMsg);
     void processCommandList(std::vector<DependencyRulePtr> &&commandList);
 
-    DependencyRulePtr handleHintWords(DependencyRulePtr &depRule, std::vector<UnicodeString> &&hintWords) {
+    DependencyRulePtr processAlias(DependencyRulePtr &depRule, UnicodeString &alias) {
+        depRule->alias = alias.isEmpty() ? depRule->root->getRawValue() : alias;
+        return depRule;
+    }
+
+    DependencyRulePtr handleHintWordsAndAlias(DependencyRulePtr &depRule, std::vector<UnicodeString> &&hintWords, UnicodeString &alias) {
         depRule->hintWords = std::move(hintWords);
+        depRule->alias = alias.isEmpty() ? depRule->root->getRawValue() : alias;
         return depRule;
     }
 
