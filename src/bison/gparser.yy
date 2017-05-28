@@ -205,23 +205,23 @@ command_list
     ;
 
 command
-    : command_find alias SEMICOLON dependency_part { 
-        driver.processAlias($1, $2);
-        driver.processDependencies($1, std::move($4)); 
+    : command_find dependency_part alias SEMICOLON { 
+        driver.processAlias($1, $3);
+        driver.processDependencies($1, std::move($2)); 
         $$.swap($1); 
     } 
-    | command_find LBRACKET hint_word_list RBRACKET alias SEMICOLON dependency_part { 
-        driver.handleHintWordsAndAlias($1, std::move($3), $5);
-        driver.processDependencies($1, std::move($7)); 
+    | command_find LBRACKET hint_word_list RBRACKET dependency_part alias SEMICOLON { 
+        driver.handleHintWordsAndAlias($1, std::move($3), $6);
+        driver.processDependencies($1, std::move($5)); 
         $$.swap($1); 
     };
 
 dependency_part
-    : LBRACKET left_deps_descr right_deps_descr upper_deps_descr lower_deps_descr RBRACKET {
-        $$.leftDeps.swap($2);
-        $$.rightDeps.swap($3);
-        $$.upperDeps.swap($4);
-        $$.lowerDeps.swap($5);
+    : WITH DEPS LBRACKET left_deps_descr right_deps_descr upper_deps_descr lower_deps_descr RBRACKET {
+        $$.leftDeps.swap($4);
+        $$.rightDeps.swap($5);
+        $$.upperDeps.swap($6);
+        $$.lowerDeps.swap($7);
     }
     | %empty
     ;
@@ -241,7 +241,9 @@ left_deps_descr
             return -1;
         }
         $$.swap($1);
-    };
+    }
+    | %empty
+    ;
 
 right_deps_descr
     : RIGHT_DEPS_SECT COLON rhs_nterm {
@@ -258,7 +260,9 @@ right_deps_descr
             return -1;
         }
         $$.swap($1);
-    };
+    }
+    | %empty
+    ;
 
 upper_deps_descr
     : UPPER_DEPS_SECT COLON rhs_nterm {
@@ -275,7 +279,9 @@ upper_deps_descr
             return -1;
         }
         $$.swap($1);
-    };
+    }
+    | %empty
+    ;
 
 lower_deps_descr
     : LOWER_DEPS_SECT COLON rhs_nterm { 
@@ -292,7 +298,9 @@ lower_deps_descr
             return -1;
         }
         $$.swap($1);
-    };
+    }
+    | %empty
+    ;
 
 alias
     : ALIAS_OP WORD { $$ = $2; }

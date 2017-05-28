@@ -153,8 +153,9 @@ static bool checkLeftDependencies(const Tokenizer::Sentence &sentence,
                               std::unordered_set<ParserPtr> &foundParsers)
 {
     for (auto &leftDep : leftDeps) {
-        if (foundParsers.find(leftDep) == foundParsers.end()) {
+//        if (foundParsers.find(leftDep) == foundParsers.end()) {
             std::vector<std::pair<UnicodeString, int>> result;
+            Logger::getLogger() << "Checking dependency: " << leftDep->getGrammar()->getRoot()->getChildWords().at(0).at(0)->getRawValue() << std::endl;
             if (!leftDep->tryParse(sentence, result)) {
                 return  false;
             }
@@ -167,15 +168,15 @@ static bool checkLeftDependencies(const Tokenizer::Sentence &sentence,
                     return false;
                 }
             }
-        }
+//        }
     }
     return true;
 }
 
 static bool checkRightDependencies(const Tokenizer::Sentence &sentence,
-                              int index,
-                              std::vector<ParserPtr> &rightDeps,
-                              std::unordered_set<ParserPtr> &foundParsers)
+                                   int index,
+                                   std::vector<ParserPtr> &rightDeps,
+                                   std::unordered_set<ParserPtr> &foundParsers)
 {
     for (auto &rightDep : rightDeps) {
         std::vector<std::pair<UnicodeString, int>> result;
@@ -195,6 +196,27 @@ static bool checkRightDependencies(const Tokenizer::Sentence &sentence,
     return true;
 }
 
+static bool checkUpperDependencies(const Tokenizer::Sentence &sentence,
+                                   std::vector<ParserPtr> &depList,
+                                   std::unordered_set<ParserPtr> &foundParsers)
+{
+    bool checked = true;
+    for (auto &upperDep : depList) {
+        Logger::getLogger() << "checkUpperDependencies: " << upperDep->getGrammar()->getRoot()->getChildWords().at(0).at(0)->getRawValue() << std::endl;
+        if (foundParsers.find(upperDep) == foundParsers.end()) {
+            checked = false;
+            std::vector<std::pair<UnicodeString, int>> result;
+            if (upperDep->tryParse(sentence, result)) {
+                if (result.size() > 0) {
+                    foundParsers.insert(upperDep);
+                }
+            }
+        }
+    }
+
+    return checked;
+}
+
 std::map<UnicodeString, std::vector<FieldInfo>> FieldsExtractor::extract(const UnicodeString &plainText) {
     std::unordered_set<ParserPtr> foundParsers;
     PendingResultsContainer pendingResults;
@@ -208,22 +230,28 @@ std::map<UnicodeString, std::vector<FieldInfo>> FieldsExtractor::extract(const U
         checkPendingResults(pendingResults, foundParsers, sentence, extractionResultsQueue);
         for (auto &parserWrapper : definedParserWrappers) {
 //            checkDependencies(sentence, i, parserWrapper.dependencies, foundParsers);
+            bool upperDepsCheckResult = checkUpperDependencies(sentence, parserWrapper.dependencies.upperDeps, foundParsers);
             std::vector<std::pair<UnicodeString, int>> result;
             if (parserWrapper.parser->tryParse(sentence, result)) {
                 if (result.size() > 0) {
                     auto hintWordsPositions = calcHintWordsPositions(parserWrapper.hintWords, sentence);
                     for (auto &resultRecord : result) {
 //                        if (checkLeftDependencies(parserWrapper.dependencies.leftDeps, foundParsers, resultRecord.second, sentence)) {
-                        if (checkLeftDependencies(sentence, resultRecord.second, parserWrapper.dependencies.leftDeps, foundParsers)) {
+                        if (upperDepsCheckResult && checkLeftDependencies(sentence, resultRecord.second, parserWrapper.dependencies.leftDeps, foundParsers))
+                        {
                             double heuristics = calcHeuristics(hintWordsPositions, resultRecord.second);
 //                            std::cout << "Inserting results in queue: " << parserWrapper.name << ", " << resultRecord.first <<
 //                                         ", " << heuristics << std::endl;
 //                            extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
                             foundParsers.insert(parserWrapper.parser);
-                            if (!checkRightDependencies(sentence, resultRecord.second, parserWrapper.dependencies.rightDeps, foundParsers)) {
-                                pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.second, heuristics}, parserWrapper.dependencies.rightDeps));
-                            } else {
-                                extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
+//                            if (!checkRightDependencies(sentence, resultRecord.second, parserWrapper.dependencies.rightDeps, foundParsers)) {
+//                                pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.second, heuristics}, parserWrapper.dependencies.rightDeps));
+                            if (checkRightDependencies(sentence, resultRecord.second, parserWrapper.dependencies.rightDeps, foundParsers)) {
+                                if (parserWrapper.dependencies.lowerDeps.size() > 0) {
+                                    pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.second, heuristics}, parserWrapper.dependencies.rightDeps));
+                                } else {
+                                    extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
+                                }
                             }
                         }
                     }
@@ -255,7 +283,7 @@ static ParserPtr buildParserFromDepGrammar(const std::shared_ptr<Grammar> &gramm
     pTable.buildTableFromGrammar(*grammar);
     pTable.printActionTable();
     pTable.printGotoTable();
-    return std::make_shared<Parser>(pTable);
+    return std::make_shared<Parser>(grammar, pTable);
 }
 
 enum class DependencyType { LEFT, RIGHT, UPPER, LOWER };

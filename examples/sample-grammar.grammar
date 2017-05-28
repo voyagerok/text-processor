@@ -4,10 +4,13 @@ PassportNumber = num(len: 6);
 
 Address = Town Street;
 
+RentPeriodStart = "с" FullDate;
+RentPeriodEnd = "по" FullDate;
+RentPeriod = "с" FullDate "по" FullDate;
+
+EmployerName = "наниматель";
+OwnerName = "наймодатель";
+Requisits = "реквизит";
+
 %commands
-Find PassportSeries(hint_words: "наймодатель") as OwnerPassportSeries;
-Find PassportNumber(hint_words: "наниматель");
-Find PersonName(hint_words: "наниматель") as Employer;
-Find PassportSeries(hint_words: "наниматель", "серия") as EmployerPassportSeries;
-Find FullDate(hint_words: "помещение", "предоставить", "наниматель");
-Find Address(hint_words: "наниматель");
+Find FullDate (hint_words: "регистрация", "адрес") with deps (upper: Requisits, EmployerName) as RegistrationDate;
