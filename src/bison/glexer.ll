@@ -160,6 +160,30 @@ double_quote "\""
                     return token::ALIAS_OP;
                 }
 
+"with"          {
+                    return token::WITH;
+                }
+
+"deps"          {
+                    return token::DEPS;
+                }
+
+"left"          {
+                    return token::LEFT_DEPS_SECT;
+                }
+
+"right"         {
+                    return token::RIGHT_DEPS_SECT;
+                }
+
+"upper"         {
+                    return token::UPPER_DEPS_SECT;
+                }
+
+"lower"         {
+                    return token::LOWER_DEPS_SECT;
+                }
+
 "%rules"        {
                     return token::RULE_SECTION_HEADER;
                 }

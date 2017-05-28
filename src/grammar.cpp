@@ -40,74 +40,113 @@ namespace tproc {
 //    }
 //}
 
-void Grammar::initFromDependencyRule(const DependencyRulePtr &depRulePtr) {
-    root = depRulePtr->root;
-    nterminals = depRulePtr->nterms;
-    terminals = depRulePtr->terms;
+Grammar::Grammar(Grammar::GRuleWithInfo &&ruleWithInfo):
+    root { std::move(ruleWithInfo.root) },
+    nterminals { std::move(ruleWithInfo.nterms) },
+    terminals { std::move(ruleWithInfo.terms) }
+{
+    initAdditioanlParams();
+}
+
+Grammar::Grammar(const Grammar::GRuleWithInfo &ruleWithInfo):
+    root { ruleWithInfo.root },
+    nterminals { ruleWithInfo.nterms },
+    terminals { ruleWithInfo.terms }
+{
+    initAdditioanlParams();
+}
+
+void Grammar::initAdditioanlParams() {
     addExplicitRule();
     Logger::getLogger() << "Rules are:" << std::endl;
     for (auto &nterm : nterminals) {
         Logger::getLogger() << nterm << std::endl;
-//            Logger::getLogger() << "Parent rules:" << std::endl;
-//            for (auto &parent : nterm->getParentNterms()) {
-//                Logger::getLogger() << parent.nterm << std::endl;
-//            }
     }
     buildFirstSet();
     buildFollowSet();
-
-    printFollowSet();
-//    return true;
 }
 
-bool Grammar::initFromFile(const std::string &filename) {
-//    try {
-//        parser = std::make_shared<GrammarParser>();
-//        parser = new GrammarParser();
-//        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
-//        parser->beginParseFromFile(filename);
-    GParserDriver parserDriver;
-    if (parserDriver.parse(filename)) {
-        //            readRules(parserDriver.getRules());
-        //            if (!validateRules()) {
-        //                return false;
-        //            }
-        if ((root = parserDriver.getRootNterm()) == nullptr) {
-            Logger::getLogger() << "Failed to find root rule" << std::endl;
-            return false;
-        }
-        if (parserDriver.hasPendingNterms()) {
-            Logger::getLogger() << "Some non terminals don't have definitions" << std::endl;
-            return false;
-        }
-
-        this->nterminals = std::move(parserDriver.getDefinedNterms());
-        this->terminals = std::move(parserDriver.getTerminals());
-        this->pendingActions = std::move(parserDriver.getPendingActions());
-
-        addExplicitRule();
-
-        applyPendingActions();
-
-        Logger::getLogger() << "Rules are:" << std::endl;
-        for (auto &nterm : nterminals) {
-            Logger::getLogger() << nterm << std::endl;
-//            Logger::getLogger() << "Parent rules:" << std::endl;
-//            for (auto &parent : nterm->getParentNterms()) {
-//                Logger::getLogger() << parent.nterm << std::endl;
-//            }
-        }
-
-        buildFirstSet();
-        buildFollowSet();
-    }
-//    } catch (GrammarParserException &err) {
-//        Logger::getErrLogger() << err.what() << std::endl;
-//        return false;
+//void Grammar::initFromDependencyRule(const DependencyGrammar &depRule) {
+//    root = depRule.root;
+//    nterminals = depRule.nterms;
+//    terminals = depRule.terms;
+//    addExplicitRule();
+//    Logger::getLogger() << "Rules are:" << std::endl;
+//    for (auto &nterm : nterminals) {
+//        Logger::getLogger() << nterm << std::endl;
+////            Logger::getLogger() << "Parent rules:" << std::endl;
+////            for (auto &parent : nterm->getParentNterms()) {
+////                Logger::getLogger() << parent.nterm << std::endl;
+////            }
 //    }
+//    buildFirstSet();
+//    buildFollowSet();
 
-    return true;
-}
+//    printFollowSet();
+////    return true;
+//}
+
+//void Grammar::initWithInfo(GRuleWithInfo &&ruleWithInfo) {
+//    root = ruleWithInfo.root;
+//    nterminals = ruleWithInfo.nterms;
+//    terminals = ruleWithInfo.terms;
+//    addExplicitRule();
+//    Logger::getLogger() << "Rules are:" << std::endl;
+//    for (auto &nterm : nterminals) {
+//        Logger::getLogger() << nterm << std::endl;
+//    }
+//    buildFirstSet();
+//    buildFollowSet();
+//}
+
+//bool Grammar::initFromFile(const std::string &filename) {
+////    try {
+////        parser = std::make_shared<GrammarParser>();
+////        parser = new GrammarParser();
+////        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
+////        parser->beginParseFromFile(filename);
+//    GParserDriver parserDriver;
+//    if (parserDriver.parse(filename)) {
+//        //            readRules(parserDriver.getRules());
+//        //            if (!validateRules()) {
+//        //                return false;
+//        //            }
+//        if ((root = parserDriver.getRootNterm()) == nullptr) {
+//            Logger::getLogger() << "Failed to find root rule" << std::endl;
+//            return false;
+//        }
+//        if (parserDriver.hasPendingNterms()) {
+//            Logger::getLogger() << "Some non terminals don't have definitions" << std::endl;
+//            return false;
+//        }
+
+//        this->nterminals = std::move(parserDriver.getDefinedNterms());
+//        this->terminals = std::move(parserDriver.getTerminals());
+//        this->pendingActions = std::move(parserDriver.getPendingActions());
+
+//        addExplicitRule();
+
+//        applyPendingActions();
+
+//        Logger::getLogger() << "Rules are:" << std::endl;
+//        for (auto &nterm : nterminals) {
+//            Logger::getLogger() << nterm << std::endl;
+////            Logger::getLogger() << "Parent rules:" << std::endl;
+////            for (auto &parent : nterm->getParentNterms()) {
+////                Logger::getLogger() << parent.nterm << std::endl;
+////            }
+//        }
+
+//        buildFirstSet();
+//        buildFollowSet();
+//    }
+////    } catch (GrammarParserException &err) {
+////        Logger::getErrLogger() << err.what() << std::endl;
+////        return false;
+////    }
+
+//    return true;
+//}
 
 void Grammar::applyPendingActions() {
     for (auto &action : this->pendingActions) {
@@ -115,25 +154,25 @@ void Grammar::applyPendingActions() {
     }
 }
 
-bool Grammar::initFromPlainText(const UnicodeString &plainText) {
-//    try {
-//        parser = std::make_shared<GrammarParser>();
-////        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
-//        parser->beginParseFromPlainText(plainText);
-//        readRules();
-//        if (!validateRules()) {
-//            return false;
-//        }
-//        addExplicitRule();
-//        buildFirstSet();
-//        buildFollowSet();
-//    } catch (GrammarParserException &err) {
-//        Logger::getErrLogger() << err.what() << std::endl;
-//        return false;
-//    }
+//bool Grammar::initFromPlainText(const UnicodeString &plainText) {
+////    try {
+////        parser = std::make_shared<GrammarParser>();
+//////        parser = std::move(std::unique_ptr<GrammarParser>(new GrammarParser()));
+////        parser->beginParseFromPlainText(plainText);
+////        readRules();
+////        if (!validateRules()) {
+////            return false;
+////        }
+////        addExplicitRule();
+////        buildFirstSet();
+////        buildFollowSet();
+////    } catch (GrammarParserException &err) {
+////        Logger::getErrLogger() << err.what() << std::endl;
+////        return false;
+////    }
 
-    return true;
-}
+//    return true;
+//}
 
 void Grammar::addExplicitRule() {
 //    startRule = std::unique_ptr<SimpleGrammarRule>{new SimpleGrammarRule {EXPLICIT_START_SYMBOL, {START_SYMBOL}, true}};
@@ -161,12 +200,12 @@ void Grammar::addExplicitRule() {
     nterminals.insert(root);
 }
 
-Grammar::~Grammar() {
-//    delete parser;
-//    if (startRule) {
-//        delete startRule;
-//    }
-}
+//Grammar::~Grammar() {
+////    delete parser;
+////    if (startRule) {
+////        delete startRule;
+////    }
+//}
 
 void Grammar::readRules(const std::vector<ComplexGrammarRule> &plainRules) {
 //    if (!parser) {

@@ -9,6 +9,7 @@
 #include "g-scanner.hpp"
 #include "utils/logger.h"
 #include "grammar-words-storage.hpp"
+#include "grammar.h"
 
 namespace tproc {
 
@@ -265,155 +266,155 @@ static void extractTermsAndNterms(const GRuleWordPtr &word,
     }
 }
 
-void GParserDriver::handleDependencies(std::vector<DependencyStruct> &deps) {
-    for (auto &dep : deps) {
-        auto depRootFound = std::find_if(definedDepRules.begin(), definedDepRules.end(), [&dep](auto &definedDep){
-            return definedDep->root = dep.target;
-        });
-        if (depRootFound != definedDepRules.end()) {
-            Logger::getErrLogger() << "Error: redefenition of dependency rule with target " << dep.target->getRawValue() << std::endl;
-            return;
-        }
+//void GParserDriver::handleDependencies(std::vector<DependencyStruct> &deps) {
+//    for (auto &dep : deps) {
+//        auto depRootFound = std::find_if(definedDepRules.begin(), definedDepRules.end(), [&dep](auto &definedDep){
+//            return definedDep->root = dep.target;
+//        });
+//        if (depRootFound != definedDepRules.end()) {
+//            Logger::getErrLogger() << "Error: redefenition of dependency rule with target " << dep.target->getRawValue() << std::endl;
+//            return;
+//        }
 
-        std::set<DependencyRulePtr> forwardDeps;
-        std::set<DependencyRulePtr> backwardDeps;
-        bool targetFound = false;
-        for (auto &depSymbol : dep.depSymbols) {
-            if (depSymbol == dep.target) {
-                targetFound = true;
-                continue;
-            }
-            DependencyRulePtr symbolDepRule = nullptr;
+//        std::set<DependencyRulePtr> forwardDeps;
+//        std::set<DependencyRulePtr> backwardDeps;
+//        bool targetFound = false;
+//        for (auto &depSymbol : dep.depSymbols) {
+//            if (depSymbol == dep.target) {
+//                targetFound = true;
+//                continue;
+//            }
+//            DependencyRulePtr symbolDepRule = nullptr;
 
-            auto defSymbolFound = std::find_if(definedDepRules.begin(), definedDepRules.end(), [&depSymbol](auto &defDep){
-                return depSymbol == defDep->root;
-            });
-            if (defSymbolFound != definedDepRules.end()) {
-                symbolDepRule = *defSymbolFound;
-            }
+//            auto defSymbolFound = std::find_if(definedDepRules.begin(), definedDepRules.end(), [&depSymbol](auto &defDep){
+//                return depSymbol == defDep->root;
+//            });
+//            if (defSymbolFound != definedDepRules.end()) {
+//                symbolDepRule = *defSymbolFound;
+//            }
 
-            if (!symbolDepRule) {
-                auto pendSymbolFound = std::find_if(pendingDepRules.begin(), pendingDepRules.end(), [&depSymbol](auto &pendDep){
-                    return depSymbol == pendDep->root;
-                });
-                if (pendSymbolFound != pendingDepRules.end()) {
-                    symbolDepRule = *pendSymbolFound;
-                }
-            }
+//            if (!symbolDepRule) {
+//                auto pendSymbolFound = std::find_if(pendingDepRules.begin(), pendingDepRules.end(), [&depSymbol](auto &pendDep){
+//                    return depSymbol == pendDep->root;
+//                });
+//                if (pendSymbolFound != pendingDepRules.end()) {
+//                    symbolDepRule = *pendSymbolFound;
+//                }
+//            }
 
-            if (!symbolDepRule) {
-                symbolDepRule = std::make_shared<DependencyRule>(depSymbol);
+//            if (!symbolDepRule) {
+//                symbolDepRule = std::make_shared<DependencyRule>(depSymbol);
 
-                std::set<GRuleWordPtr> terms, nterms;
-                extractTermsAndNterms(depSymbol, terms, nterms);
-                symbolDepRule->nterms = std::move(nterms);
-                symbolDepRule->terms = std::move(terms);
+//                std::set<GRuleWordPtr> terms, nterms;
+//                extractTermsAndNterms(depSymbol, terms, nterms);
+//                symbolDepRule->nterms = std::move(nterms);
+//                symbolDepRule->terms = std::move(terms);
 
-                pendingDepRules.insert(symbolDepRule);
-            }
+//                pendingDepRules.insert(symbolDepRule);
+//            }
 
-            targetFound ? backwardDeps.insert(symbolDepRule) : forwardDeps.insert(symbolDepRule);
-        }
+//            targetFound ? backwardDeps.insert(symbolDepRule) : forwardDeps.insert(symbolDepRule);
+//        }
 
-        if (!targetFound) {
-            Logger::getErrLogger() << "Error: no " << dep.target->getRawValue() << " in right part of rule" << std::endl;
-            return;
-        }
+//        if (!targetFound) {
+//            Logger::getErrLogger() << "Error: no " << dep.target->getRawValue() << " in right part of rule" << std::endl;
+//            return;
+//        }
 
-        auto pendingFound = std::find_if(pendingDepRules.begin(), pendingDepRules.end(), [&dep](auto &pendDep){
-            return dep.target == pendDep->root;
-        });
+//        auto pendingFound = std::find_if(pendingDepRules.begin(), pendingDepRules.end(), [&dep](auto &pendDep){
+//            return dep.target == pendDep->root;
+//        });
 
-        DependencyRulePtr newDepRule = nullptr;
-        if (pendingFound != pendingDepRules.end()) {
-            (*pendingFound)->backwardDeps.insert(backwardDeps.begin(), backwardDeps.end());
-            (*pendingFound)->forwardDeps.insert(forwardDeps.begin(), forwardDeps.end());
-            newDepRule = *pendingFound;
-            pendingDepRules.erase(pendingFound);
-        } else {
-            newDepRule = std::make_shared<DependencyRule>(dep.target);
-            newDepRule->backwardDeps = std::move(backwardDeps);
-            newDepRule->forwardDeps = std::move(forwardDeps);
+//        DependencyRulePtr newDepRule = nullptr;
+//        if (pendingFound != pendingDepRules.end()) {
+//            (*pendingFound)->backwardDeps.insert(backwardDeps.begin(), backwardDeps.end());
+//            (*pendingFound)->forwardDeps.insert(forwardDeps.begin(), forwardDeps.end());
+//            newDepRule = *pendingFound;
+//            pendingDepRules.erase(pendingFound);
+//        } else {
+//            newDepRule = std::make_shared<DependencyRule>(dep.target);
+//            newDepRule->backwardDeps = std::move(backwardDeps);
+//            newDepRule->forwardDeps = std::move(forwardDeps);
 
-            std::set<GRuleWordPtr> terms, nterms;
-            extractTermsAndNterms(dep.target, terms, nterms);
-            newDepRule->nterms = std::move(nterms);
-            newDepRule->terms = std::move(terms);
-        }
+//            std::set<GRuleWordPtr> terms, nterms;
+//            extractTermsAndNterms(dep.target, terms, nterms);
+//            newDepRule->nterms = std::move(nterms);
+//            newDepRule->terms = std::move(terms);
+//        }
 
-        definedDepRules.insert(newDepRule);
-    }
+//        definedDepRules.insert(newDepRule);
+//    }
 
-    std::move(pendingDepRules.begin(), pendingDepRules.end(), std::inserter(definedDepRules, definedDepRules.begin()));
-    pendingDepRules.clear();
-}
+//    std::move(pendingDepRules.begin(), pendingDepRules.end(), std::inserter(definedDepRules, definedDepRules.begin()));
+//    pendingDepRules.clear();
+//}
 
-bool GParserDriver::createDependencyStruct(const UnicodeString &target,
-                                          const UnicodeString &firstSym,
-                                          const UnicodeString &secondSym,
-                                          DependencyType depType,
-                                          DependencyStruct &outStruct,
-                                          std::string &errMessage)
-{
-    std::ostringstream err_os;
-    auto targetFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&target](auto &nterm){
-        return nterm->getRawValue() == target;
-    });
-    if (targetFound == definedNterms.end()) {
-        err_os << "Error:" << target << " not defined";
-        errMessage = err_os.str();
-        return false;
-    }
+//bool GParserDriver::createDependencyStruct(const UnicodeString &target,
+//                                          const UnicodeString &firstSym,
+//                                          const UnicodeString &secondSym,
+//                                          DependencyType depType,
+//                                          DependencyStruct &outStruct,
+//                                          std::string &errMessage)
+//{
+//    std::ostringstream err_os;
+//    auto targetFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&target](auto &nterm){
+//        return nterm->getRawValue() == target;
+//    });
+//    if (targetFound == definedNterms.end()) {
+//        err_os << "Error:" << target << " not defined";
+//        errMessage = err_os.str();
+//        return false;
+//    }
 
-    auto firstSymFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&firstSym](auto &nterm){
-        return nterm->getRawValue() == firstSym;
-    });
-    if (firstSymFound == definedNterms.end()) {
-        err_os << "Error:" << target << " not defined";
-        errMessage = err_os.str();
-        return false;
-    }
+//    auto firstSymFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&firstSym](auto &nterm){
+//        return nterm->getRawValue() == firstSym;
+//    });
+//    if (firstSymFound == definedNterms.end()) {
+//        err_os << "Error:" << target << " not defined";
+//        errMessage = err_os.str();
+//        return false;
+//    }
 
-    auto secondSymFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&secondSym](auto &nterm){
-        return nterm->getRawValue() == secondSym;
-    });
-    if (secondSymFound == definedNterms.end()) {
-        err_os << "Error:" << target << " not defined";
-        errMessage = err_os.str();
-        return false;
-    }
+//    auto secondSymFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&secondSym](auto &nterm){
+//        return nterm->getRawValue() == secondSym;
+//    });
+//    if (secondSymFound == definedNterms.end()) {
+//        err_os << "Error:" << target << " not defined";
+//        errMessage = err_os.str();
+//        return false;
+//    }
 
-    outStruct = DependencyStruct(*targetFound, {*firstSymFound, *secondSymFound}, depType);
-    return true;
-}
+//    outStruct = DependencyStruct(*targetFound, {*firstSymFound, *secondSymFound}, depType);
+//    return true;
+//}
 
-bool GParserDriver::appendDependencyStruct(const UnicodeString &symbol,
-                                           DependencyStruct &outStruct,
-                                           std::string &errMessage)
-{
-    std::ostringstream err_os;
-    auto symbolFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&symbol](auto &nterm){
-        return nterm->getRawValue() == symbol;
-    });
-    if (symbolFound == definedNterms.end()) {
-        err_os << "Error:" << symbol << " not defined";
-        errMessage = err_os.str();
-        return false;
-    }
+//bool GParserDriver::appendDependencyStruct(const UnicodeString &symbol,
+//                                           DependencyStruct &outStruct,
+//                                           std::string &errMessage)
+//{
+//    std::ostringstream err_os;
+//    auto symbolFound = std::find_if(definedNterms.begin(), definedNterms.end(), [&symbol](auto &nterm){
+//        return nterm->getRawValue() == symbol;
+//    });
+//    if (symbolFound == definedNterms.end()) {
+//        err_os << "Error:" << symbol << " not defined";
+//        errMessage = err_os.str();
+//        return false;
+//    }
 
-    outStruct.appendSymbol(*symbolFound);
+//    outStruct.appendSymbol(*symbolFound);
 
-    return true;
-}
+//    return true;
+//}
 
-bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rawWord, DependencyRulePtr &result, std::string &errMsg) {
+bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rule, DependencyGrammar &result, std::string &errMsg) {
     std::stringstream os;
 
 //    auto rule = GWordStorage::getNonTerminal(rawWord);
-    auto rule = rawWord;
+//    auto rule = rule;
     auto ruleFound = definedNterms.find(rule);
     if (ruleFound == definedNterms.end()) {
-        os << "Failed to find rule for " << rawWord;
+        os << "Failed to find rule for " << rule;
         errMsg = os.str();
         return  false;
     }
@@ -424,39 +425,77 @@ bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rawWord, Dependency
 //    if (depRuleFound != definedDepRules.end()) {
 //        result = *depRuleFound;
 //    } else {
-        result = std::make_shared<DependencyRule>(rule);
-        result->alias = rule->getRawValue();
-        std::set<GRuleWordPtr> terms, nterms;
-        extractTermsAndNterms(rule, terms, nterms);
-        result->terms = std::move(terms);
-        result->nterms = std::move(nterms);
+//        result = std::make_shared<DependencyRule>(rule);
+//    result.root = rule;
+//    result.alias = rule->getRawValue();
+//    std::set<GRuleWordPtr> terms, nterms;
+//    extractTermsAndNterms(rule, terms, nterms);
+//    result.terms = std::move(terms);
+//    result.nterms = std::move(nterms);
 //    }
 
+    auto grammarFound = definedGrammars.find(rule);
+    if (grammarFound != definedGrammars.end()) {
+        result.grammar = grammarFound->second;
+    } else {
+        Grammar::GRuleWithInfo ruleWithInfo;
+        ruleWithInfo.root = rule;
+        extractTermsAndNterms(rule, ruleWithInfo.terms, ruleWithInfo.nterms);
+        result.grammar = std::make_shared<Grammar>(ruleWithInfo);
+    }
+    result.alias = rule->getRawValue();
+
     return true;
 }
 
-bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rule, UnicodeString &alias, DependencyRulePtr &result, std::string &errMsg) {
-    std::stringstream os;
+//bool GParserDriver::handleCommandFindReduction(GRuleWordPtr &rule, UnicodeString &alias, DependencyRulePtr &result, std::string &errMsg) {
+//    std::stringstream os;
 
-    auto ruleFound = definedNterms.find(rule);
-    if (ruleFound == definedNterms.end()) {
-        os << "Failed to find rule for " << rule->getRawValue();
-        errMsg = os.str();
-        return  false;
+//    auto ruleFound = definedNterms.find(rule);
+//    if (ruleFound == definedNterms.end()) {
+//        os << "Failed to find rule for " << rule->getRawValue();
+//        errMsg = os.str();
+//        return  false;
+//    }
+
+//    result = std::make_shared<DependencyRule>(rule);
+//    result->alias = alias;
+//    std::set<GRuleWordPtr> terms, nterms;
+//    extractTermsAndNterms(rule, terms, nterms);
+//    result->terms = std::move(terms);
+//    result->nterms = std::move(nterms);
+
+//    return true;
+//}
+
+bool GParserDriver::handleDependencyReduction(std::vector<std::shared_ptr<Grammar>> &depList, GRuleWordPtr &dep, std::string &errMsg) {
+    if (definedNterms.find(dep) == definedNterms.end()) {
+        std::ostringstream os { errMsg };
+        os << "handleDependencyReduction(): failed to find definition for dependency " << dep->getRawValue();
+        return false;
     }
 
-    result = std::make_shared<DependencyRule>(rule);
-    result->alias = alias;
-    std::set<GRuleWordPtr> terms, nterms;
-    extractTermsAndNterms(rule, terms, nterms);
-    result->terms = std::move(terms);
-    result->nterms = std::move(nterms);
+//    depList.push_back(dep);
+    auto grammarFound = definedGrammars.find(dep);
+    if (grammarFound != definedGrammars.end()) {
+        depList.push_back(grammarFound->second);
+    } else {
+        Grammar::GRuleWithInfo ruleWithInfo;
+        ruleWithInfo.root = dep;
+        extractTermsAndNterms(dep, ruleWithInfo.terms, ruleWithInfo.nterms);
+//        std::shared_ptr<Grammar> grammar = std::make_shared<Grammar>(ruleWithInfo);
+        depList.push_back(std::make_shared<Grammar>(ruleWithInfo));
+    }
 
     return true;
 }
 
-void GParserDriver::processCommandList(std::vector<DependencyRulePtr> &&commands) {
-    std::move(commands.begin(), commands.end(), std::inserter(targetRules, targetRules.begin()));
+void GParserDriver::processDependencies(DependencyGrammar &depRule, GrammarDepStorage &&deps) {
+    depRule.dependencies = std::move(deps);
+}
+
+void GParserDriver::processCommandList(std::vector<DependencyGrammar> &&commands) {
+    std::move(commands.begin(), commands.end(), std::inserter(targetGrammars, targetGrammars.begin()));
 }
 
 void GParserDriver::applyPendingActions() {

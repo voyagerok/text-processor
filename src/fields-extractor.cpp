@@ -4,6 +4,7 @@
 #include <queue>
 #include <map>
 #include <unicode/ustream.h>
+#include <cmath>
 
 #include "fields-extractor.hpp"
 #include "grammar.h"
@@ -45,7 +46,8 @@ FieldsExtractor::FieldsExtractor(const std::string &grammarFilename) {
     GParserDriver parserDriver;
     if (parserDriver.parse(grammarFilename)) {
 //        processDependencyRules(parserDriver.getTargetRules());
-        processRulesWithoutDependencies(parserDriver.getTargetRules());
+//        processRulesWithoutDependencies(parserDriver.getTargetGrammars());
+        processDependencyGrammars(parserDriver.getTargetGrammars());
     } else {
         std::ostringstream os;
         os << "Failed to parse file named " << grammarFilename;
@@ -63,7 +65,7 @@ FieldsExtractor::FieldsExtractor(const std::string &grammarFilename) {
 //    }
 //}
 
-std::map<UnicodeString, FieldInfo> FieldsExtractor::extractFromFile(const std::string &filename) {
+std::map<UnicodeString, std::vector<FieldInfo>> FieldsExtractor::extractFromFile(const std::string &filename) {
     UnicodeString plainText;
     if (readAllTextFromFile(filename, plainText)) {
         return extract(plainText);
@@ -94,137 +96,226 @@ static std::vector<int> calcHintWordsPositions(const std::vector<UnicodeString> 
     return result;
 }
 
-std::map<UnicodeString,FieldInfo> FieldsExtractor::extract(const UnicodeString &plainText) {
+//static void checkDependencyList(const Tokenizer::Sentence &sentence,
+//                                int sentenceIndex,
+//                                const std::vector<ParserPtr> &depList,
+//                                std::unordered_map<ParserPtr, std::vector<FieldIndex>> &foundParsers)
+//{
+//    for (auto &dep : depList) {
+//        std::vector<std::pair<UnicodeString, int>> result;
+//        if (dep->tryParse(sentence, result)) {
+//            for (auto &parseResult : result) {
+//                foundParsers[dep].push_back({sentenceIndex, parseResult.second});
+//            }
+//        }
+//    }
+//}
+
+//static void checkDependencies(const Tokenizer::Sentence &sentence,
+//                              int sentenceIndex,
+//                              const ParserDepStorage &depStorage,
+//                              std::unordered_map<ParserPtr, std::vector<FieldIndex>> &foundParsers) {
+//    checkDependencyList(sentence, sentenceIndex, depStorage.leftDeps, foundParsers);
+//    checkDependencyList(sentence, sentenceIndex, depStorage.rightDeps, foundParsers);
+//    checkDependencyList(sentence, sentenceIndex, depStorage.upperDeps, foundParsers);
+//    checkDependencyList(sentence, sentenceIndex, depStorage.lowerDeps, foundParsers);
+//}
+
+using ExtractionResultsQueue = std::priority_queue<FieldInfo, std::vector<FieldInfo>, FieldInfoComparator>;
+using PendingResultsContainer = std::map<UnicodeString, std::vector<std::pair<FieldInfo, std::vector<ParserPtr>>>>;
+static void checkPendingResults(PendingResultsContainer &pendingResults,
+                                std::unordered_set<ParserPtr> &foundParsers,
+                                const Tokenizer::Sentence &sentence,
+                                std::map<UnicodeString, ExtractionResultsQueue> &extractionResultsQueue) {
+    for (auto &pendingResult : pendingResults) {
+        for (auto &pendingResultForName : pendingResult.second) {
+            for (auto &dep : pendingResultForName.second) {
+                if (foundParsers.find(dep) != foundParsers.end()) {
+                    extractionResultsQueue[pendingResult.first].push(pendingResultForName.first);
+                    continue;
+                }
+                std::vector<std::pair<UnicodeString, int>> result;
+                if (dep->tryParse(sentence, result)) {
+                    if (result.size()) {
+                        foundParsers.insert(dep);
+                        extractionResultsQueue[pendingResult.first].push(pendingResultForName.first);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+static bool checkLeftDependencies(const Tokenizer::Sentence &sentence,
+                              int index,
+                              std::vector<ParserPtr> &leftDeps,
+                              std::unordered_set<ParserPtr> &foundParsers)
+{
+    for (auto &leftDep : leftDeps) {
+        if (foundParsers.find(leftDep) == foundParsers.end()) {
+            std::vector<std::pair<UnicodeString, int>> result;
+            if (!leftDep->tryParse(sentence, result)) {
+                return  false;
+            }
+            if (result.size() == 0) {
+                return false;
+            }
+            foundParsers.insert(leftDep);
+            for (auto &parserResult : result) {
+                if (parserResult.second >= index) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+static bool checkRightDependencies(const Tokenizer::Sentence &sentence,
+                              int index,
+                              std::vector<ParserPtr> &rightDeps,
+                              std::unordered_set<ParserPtr> &foundParsers)
+{
+    for (auto &rightDep : rightDeps) {
+        std::vector<std::pair<UnicodeString, int>> result;
+        if (!rightDep->tryParse(sentence, result)) {
+            return false;
+        }
+        if (result.size() == 0) {
+            return false;
+        }
+        foundParsers.insert(rightDep);
+        for (auto &parserResult : result) {
+            if (parserResult.second <= index) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+std::map<UnicodeString, std::vector<FieldInfo>> FieldsExtractor::extract(const UnicodeString &plainText) {
+    std::unordered_set<ParserPtr> foundParsers;
+    PendingResultsContainer pendingResults;
+
     using ExtractionResultsQueue = std::priority_queue<FieldInfo, std::vector<FieldInfo>, FieldInfoComparator>;
     std::map<UnicodeString, ExtractionResultsQueue> extractionResultsQueue;
     Tokenizer tokenizer { plainText };
     auto sentences = tokenizer.getSentences();
-    for (auto &sentence : sentences) {
-        for (auto &parserWrapper : definedParsers) {
+    for (int i = 0; i < sentences.size(); ++i) {
+        auto &sentence = sentences[i];
+        checkPendingResults(pendingResults, foundParsers, sentence, extractionResultsQueue);
+        for (auto &parserWrapper : definedParserWrappers) {
+//            checkDependencies(sentence, i, parserWrapper.dependencies, foundParsers);
             std::vector<std::pair<UnicodeString, int>> result;
-            if (parserWrapper.parser.tryParse(sentence, result)) {
+            if (parserWrapper.parser->tryParse(sentence, result)) {
                 if (result.size() > 0) {
                     auto hintWordsPositions = calcHintWordsPositions(parserWrapper.hintWords, sentence);
                     for (auto &resultRecord : result) {
-                        double heuristics = calcHeuristics(hintWordsPositions, resultRecord.second);
-                        std::cout << "Inserting results in queue: " << parserWrapper.name << ", " << resultRecord.first <<
-                                     ", " << heuristics << std::endl;
-                        extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
+//                        if (checkLeftDependencies(parserWrapper.dependencies.leftDeps, foundParsers, resultRecord.second, sentence)) {
+                        if (checkLeftDependencies(sentence, resultRecord.second, parserWrapper.dependencies.leftDeps, foundParsers)) {
+                            double heuristics = calcHeuristics(hintWordsPositions, resultRecord.second);
+//                            std::cout << "Inserting results in queue: " << parserWrapper.name << ", " << resultRecord.first <<
+//                                         ", " << heuristics << std::endl;
+//                            extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
+                            foundParsers.insert(parserWrapper.parser);
+                            if (!checkRightDependencies(sentence, resultRecord.second, parserWrapper.dependencies.rightDeps, foundParsers)) {
+                                pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.second, heuristics}, parserWrapper.dependencies.rightDeps));
+                            } else {
+                                extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
-    std::map<UnicodeString, FieldInfo> extractionResult;
+    std::map<UnicodeString, std::vector<FieldInfo>> extractionResult;
     for (auto &queue : extractionResultsQueue) {
-        extractionResult.insert(std::make_pair(queue.first, queue.second.top()));
+        std::vector<FieldInfo> results;
+        double heuristics;
+        do {
+            heuristics = queue.second.top().heuristics;
+            results.push_back(queue.second.top());
+            queue.second.pop();
+        } while (queue.second.size() && std::fabs(heuristics - queue.second.top().heuristics) <= 0.001);
+        extractionResult.insert(std::make_pair(queue.first, results));
     }
     return extractionResult;
 }
 
-void FieldsExtractor::processRulesWithoutDependencies(const std::set<DependencyRulePtr> &depRules) {
-    std::set<std::shared_ptr<Grammar>> definedGrammars;
-    for (auto &depRule : depRules) {
-        auto grammarFound = std::find_if(definedGrammars.begin(), definedGrammars.end(), [&depRule](auto &grammarPtr){
-            return grammarPtr->getRoot() == depRule->root;
-        });
-        if (grammarFound != definedGrammars.end()) {
-            continue;
-        }
-        auto grammar = std::make_shared<Grammar>();
-        grammar->initFromDependencyRule(depRule);
-        ParserTable parserTable;
-        parserTable.buildTableFromGrammar(*grammar);
-        parserTable.printActionTable();
-        parserTable.printGotoTable();
-        Parser parser { *grammar, parserTable };
-        definedParsers.push_back({parser, depRule->hintWords, depRule->alias});
+static ParserPtr buildParserFromDepGrammar(const std::shared_ptr<Grammar> &grammar, const std::unordered_map<std::shared_ptr<Grammar>, ParserPtr> definedParsers) {
+    auto parserFound = definedParsers.find(grammar);
+    if (parserFound != definedParsers.end()) {
+        return parserFound->second;
+    }
+    ParserTable pTable;
+    pTable.buildTableFromGrammar(*grammar);
+    pTable.printActionTable();
+    pTable.printGotoTable();
+    return std::make_shared<Parser>(pTable);
+}
+
+enum class DependencyType { LEFT, RIGHT, UPPER, LOWER };
+
+static void processDependencyList(ParserWrapper &parserWrapper,
+                                  const std::vector<std::shared_ptr<Grammar>> &depList,
+                                  DependencyType depType,
+                                  const std::unordered_map<std::shared_ptr<Grammar>, ParserPtr> definedParsers)
+{
+    std::vector<ParserPtr> *depParserList = nullptr;
+    switch (depType) {
+    case DependencyType::LEFT:
+        depParserList = &parserWrapper.dependencies.leftDeps;
+        break;
+    case DependencyType::RIGHT:
+        depParserList = &parserWrapper.dependencies.rightDeps;
+        break;
+    case DependencyType::UPPER:
+        depParserList = &parserWrapper.dependencies.upperDeps;
+        break;
+    case DependencyType::LOWER:
+        depParserList = &parserWrapper.dependencies.lowerDeps;
+        break;
+    default:
+        Logger::getErrLogger() << "processDependencyList(): invalid dependency type" << std::endl;
+        return;
+    }
+    for (auto &grammarDep : depList) {
+        depParserList->push_back(buildParserFromDepGrammar(grammarDep, definedParsers));
     }
 }
 
-void FieldsExtractor::processDependencyRules(const std::set<DependencyRulePtr> &depRules) {
+void FieldsExtractor::processRulesWithoutDependencies(const std::vector<DependencyGrammar> &depRules) {
+//    std::unordered_map<std::shared_ptr<Grammar>, ParserPtr> definedParsers;
 //    for (auto &depRule : depRules) {
-//        DependencyGrammarObjectPtr depGrammar = nullptr;
-//        auto defGrammarFound = std::find_if(definedDepGrammars.begin(), definedDepGrammars.end(), [&depRule](const DependencyGrammarObjectPtr &depGrammar){
-//            return depGrammar->grammar->getRoot() == depRule->root;
-//        });
-//        if (defGrammarFound != definedDepGrammars.end()) {
-//            Logger::getErrLogger() << "Miltiple definition for " << depRule->root->getRawValue() << std::endl;
-//            continue;
-//        }
-//        auto pendGrammarFound = std::find_if(pendingDepGrammars.begin(), pendingDepGrammars.end(), [&depRule](const DependencyGrammarObjectPtr &depGrammar){
-//            return depGrammar->grammar->getRoot() == depRule->root;
-//        });
-//        if (pendGrammarFound != pendingDepGrammars.end()) {
-//            depGrammar = *pendGrammarFound;
-//            pendingDepGrammars.erase(pendGrammarFound);
-////            definedDepGrammars.insert(depGrammar);
-//        }
-
-//        if (!depGrammar) {
-//            depGrammar = std::make_shared<DependencyParserObject>();
-//            depGrammar->grammar = std::make_shared<Grammar>();
-//            depGrammar->grammar->initFromDependencyRule(depRule);
-//        }
-//        definedDepGrammars.insert(depGrammar);
-
-//        for (auto &forwardDep : depRule->forwardDeps) {
-//            DependencyGrammarObjectPtr forwardDepGrammar = nullptr;
-//            auto defFound = std::find_if(definedDepGrammars.begin(), definedDepGrammars.end(), [&forwardDep](const DependencyGrammarObjectPtr &depGrammar){
-//                return depGrammar->grammar->getRoot() == forwardDep->root;
-//            });
-//            if (defFound != definedDepGrammars.end()) {
-//                forwardDepGrammar = *defFound;
-//            }
-
-//            if (!forwardDepGrammar) {
-//                auto pendFound = std::find_if(pendingDepGrammars.begin(), pendingDepGrammars.end(), [&forwardDep](const DependencyGrammarObjectPtr &depGrammar){
-//                    return forwardDep->root == depGrammar->grammar->getRoot();
-//                });
-//                if (pendFound != pendingDepGrammars.end()) {
-//                    forwardDepGrammar = *pendFound;
-//                }
-//            }
-
-//            if (!forwardDepGrammar) {
-//                forwardDepGrammar = std::make_shared<DependencyParserObject>();
-//                forwardDepGrammar->grammar = std::make_shared<Grammar>();
-//                forwardDepGrammar->grammar->initFromDependencyRule(forwardDep);
-//                pendingDepGrammars.insert(forwardDepGrammar);
-//            }
-
-//            depGrammar->forwardDeps.push_back(forwardDepGrammar);
-//        }
-
-//        for (auto &backwardDep: depRule->backwardDeps) {
-//            DependencyGrammarObjectPtr backwardDepGrammar = nullptr;
-//            auto defFound = std::find_if(definedDepGrammars.begin(), definedDepGrammars.end(), [&backwardDep](const DependencyGrammarObjectPtr &depGrammar){
-//                return depGrammar->grammar->getRoot() == backwardDep->root;
-//            });
-//            if (defFound != definedDepGrammars.end()) {
-//                backwardDepGrammar = *defFound;
-//            }
-
-//            if (!backwardDepGrammar) {
-//                auto pendFound = std::find_if(pendingDepGrammars.begin(), pendingDepGrammars.end(), [&backwardDep](const DependencyGrammarObjectPtr &depGrammar){
-//                    return backwardDep->root == depGrammar->grammar->getRoot();
-//                });
-//                if (pendFound != pendingDepGrammars.end()) {
-//                    backwardDepGrammar = *pendFound;
-//                }
-//            }
-
-//            if (!backwardDepGrammar) {
-//                backwardDepGrammar = std::make_shared<DependencyParserObject>();
-//                backwardDepGrammar->grammar = std::make_shared<Grammar>();
-//                backwardDepGrammar->grammar->initFromDependencyRule(backwardDep);
-//                pendingDepGrammars.insert(backwardDepGrammar);
-//            }
-
-//            depGrammar->forwardDeps.push_back(backwardDepGrammar);
-//        }
+//        ParserWrapper parserWrapper;
+//        parserWrapper.parser = buildParserFromDepGrammar(depRule.grammar, definedParsers);
+//        parserWrapper.hintWords = std::move(depRule.hintWords);
+//        parserWrapper.name = std::move(depRule.alias);
+//        processDependencyList(parserWrapper, depRule.dependencies.leftDeps, DependencyType::LEFT, definedParsers);
+//        processDependencyList(parserWrapper, depRule.dependencies.rightDeps, DependencyType::RIGHT, definedParsers);
+//        processDependencyList(parserWrapper, depRule.dependencies.upperDeps, DependencyType::UPPER, definedParsers);
+//        processDependencyList(parserWrapper, depRule.dependencies.lowerDeps, DependencyType::LOWER, definedParsers);
+//        definedParserWrappers.push_back(parserWrapper);
 //    }
+}
+
+void FieldsExtractor::processDependencyGrammars(const std::vector<DependencyGrammar> &depRules) {
+    std::unordered_map<std::shared_ptr<Grammar>, ParserPtr> definedParsers;
+    for (auto &depRule : depRules) {
+        ParserWrapper parserWrapper;
+        parserWrapper.parser = buildParserFromDepGrammar(depRule.grammar, definedParsers);
+        parserWrapper.hintWords = std::move(depRule.hintWords);
+        parserWrapper.name = std::move(depRule.alias);
+        processDependencyList(parserWrapper, depRule.dependencies.leftDeps, DependencyType::LEFT, definedParsers);
+        processDependencyList(parserWrapper, depRule.dependencies.rightDeps, DependencyType::RIGHT, definedParsers);
+        processDependencyList(parserWrapper, depRule.dependencies.upperDeps, DependencyType::UPPER, definedParsers);
+        processDependencyList(parserWrapper, depRule.dependencies.lowerDeps, DependencyType::LOWER, definedParsers);
+        definedParserWrappers.push_back(parserWrapper);
+    }
 }
 
 }

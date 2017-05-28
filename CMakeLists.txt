@@ -80,14 +80,17 @@ set(SRC
     "src/grammar-words-storage.cpp"
     "src/grammar-words-storage.hpp"
     "src/fields-extractor.cpp"
-    "src/fields-extractor.hpp")
+    "src/fields-extractor.hpp"
+    "src/contrib/tinyxml2/tinyxml2.cpp"
+    "src/contrib/tinyxml2/tinyxml2.h")
 
 include_directories(src
     ${CMAKE_BINARY_DIR}
     ${ICU_INCLUDE_DIRS}
     ${PYTHON_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
-    ${BISON_DIR})
+    ${BISON_DIR}
+    src/contrib/)
 link_directories(${ICU_LIBRARY_DIRS} ${PYTHON_LIBRARY_DIRS})
 add_definitions(${ICU_CFLAGS_OTHER} ${PYTHON_CFLAGS_OTHER})
 

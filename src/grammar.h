@@ -25,6 +25,7 @@ namespace tproc {
 //class GrammarParser;
 //struct SimpleGrammarRule;
 
+
 class Grammar {
 //    using RulesContainer = std::set<GRuleWordPtr>;
 public:
@@ -33,10 +34,19 @@ public:
 
 //    Grammar(const Grammar&) = delete;
 //    Grammar &operator=(const Grammar&) = delete;
-    ~Grammar();
-    bool initFromFile(const std::string &filename);
-    bool initFromPlainText(const UnicodeString &plainText);
-    void initFromDependencyRule(const DependencyRulePtr &depRulePtr);
+    struct GRuleWithInfo {
+        GRuleWordPtr root;
+        std::set<GRuleWordPtr> nterms;
+        std::set<GRuleWordPtr> terms;
+    };
+    Grammar(GRuleWithInfo &&ruleWithInfo);
+    Grammar(const GRuleWithInfo &ruleWithInfo);
+    void initAdditioanlParams();
+//    ~Grammar();
+//    bool initFromFile(const std::string &filename);
+//    bool initFromPlainText(const UnicodeString &plainText);
+//    void initFromDependencyRule(const DependencyGrammar &depRulePtr);
+//    void initWithInfo(GRuleWithInfo &&ruleWithInfo);
 
 //    std::vector<SimpleGrammarRule> getRulesForLeftHandle(const UnicodeString &leftHandle) const;
 //    SimpleGrammarRule &getStartRule() const;

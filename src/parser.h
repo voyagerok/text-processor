@@ -35,9 +35,10 @@ public:
     using ReduceSet = std::vector<ReduceInfo>;
     using ShiftSet = std::vector<ShiftInfo>;
 
-    Parser(const Grammar &grammar, const ParserTable &parserTable) : grammar {grammar}, parserTable {parserTable} {}
+//    Parser(const std::shared_ptr<Grammar> &grammar, const ParserTable &parserTable) : grammar {grammar}, parserTable {parserTable} {}
+    Parser(const ParserTable &parserTable) : parserTable { parserTable } {}
     bool tryParse(const Tokenizer::Sentence &sentence, std::vector<std::pair<UnicodeString,int>> &result);
-    Grammar &getGrammar() { return grammar; }
+//    std::shared_ptr<Grammar> getGrammar() { return grammar; }
 private:
     ActiveSet parseToken(const Token &token, ActiveSet &currentLevelNodes, bool &accepted);
     void actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduceSet, ShiftSet &shiftSet, bool &isAccepted);
@@ -46,7 +47,7 @@ private:
     std::map<UnicodeString, ParserTable::ParserActionSet> getActionSetForTokenWithTokenInfo(const Token &token, int state);
     ParserTable::ParserActionSet getActionSetForToken(const Token &token, int state);
 
-    Grammar grammar;
+//    std::shared_ptr<Grammar> grammar;
     ParserTable parserTable;
 };
 

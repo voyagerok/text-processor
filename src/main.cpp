@@ -108,7 +108,10 @@ int main(int argc, char *argv[]) {
         std::cout << "No fields extracted." << std::endl;
     } else {
         for (auto &resultRecord : result) {
-            std::cout << "Field name: " << resultRecord.first << ", field value: " << resultRecord.second.fieldValue << std::endl;
+            std::cout << "Field name: " << resultRecord.first << std::endl;// ", field value: " << resultRecord.second.fieldValue << std::endl;
+            for (auto &fieldValueRecord : resultRecord.second) {
+                std::cout << "Field value: " << fieldValueRecord.fieldValue << std::endl;
+            }
         }
     }
 

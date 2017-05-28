@@ -65,6 +65,7 @@
 %token NUM_TERM
 %token PERSON_NAME AGREEMENT_DATE FULL_DATE APARTMENT_NUM WORD_SEQUENCE TOWN STREET
 %token ALIAS_OP
+%token WITH DEPS LEFT_DEPS_SECT RIGHT_DEPS_SECT UPPER_DEPS_SECT LOWER_DEPS_SECT
 
 %type <std::vector<GRuleWordPtr>> rule_list
 %type <GRuleWordPtr> rule complex_rule
@@ -76,18 +77,18 @@
 %type <PredicatePtr> prop simple_prop length_info
 %type <ActionPtr> action
 %type <std::vector<ActionPtr>> action_list
-%type <DependencyStruct> dependency dep_rhs_chain long_dep_rhs_chain
-%type <std::vector<DependencyStruct>> dep_list
-%type <DependencyRulePtr> command, command_find
-%type <std::vector<DependencyRulePtr>> command_list
+%type <DependencyGrammar> command, command_find
+%type <std::vector<DependencyGrammar>> command_list
 %type <std::vector<UnicodeString>> hint_word_list
 %type <UnicodeString> alias
+%type <GrammarDepStorage> dependency_part
+%type <std::vector<std::shared_ptr<Grammar>>> left_deps_descr right_deps_descr upper_deps_descr lower_deps_descr
 
 %locations
 
 %%
 section_list
-    : rule_section dep_section command_section
+    : rule_section command_section
     ;
 
 rule_list
@@ -143,24 +144,21 @@ rhs_term_empty
 
 labeled_rhs_term
     : rhs_term { $$ = driver.handleTermReduction(std::move($1)); }
-    /*| rhs_term LBRACKET prop_list RBRACKET { $$ = driver.handleTermReduction(std::move($1), std::move($3));  }*/
-    /*| rhs_term LBRACKET action_list RBRACKET { $$ = driver.handleTermReduction(std::move($1)); driver.fixAndSaveActionList($$, std::move($3)); }*/
-    | rhs_term LBRACKET action_list prop_list length_info RBRACKET 
-    { 
+    | rhs_term LBRACKET action_list prop_list length_info RBRACKET { 
         if ($5) 
             $4.push_back($5); 
         $$ = driver.handleTermReduction(std::move($1), std::move($4)); 
         driver.fixAndSaveActionList($$, std::move($3)); 
-    }
-    | NUM_TERM { $$ = driver.handleNumTermReduction(); }
-    | NUM_TERM LBRACKET action_list prop_list length_info RBRACKET
-    {
+    } 
+    | NUM_TERM { 
+        $$ = driver.handleNumTermReduction(); 
+    } 
+    | NUM_TERM LBRACKET action_list prop_list length_info RBRACKET {
         if ($5)
             $4.push_back($5);
         $$ = driver.handleNumTermReduction(std::move($4));
         driver.fixAndSaveActionList($$, std::move($3));
-    }
-    ;
+    };
 
 action_list
     : %empty { $$ = {}; }
@@ -193,11 +191,6 @@ length_info
     | LENGTH_SECT COLON NUM ELLIPSIS NUM { $$ = std::make_shared<LengthPredicate>($3,$5); }
     ;
 
-dep_section
-    : %empty
-    | DEP_SECTION_HEADER dep_list { driver.handleDependencies($2); }
-    ;
-
 rule_section
     : RULE_SECTION_HEADER rule_list { driver.applyPendingActions(); }
     ;
@@ -212,45 +205,113 @@ command_list
     ;
 
 command
-    : command_find alias SEMICOLON { auto res = driver.processAlias($1, $2); $$.swap($1); }
-    | command_find LBRACKET hint_word_list RBRACKET alias SEMICOLON { auto res = driver.handleHintWordsAndAlias($1, std::move($3), $5); $$.swap(res); }
+    : command_find alias SEMICOLON dependency_part { 
+        driver.processAlias($1, $2);
+        driver.processDependencies($1, std::move($4)); 
+        $$.swap($1); 
+    } 
+    | command_find LBRACKET hint_word_list RBRACKET alias SEMICOLON dependency_part { 
+        driver.handleHintWordsAndAlias($1, std::move($3), $5);
+        driver.processDependencies($1, std::move($7)); 
+        $$.swap($1); 
+    };
+
+dependency_part
+    : LBRACKET left_deps_descr right_deps_descr upper_deps_descr lower_deps_descr RBRACKET {
+        $$.leftDeps.swap($2);
+        $$.rightDeps.swap($3);
+        $$.upperDeps.swap($4);
+        $$.lowerDeps.swap($5);
+    }
+    | %empty
     ;
+
+left_deps_descr
+    : LEFT_DEPS_SECT COLON rhs_nterm {
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($$, $3, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }
+    } 
+    | left_deps_descr rhs_nterm {
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($1, $2, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }
+        $$.swap($1);
+    };
+
+right_deps_descr
+    : RIGHT_DEPS_SECT COLON rhs_nterm {
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($$, $3, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }  
+    } 
+    | right_deps_descr rhs_nterm {
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($1, $2, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }
+        $$.swap($1);
+    };
+
+upper_deps_descr
+    : UPPER_DEPS_SECT COLON rhs_nterm {
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($$, $3, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }   
+    } 
+    | upper_deps_descr rhs_nterm {
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($1, $2, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }
+        $$.swap($1);
+    };
+
+lower_deps_descr
+    : LOWER_DEPS_SECT COLON rhs_nterm { 
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($$, $3, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }
+    } 
+    | lower_deps_descr rhs_nterm { 
+        std::string errMsg; 
+        if (!driver.handleDependencyReduction($1, $2, errMsg)) {
+            error(@1, errMsg);
+            return -1;
+        }
+        $$.swap($1);
+    };
 
 alias
     : ALIAS_OP WORD { $$ = $2; }
     | ALIAS_OP CAPITAL_WORD { $$ = $2; }
-    | %empty { $$ = UnicodeString(); }
+    | %empty
     ;
 
 command_find
-    : FIND rhs_nterm { std::string err; if(!driver.handleCommandFindReduction($2,$$,err)) { error(@1,err); return -1; } }
-    ;
+    : FIND rhs_nterm { 
+        std::string err; 
+        if(!driver.handleCommandFindReduction($2,$$,err)) { 
+            error(@1,err); return -1; 
+        } 
+    };
 
 hint_word_list
     : HINT_WORDS_SECT COLON DOUBLE_QUOTE WORD DOUBLE_QUOTE { $$ = { $4 }; }
     | hint_word_list DOUBLE_QUOTE WORD DOUBLE_QUOTE { $1.push_back( $3 ); $$.swap($1); }
     ;
-
-dep_list
-    : dependency { $$ = { $1 }; } 
-    | dep_list dependency { $1.push_back($2); $$.swap($1); }
-    ;
-
-dependency
-    : dep_rhs_chain SEMICOLON { $$.swap($1); }
-    | long_dep_rhs_chain SEMICOLON { $$.swap($1); }
-    ;
-
-dep_rhs_chain
-    : CAPITAL_WORD COLON CAPITAL_WORD NEAR_AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.createDependencyStruct($1, $3, $5, DependencyType::NEAR, $$, errMsg)) { error(@1, errMsg); return -1; } }
-    | dep_rhs_chain NEAR_AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.appendDependencyStruct($3, $1, errMsg)) { error(@1, errMsg); return -1; } $$.swap($1); }
-    ;
-
-long_dep_rhs_chain
-    : CAPITAL_WORD COLON CAPITAL_WORD AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.createDependencyStruct($1, $3, $5, DependencyType::FAR, $$, errMsg)) { error(@1, errMsg); return -1; } }
-    | long_dep_rhs_chain AFTER_KEYWORD CAPITAL_WORD { std::string errMsg; if (!driver.appendDependencyStruct($3, $1, errMsg)) { error(@1, errMsg); return -1; } $$.swap($1); }
-    ;
-
 
 %%
 
