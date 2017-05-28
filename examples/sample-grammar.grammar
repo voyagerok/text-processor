@@ -13,4 +13,8 @@ OwnerName = "наймодатель";
 Requisits = "реквизит";
 
 %commands
-Find FullDate (hint_words: "регистрация", "адрес") with deps (upper: Requisits, EmployerName) as RegistrationDate;
+Find FullDate (hint_words: "выдавать", "когда") 
+with deps (upper: Requisits, OwnerName) 
+as RegistrationDate;
+
+Find FullDate with deps (left: Town) as AgreementDateValue;

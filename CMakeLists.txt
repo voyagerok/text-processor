@@ -23,11 +23,18 @@ find_package(Boost REQUIRED COMPONENTS program_options)
 # =======================
 
 # ====== icu and python =====
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(ICU REQUIRED icu-uc icu-io)
-pkg_check_modules(PYTHON REQUIRED python-2.7)
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(ICU REQUIRED icu-uc icu-io)
+#pkg_check_modules(PYTHON REQUIRED python-2.7)
 # ===========================
 
+#=======Python 2.7=========
+find_package(PythonLibs 2.7 REQUIRED)
+#==========================
+
+#========ICU===============
+find_package(ICU 56 REQUIRED uc io i18n data)
+#=========================
 
 # ======= flex and bison ========
 find_package(BISON REQUIRED)
@@ -91,8 +98,6 @@ include_directories(src
     ${Boost_INCLUDE_DIRS}
     ${BISON_DIR}
     src/contrib/)
-link_directories(${ICU_LIBRARY_DIRS} ${PYTHON_LIBRARY_DIRS})
-add_definitions(${ICU_CFLAGS_OTHER} ${PYTHON_CFLAGS_OTHER})
 
 add_executable(${PROJECT_NAME} ${SRC})
 add_dependencies(${PROJECT_NAME} CYTHON_GENERATOR)

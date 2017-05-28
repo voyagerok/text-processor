@@ -248,7 +248,7 @@ std::map<UnicodeString, std::vector<FieldInfo>> FieldsExtractor::extract(const U
 //                                pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.second, heuristics}, parserWrapper.dependencies.rightDeps));
                             if (checkRightDependencies(sentence, resultRecord.second, parserWrapper.dependencies.rightDeps, foundParsers)) {
                                 if (parserWrapper.dependencies.lowerDeps.size() > 0) {
-                                    pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.second, heuristics}, parserWrapper.dependencies.rightDeps));
+                                    pendingResults[parserWrapper.name].push_back(std::make_pair(FieldInfo {resultRecord.first, heuristics}, parserWrapper.dependencies.lowerDeps));
                                 } else {
                                     extractionResultsQueue[parserWrapper.name].emplace(resultRecord.first, heuristics);
                                 }
