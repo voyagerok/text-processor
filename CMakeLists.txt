@@ -89,7 +89,11 @@ set(SRC
     "src/fields-extractor.cpp"
     "src/fields-extractor.hpp"
     "src/contrib/tinyxml2/tinyxml2.cpp"
-    "src/contrib/tinyxml2/tinyxml2.h")
+    "src/contrib/tinyxml2/tinyxml2.h"
+    #"src/contrib/mystem/mystem.hpp"
+    #"src/mystem-tokenizer.cpp"
+    #"src/mystem-tokenizer.hpp"
+    )
 
 include_directories(src
     ${CMAKE_BINARY_DIR}
@@ -97,7 +101,9 @@ include_directories(src
     ${PYTHON_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${BISON_DIR}
-    src/contrib/)
+    ${CMAKE_SOURCE_DIR}/src/contrib/)
+
+link_directories(${link_directories} ${CMAKE_SOURCE_DIR}/libs)
 
 add_executable(${PROJECT_NAME} ${SRC})
 add_dependencies(${PROJECT_NAME} CYTHON_GENERATOR)
@@ -106,4 +112,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 target_link_libraries(${PROJECT_NAME}
     ${ICU_LIBRARIES}
     ${PYTHON_LIBRARIES}
-    ${Boost_LIBRARIES})
+    ${Boost_LIBRARIES}
+    #"libmystem_c_binding.so"
+    #"pthread"
+    )

@@ -64,7 +64,8 @@ bool LengthPredicate::operator()(const Token &token) {
 //    if (result) {
 //        Logger::getLogger() << "Passed" << std::endl;
 //    }
-    return token.pureToken.length() >= minLength && token.pureToken.length() <= maxLength;
+    return token.pureToken.length() >= minLength &&
+            token.pureToken.length() <= maxLength;
 
 //    return result;
 }

@@ -74,6 +74,6 @@ cdef analyzeToken(const UnicodeString tok, vector[pair[UnicodeString, vector[sha
     #analysis_results[tok] = res_for_tok
     analysis_results.push_back(pair[UnicodeString, vector[shared_ptr[AnalysisResult]]](tok, res_for_tok))
 
-cdef public analyzeTokens(const vector[UnicodeString] &tokens, vector[pair[UnicodeString, vector[shared_ptr[AnalysisResult]]]] &analysis_results):
+cdef public void analyzeTokens(const vector[UnicodeString] &tokens, vector[pair[UnicodeString, vector[shared_ptr[AnalysisResult]]]] &analysis_results):
     for i in xrange(tokens.size()):
         analyzeToken(tokens[i], analysis_results)

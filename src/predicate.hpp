@@ -50,8 +50,12 @@ class LengthPredicate final: public Predicate {
 protected:
     bool equals(const PredicatePtr &other) const override;
 public:
-    LengthPredicate(int length): minLength { length }, maxLength { length } {}
-    LengthPredicate(int minLength, int maxLength): minLength { minLength }, maxLength { maxLength } {}
+    LengthPredicate(int length):
+        minLength { length },
+        maxLength { length } {}
+    LengthPredicate(int minLength, int maxLength):
+        minLength { minLength },
+        maxLength { maxLength } {}
     bool operator()(const Token &token) override;
     unsigned long hash() const override { return std::hash<int>()(minLength) ^ std::hash<int>()(maxLength) * typeid (this).hash_code(); }
 private:

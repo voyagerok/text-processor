@@ -34,6 +34,7 @@
 #include "utils/logger.h"
 #include "g-parser-driver.hpp"
 #include "fields-extractor.hpp"
+#include "mystem-tokenizer.hpp"
 
 namespace po = boost::program_options;
 
@@ -68,18 +69,18 @@ static bool processArgs(int argc, char *argv[], Arguements &result) {
     return true;
 }
 
-//static bool readAllTextFromFile(const std::string &filename, UnicodeString &outText) {
-//    std::ifstream ifs(filename);
-//    if (ifs.fail()) {
-//        std::cerr << "Error: failed to open " << filename << std::endl;
-//        return false;
-//    }
-//    std::string text {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+static bool readAllTextFromFile(const std::string &filename, UnicodeString &outText) {
+    std::ifstream ifs(filename);
+    if (ifs.fail()) {
+        std::cerr << "Error: failed to open " << filename << std::endl;
+        return false;
+    }
+    std::string text {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
 
-//    outText = UnicodeString(text.c_str());
+    outText = UnicodeString(text.c_str());
 
-//    return true;
-//}
+    return true;
+}
 
 int main(int argc, char *argv[]) {
     Py_Initialize();
@@ -99,6 +100,15 @@ int main(int argc, char *argv[]) {
 //    UnicodeString inputText;
 //    if (!readAllTextFromFile(args.inputTextFilename, inputText)) {
 //        return -1;
+//    }
+
+//    UnicodeString inputText;
+//    if (readAllTextFromFile(args.inputTextFilename, inputText)) {
+//        tproc::MystemTokenizer tokenizer { inputText };
+//        auto lemmaArray = tokenizer.getLemmaArray();
+//        for (auto &lemma : lemmaArray) {
+//            std::cout << lemma << std::endl;
+//        }
 //    }
 
     tproc::FieldsExtractor extractor {args.grammarFilename};
