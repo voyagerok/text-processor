@@ -60,7 +60,7 @@ enum class GRuleWordPropType {
 //};
 
 
-class Token;
+struct Token;
 
 class GRuleWord;
 

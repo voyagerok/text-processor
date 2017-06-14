@@ -21,6 +21,7 @@
 #include <unicode/unistr.h>
 #include <unicode/ustream.h>
 #include <unicode/schriter.h>
+#include <unicode/ucnv.h>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <fstream>
@@ -34,7 +35,6 @@
 #include "utils/logger.h"
 #include "g-parser-driver.hpp"
 #include "fields-extractor.hpp"
-#include "mystem-tokenizer.hpp"
 
 namespace po = boost::program_options;
 
@@ -82,7 +82,47 @@ static bool readAllTextFromFile(const std::string &filename, UnicodeString &outT
     return true;
 }
 
+static void printUnicode(const UnicodeString &unistring) {
+#ifdef WIN32_PLATFORM
+    static char converted[100];
+    int32_t converted_size = unistring.extract(0, unistring.length(), converted, sizeof(converted), "windows1251");
+    converted[converted_size] = '\0';
+    std::cout << converted;
+#else
+    std::cout << unistring;
+#endif
+}
+
+struct UnicodePrinter {
+    const UnicodePrinter &operator<<(const UnicodeString &ustring) const {
+#ifdef WIN32_PLATFORM
+        static char converted[100];
+        int32_t converted_size = ustring.extract(0, ustring.length(), converted, sizeof(converted), "windows1251");
+        converted[converted_size] = '\0';
+        std::cout << converted;
+#else
+        std::cout << unistring;
+#endif
+        return *this;
+    }
+    
+    const UnicodePrinter& operator<<(std::ostream &(*func)(std::ostream&)) const {
+        func(std::cout);
+        return *this;
+    }
+    
+    static UnicodePrinter &get() {
+        static UnicodePrinter uPrinter;
+        return uPrinter;
+    }
+};
+
 int main(int argc, char *argv[]) {
+    ucnv_setDefaultName("UTF-8");
+#ifdef WIN32_PLATFORM
+    setlocale(LC_CTYPE, "rus");
+#endif
+    
     Py_Initialize();
     initmorph();
 
@@ -120,7 +160,8 @@ int main(int argc, char *argv[]) {
         for (auto &resultRecord : result) {
             std::cout << "Field name: " << resultRecord.first << std::endl;// ", field value: " << resultRecord.second.fieldValue << std::endl;
             for (auto &fieldValueRecord : resultRecord.second) {
-                std::cout << "Field value: " << fieldValueRecord.fieldValue << std::endl;
+                //std::cout << "Field value: " << fieldValueRecord.fieldValue << std::endl;
+                UnicodePrinter::get() << "Field value: " << fieldValueRecord.fieldValue << std::endl;
             }
         }
     }

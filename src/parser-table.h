@@ -16,7 +16,7 @@ namespace tproc {
 //class Grammar;
 //struct RuleIndex;
 
-enum class ActionName {SHIFT, REDUCE, ACCEPT, ERROR};
+enum class ActionName {SHIFT, REDUCE, ACCEPT, PARSE_ERROR};
 
 class ParserAction;
 
@@ -87,7 +87,7 @@ public:
     }
 };
 
-class Token;
+struct Token;
 enum class ReservedWord;
 
 class ParserTable {

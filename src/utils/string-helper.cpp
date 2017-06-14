@@ -2,9 +2,14 @@
 #include <unicode/regex.h>
 #include <iostream>
 #include <unicode/ustream.h>
+#include <iterator>
 
 #include "string-helper.h"
 #include "utils/logger.h"
+
+#ifdef WIN32_PLATFORM
+#define CAPACITY 1000
+#endif
 
 namespace tproc {
 
@@ -27,9 +32,12 @@ bool split_unistring(const UnicodeString &unistring, const std::vector<UnicodeSt
         return false;
     }
 
-    auto capacity = unistring.length();
-    UnicodeString lines[capacity];
-    auto n_of_lines = splitter.split(unistring, lines, capacity, status);
+    //auto capacity = unistring.length();
+    //UnicodeString lines[capacity];
+    //auto n_of_lines = splitter.split(unistring, lines, capacity, status);
+    UnicodeString lines[CAPACITY];
+    int32_t n_of_lines = splitter.split(unistring, lines, CAPACITY, status);
+    
     if (U_FAILURE(status)) {
         return false;
     }

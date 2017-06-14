@@ -11,7 +11,7 @@ class Predicate;
 
 using PredicatePtr = std::shared_ptr<Predicate>;
 
-class Token;
+struct Token;
 
 class Predicate {
 protected:
