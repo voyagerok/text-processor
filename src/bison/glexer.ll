@@ -266,7 +266,7 @@ double_quote "\""
 {double_quote}  { Logger::getLogger() << "Found quote" << std::endl; return token::DOUBLE_QUOTE; }
 
 
-.               { std::cout << "Found unknown character at " << loc << std::endl; }
+.               { }
 
 %%
 

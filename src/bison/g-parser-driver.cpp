@@ -4,6 +4,7 @@
 #include <sstream>
 #include <unicode/ustream.h>
 #include <sstream>
+#include <iterator>
 
 #include "gparser.tab.hh"
 #include "g-scanner.hpp"

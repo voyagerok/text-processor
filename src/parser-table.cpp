@@ -16,7 +16,7 @@ std::ostream &operator<<(std::ostream &os, ActionName actionName) {
     case ActionName::ACCEPT:
         os << "ACCEPT";
         break;
-    case ActionName::ERROR:
+    case ActionName::PARSE_ERROR:
         os << "ERROR";
         break;
     case ActionName::REDUCE:

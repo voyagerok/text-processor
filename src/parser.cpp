@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unicode/ustream.h>
 #include <algorithm>
+#include <iterator>
 
 #include "parser.h"
 #include "utils/logger.h"
@@ -164,7 +165,7 @@ void Parser::actor(const Token &token, ActiveSet &activeNodes, ReduceSet &reduce
             case ActionName::ACCEPT:
                 isAccepted = true;
                 break;
-            case ActionName::ERROR:
+            case ActionName::PARSE_ERROR:
                 break;
             }
         }

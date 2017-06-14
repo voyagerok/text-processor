@@ -8,6 +8,10 @@ set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 set(MORPH_ANALYZER_SCRIPT "${CMAKE_SOURCE_DIR}/src/scripts/morph.pyx")
 set(BISON_DIR "src/bison")
 
+if (WIN32)
+    add_definitions(-DWIN32_PLATFORM)
+endif(WIN32)
+
 # ======== custom target for generating cpp source files with cython ====================
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h"
     COMMAND cython ${MORPH_ANALYZER_SCRIPT} -I ${CMAKE_SOURCE_DIR}/src -o "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" -2
@@ -16,6 +20,10 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" "${CM
 
 add_custom_target(CYTHON_GENERATOR
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp" "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h")
+	
+
+add_library(morph-analyzer SHARED morph-analyzer.cpp morph-analyzer.h)
+add_dependencies(morph-analyzer CYTHON_GENERATOR)
 # ========================================================================================
 
 # ====== boost ==========
@@ -37,6 +45,10 @@ find_package(ICU 56 REQUIRED uc io i18n data)
 #=========================
 
 # ======= flex and bison ========
+IF (WIN32)
+    set (BISON_EXECUTABLE "${FLEX_BISON_DIR}/win_bison.exe")
+    set (FLEX_EXECUTABLE "${FLEX_BISON_DIR}/win_flex.exe")
+ENDIF(WIN32)
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
@@ -72,8 +84,6 @@ set(SRC
     "src/tokenizer.h"
     "src/stack.cpp"
     "src/stack.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.cpp"
-    "${CMAKE_CURRENT_BINARY_DIR}/morph-analyzer.h"
     ${FLEX_grammar_lexer_OUTPUTS}
     ${BISON_grammar_parser_OUTPUTS}
     "${BISON_DIR}/g-parser-driver.hpp"
@@ -101,18 +111,29 @@ include_directories(src
     ${PYTHON_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${BISON_DIR}
-    ${CMAKE_SOURCE_DIR}/src/contrib/)
+    ${CMAKE_SOURCE_DIR}
+    "/src/contrib/")
+if (WIN32)
+    include_directories(${FLEX_BISON_DIR})
+endif(WIN32)
 
 link_directories(${link_directories} ${CMAKE_SOURCE_DIR}/libs)
 
 add_executable(${PROJECT_NAME} ${SRC})
-add_dependencies(${PROJECT_NAME} CYTHON_GENERATOR)
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+#add_dependencies(${PROJECT_NAME} CYTHON_GENERATOR)
+add_dependencies(${PROJECT_NAME} morph-analyzer)
+#set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 
 target_link_libraries(${PROJECT_NAME}
     ${ICU_LIBRARIES}
     ${PYTHON_LIBRARIES}
     ${Boost_LIBRARIES}
+    morph-analyzer
     #"libmystem_c_binding.so"
     #"pthread"
-    )
+)
+
+target_link_libraries(morph-analyzer
+    ${ICU_LIBRARIES}
+    ${PYTHON_LIBRARIES}
+    ${Boost_LIBRARIES})
