@@ -7,9 +7,7 @@
 #include "string-helper.h"
 #include "utils/logger.h"
 
-#ifdef WIN32_PLATFORM
 #define CAPACITY 1000
-#endif
 
 namespace tproc {
 

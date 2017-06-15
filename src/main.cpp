@@ -101,7 +101,7 @@ struct UnicodePrinter {
         converted[converted_size] = '\0';
         std::cout << converted;
 #else
-        std::cout << unistring;
+        std::cout << ustring;
 #endif
         return *this;
     }
